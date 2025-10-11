@@ -1,14 +1,23 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Avatar from "./Avatar";
+import { Bell, User, Settings, LogOut } from "lucide-react";
+import Notifications from "./Notifications";
+import "../App.css"; // make sure your admin CSS is included
 
 function NavigationBar() {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);     // ✅ success toast
-  const [showConfirm, setShowConfirm] = useState(false);     // ✅ confirm modal
-  const [userEmail, setUserEmail] = useState("");            // ✅ email for modal
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [setShowSuccess] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -17,21 +26,34 @@ function NavigationBar() {
     setUserEmail(email || "");
   }, [location]);
 
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Update unread count from Notifications
+  const handleUnreadUpdate = (count) => setUnreadCount(count);
+
   const isActive = (path) =>
     location.pathname === path ? "nav-link active" : "nav-link";
 
-  // 🔘 Click "Logout" → open confirm modal (do NOT log out yet)
   const openLogoutConfirm = () => {
     setShowConfirm(true);
+    setIsProfileOpen(false);
   };
 
-  // ✅ Actual logout after confirm
   const performLogout = () => {
     localStorage.removeItem("authToken");
     setIsLoggedIn(false);
-    setShowConfirm(false);      // close modal
-    setShowSuccess(true);       // show success toast
-    setTimeout(() => setShowSuccess(false), 3000); // auto-hide
+    setShowConfirm(false);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
     navigate("/signin");
   };
 
@@ -46,6 +68,7 @@ function NavigationBar() {
             alt="Thrive360 Logo"
           />
           <span className="ms-2 fw-bold text-white">Thrive360</span>
+
           <button
             className="navbar-toggler"
             type="button"
@@ -61,37 +84,155 @@ function NavigationBar() {
           <div className="collapse navbar-collapse" id="navbarSupportedContent">
             <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
               <li className="nav-item">
-                <Link to="/home" className={isActive("/home")}>Home</Link>
+                <Link to="/home" className={isActive("/home")}>
+                  Home
+                </Link>
               </li>
               <li className="nav-item">
-                <Link to="/freedomwall" className={isActive("/freedomwall")}>Freedom Wall</Link>
+                <Link to="/freedomwall" className={isActive("/freedomwall")}>
+                  Freedom Wall
+                </Link>
               </li>
               <li className="nav-item">
-                <Link to="/wellnessblog" className={isActive("/wellnessblog")}>Wellness Blog</Link>
+                <Link to="/wellnessblog" className={isActive("/wellnessblog")}>
+                  Wellness Blog
+                </Link>
               </li>
               <li className="nav-item">
-                <Link to="/meditation" className={isActive("/meditation")}>Meditation</Link>
+                <Link to="/meditation" className={isActive("/meditation")}>
+                  Meditation
+                </Link>
               </li>
               <li className="nav-item">
-                <Link to="/challenges" className={isActive("/challenges")}>Challenges</Link>
+                <Link to="/challenges" className={isActive("/challenges")}>
+                  Challenges
+                </Link>
               </li>
             </ul>
 
             {isLoggedIn ? (
-              <div className="d-flex align-items-center gap-3">
-                <Link to="/profile">
-                  
-                  <Avatar email={userEmail} size={45} />  
-                </Link>
+              <div className="d-flex align-items-center gap-3 position-relative">
+                {/* 🔔 Notification Bell */}
+              {/* 🔔 Notification Bell */}
+<div className="position-relative">
+  <button
+    className="btn p-2 rounded-circle"
+    style={{
+      background: "transparent",
+      border: "none",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = "rgba(0,128,0,0.1)"; // light green hover
+      e.currentTarget.style.borderRadius = "50%";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "transparent";
+      e.currentTarget.style.borderRadius = "50%";
+    }}
+    onClick={() => setShowNotifications(!showNotifications)}
+  >
+    <Bell size={26} color="#000000" /> {/* Bigger black bell */}
+    {unreadCount > 0 && (
+      <span
+        className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+        style={{
+          fontSize: "0.55rem",
+          width: "14px",
+          height: "14px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {unreadCount}
+      </span>
+    )}
+  </button>
 
-                {/* 🔘 Now opens confirm modal */}
-                <button
-                  className="btn btn-outline-success"
-                  type="button"
-                  onClick={openLogoutConfirm}
-                >
-                  Logout
-                </button>
+  {/* Dropdown Notifications */}
+  {showNotifications && (
+    <div
+      className="position-absolute end-0 mt-2 shadow rounded"
+      style={{
+        background: "#fff",
+        width: "280px",
+        minHeight: "250px",
+        maxHeight: "350px",
+        zIndex: 10000,
+        padding: "10px",
+        border: "none",
+        overflowY: "auto",
+        borderRadius: "12px",
+        boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
+      }}
+    >
+      <Notifications onUnreadUpdate={handleUnreadUpdate} />
+    </div>
+  )}
+</div>
+
+
+
+                {/* Profile Dropdown */}
+                <div className="user-navbar-profile" ref={dropdownRef}>
+                  <button
+                    className="user-profile-btn"
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  >
+                    <Avatar email={userEmail} size={40} />
+                   
+                    <div className="user-profile-dots">⋮</div>
+                    </button>
+
+                {isProfileOpen && (
+  <div className="user-profile-dropdown">
+    <div className="user-profile-info">
+      <Avatar email={userEmail} size={45} />
+      <div className="user-profile-details">
+        <div className="user-profile-name-large">{userEmail}</div>
+        <div className="user-profile-role">User</div>
+      </div>
+    </div>
+    <div className="user-profile-divider"></div>
+
+    <button
+      className="user-dropdown-item"
+      onClick={() => {
+        navigate("/profile");
+        setIsProfileOpen(false);
+      }}
+    >
+      <User size={18} color="#333" />
+      <span>Profile</span>
+    </button>
+
+    <button
+      className="user-dropdown-item"
+      onClick={() => {
+        navigate("/settings");
+        setIsProfileOpen(false);
+      }}
+    >
+      <Settings size={18} color="#333" />
+      <span>Settings</span>
+    </button>
+
+    <button
+      className="user-dropdown-item user-dropdown-logout"
+      onClick={openLogoutConfirm}
+    >
+      <LogOut size={18} color="#333" />
+      <span>Logout</span>
+    </button>
+  </div>
+)}
+
+                </div>
               </div>
             ) : (
               <div className="d-flex gap-2">
@@ -111,7 +252,7 @@ function NavigationBar() {
         </div>
       </nav>
 
-      {/* ✅ Confirm Logout Modal (green/white theme) */}
+      {/* Logout Confirmation */}
       {showConfirm && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
@@ -121,17 +262,21 @@ function NavigationBar() {
             className="rounded-4 shadow-lg p-4"
             style={{ background: "#fff", width: "380px", maxWidth: "92%" }}
           >
-            <h5 className="fw-bold mb-2 " style={{ color: "#2e7d32" }}>
+            <h5 className="fw-bold mb-2 text-dark">
               Are you sure you want to log out?
             </h5>
-            <p className="text-muted mb-4">
-              Log out of Thrive360{userEmail ? <> as <b className="text-dark">{userEmail}</b></> : ""}?
+            <p className="text-muted mb-4 align-items">
+               <b>{userEmail}</b>?
             </p>
 
             <div className="d-flex justify-content-end gap-2">
               <button
                 className="btn fw-bold px-4 py-2 rounded-pill"
-                style={{ background: "#e8f5e9", color: "#2e7d32", border: "1px solid #c8e6c9" }}
+                style={{
+                  background: "#e8f5e9",
+                  color: "#2e7d32",
+                  border: "1px solid #c8e6c9",
+                }}
                 onClick={() => setShowConfirm(false)}
               >
                 Cancel
@@ -147,36 +292,10 @@ function NavigationBar() {
           </div>
         </div>
       )}
-
-      {/* ✅ Success Toast after logout */}
-      {showSuccess && (
-        <div
-          className="position-fixed top-0 end-0 m-4"
-          style={{ zIndex: 9999, animation: "slideInOut 3s forwards" }}
-        >
-          <div
-            className="d-flex align-items-center shadow rounded-3 px-3 py-2 gap-2"
-            style={{ background: "black", color: "white", minWidth: "300px" , minHeight : "50px" }}
-          >
-            <span aria-hidden="true">✅</span>
-            <span className="fw-semibold">You successfully logged out</span>
-          </div>
-        </div>
-      )}
-
-      {/* Animations */}
-      <style>
-        {`
-          @keyframes slideInOut {
-            0% { opacity: 0; transform: translateX(120%); }
-            10% { opacity: 1; transform: translateX(0); }
-            90% { opacity: 1; transform: translateX(0); }
-            100% { opacity: 0; transform: translateX(120%); }
-          }
-        `}
-      </style>
     </>
   );
 }
 
 export default NavigationBar;
+
+

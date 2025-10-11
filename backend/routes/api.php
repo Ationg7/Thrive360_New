@@ -20,6 +20,9 @@ Route::get('/users', [UserController::class, 'getAllUsers']);
 Route::get('/users/{id}', [UserController::class, 'show']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+// Password reset routes
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Freedom Wall routes
 Route::get('/freedom-wall/posts', [FreedomWallController::class, 'index']);
@@ -28,7 +31,7 @@ Route::post('/freedom-wall/posts/{id}/report', [FreedomWallController::class, 'r
 
 // Challenge routes (public)
 Route::get('/challenges', [ChallengeController::class, 'index']);
-Route::get('/challenges/{id}', [ChallengeController::class, 'show']);
+Route::get('/challenges/{id}', [ChallengeController::class, 'show'])->whereNumber('id');
 
 // Event routes (public)
 Route::get('/events', [EventController::class, 'index']);
@@ -39,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     
     // Freedom Wall protected routes
+    Route::post('/freedom-wall/posts/auth', [FreedomWallController::class, 'store']);
     Route::post('/freedom-wall/posts/{postId}/react', [FreedomWallController::class, 'react']);
     Route::post('/freedom-wall/posts/{post}/save', [FreedomWallController::class, 'save']);
     Route::get('/freedom-wall/saved-posts', [FreedomWallController::class, 'getSavedPosts']);
@@ -47,11 +51,11 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Challenge protected routes
     Route::post('/challenges', [ChallengeController::class, 'store']);
-    Route::put('/challenges/{id}', [ChallengeController::class, 'update']);
-    Route::delete('/challenges/{id}', [ChallengeController::class, 'destroy']);
-    Route::post('/challenges/{id}/join', [ChallengeController::class, 'join']);
-    Route::post('/challenges/{id}/progress', [ChallengeController::class, 'updateProgress']);
-    Route::get('/challenges/{id}/progress', [ChallengeController::class, 'getUserProgress']);
+    Route::put('/challenges/{id}', [ChallengeController::class, 'update'])->whereNumber('id');
+    Route::delete('/challenges/{id}', [ChallengeController::class, 'destroy'])->whereNumber('id');
+    Route::post('/challenges/{id}/join', [ChallengeController::class, 'join'])->whereNumber('id');
+    Route::post('/challenges/{id}/progress', [ChallengeController::class, 'updateProgress'])->whereNumber('id');
+    Route::get('/challenges/{id}/progress', [ChallengeController::class, 'getUserProgress'])->whereNumber('id');
     Route::get('/challenges/history', [ChallengeController::class, 'getUserHistory']);
     
     // Todo routes

@@ -250,6 +250,226 @@
   border-radius: 10px;
 }
 
+/* ===== Avatar ===== */
+
+.user-navbar-profile {
+   position: relative;
+  
+}
+
+.user-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  width: 20px;
+  background: var(--light-bg);
+  border: 1px solid #e9ecef;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 90px;
+}
+
+.user-profile-btn:hover {
+  background: #e9ecef;
+  border-color: green;
+  box-shadow: 0 2px 8px rgba(0, 255, 30, 0.15);
+}
+
+.user-profile-avatar {
+  width: 35px;
+  height: 35px;
+  background: var(--primary-color);
+  color: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.user-profile-name {
+  color: var(--dark-text);
+  font-weight: 500;
+  font-size: 14px;
+  flex: 1;
+  text-align: left;
+}
+
+.user-profile-dots {
+  color: var(--gray-text);
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.user-profile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--white);
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  min-width: 280px;
+  margin-top: 8px;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-profile-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+   padding: 20px;
+  background: linear-gradient(135deg, #1b5e20, #4caf50);
+  color: var(--white);
+}
+
+.user-profile-avatar-large {
+  width: 50px;
+  height: 50px;
+  background: rgba(255,255,255,0.2);
+  color: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.user-profile-details {
+  flex: 1;
+}
+
+.user-profile-name-large {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.user-profile-role {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.user-profile-divider {
+  height: 1px;
+  background: #e9ecef;
+  margin: 0;
+}
+
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 15px 20px;
+  background: transparent;
+  border: none;
+  color: var(--dark-text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  text-align: left;
+}
+
+.user-dropdown-item:hover {
+  background: var(--light-bg);
+}
+
+.user-dropdown-item span {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.user-dropdown-logout {
+  color: var(--danger-color);
+  border-top: 1px solid #e9ecef;
+}
+
+.user-dropdown-logout:hover {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .user-navbar-container {
+    padding: 0 15px;
+    height: 60px;
+  }
+
+  .user-navbar-brand h2 {
+    font-size: 1.2rem;
+  }
+
+  .user-navbar-links {
+    display: none; /* Hide nav links on mobile */
+  }
+
+  .user-profile-btn {
+    min-width: auto;
+    padding: 6px 12px;
+  }
+
+  .user-profile-name {
+    display: none; /* Hide name on mobile */
+  }
+
+  .user-profile-dropdown {
+    min-width: 250px;
+    right: -10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-navbar-container {
+    padding: 0 10px;
+  }
+
+  .user-navbar-brand h2 {
+    font-size: 1rem;
+  }
+
+  .user-profile-btn {
+    padding: 4px 8px;
+    gap: 8px;
+  }
+
+  .user-profile-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+}
+
+/* CSS Variables */
+:root {
+  --white: #ffffff;
+  --dark-text: #333333;
+  --gray-text: #666666;
+  --primary-color: green;
+  --light-bg: #f8f9fa;
+  --danger-color: #dc3545;
+}
 
 
 /* ===== HERO SECTION ===== */
@@ -1274,19 +1494,36 @@ label {
 /* Profile CSS */
 /* General Styles */
 
+/* Make sidebars sticky on desktop, normal on mobile */
+.sidebar-left,
+.sidebar-right {
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 992px) {
+  .sidebar-left,
+  .sidebar-right {
+    position: relative !important;
+    top: auto !important;
+    width: 100% !important;
+    margin-top: 20px;
+  }
+}
 
 .profile-container {
   background-color: #fff;
   padding: 20px;
 }
 
-/* Profile Header */
 .profile-header {
+  position: relative;
   width: 100%;
-  margin: 0;
-  padding: 0;
-  border-radius: 0;
-  overflow: hidden; /* Prevents unwanted spacing */
+  background-color: #fff; /* or keep cover image */
+  border-radius: 0; /* straight edges for the main card */
+  overflow: hidden;
 }
 
 .profile-cover {
@@ -1294,18 +1531,23 @@ label {
   height: 220px; /* Adjust to match the image size */
   object-fit: cover;
 }
-
 .profile-info {
-  display: flex;
-  align-items: center;
-  padding-left: 20px;
+  position: absolute;
+  top: 180px; /* adjust based on header height */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #fff;
+  border-radius: 50%; /* makes it circular */
+  padding: 5px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  z-index: 10;
+  left: 5%
+  ;
 }
+
 .profile-body {
-  display: flex;
-  align-items: center;
-  padding: 0;
+  padding-top: 50px; /* space for the floating avatar */
   position: relative;
-  top: -40px; /* Moves the content up to overlap */
 }
 
 /* Smaller dropdown box */
@@ -1340,45 +1582,9 @@ label {
 }
 
 
-.profile-picture {
-  width: 90px;
-  height: 90px;
-  background-color: green;
-  color: white;
-  font-size: 36px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 4px solid white;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  position: absolute;
- margin-top: -70px;
-  left: 20px; /* Adjust for alignment */
-}
 
-.profile-add {
-  position: absolute;
-  bottom: -5px;
-  right: -5px;
-  background: white;
-  color: black;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  font-size: 25px;
-  text-align: center;
-  line-height: 22px;
-  font-weight: bold;
-}
-.follow-info h4 {
-  font-size: 14px; /* Adjust to desired size */
-  font-weight: 500; /* Optional: Adjust thickness */
-  color: #333; /* Optional: Darker text */
-  margin: 0; /* Remove extra spacing */
-  margin-left: 100px;
-}
+
+
 
 /* Events Sidebar */
 .events-card {
@@ -2203,7 +2409,7 @@ button:hover {
   font-weight: 600;
   color: green;
   text-align: center;
-  padding: 10px;
+  padding: 10p
 }
 
 /* Responsive Design */
@@ -2224,7 +2430,70 @@ button:hover {
     height: auto;
   }
 }
+ 
+/* 🥗 Minimalistic Top Foods Sidebar */
+.top-foods-card.minimalist {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
 
+.top-foods-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: black; /* sky blue accent */
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: 0.3px;
+}
+
+.top-foods-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.top-foods-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  padding: 6px 0;
+  border-bottom: 1px solid #f2f2f2;
+  transition: all 0.2s ease-in-out;
+}
+
+.top-foods-list li:last-child {
+  border-bottom: none;
+}
+
+.food-rank {
+  color: green;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.top-foods-list li:hover {
+  color: #0077b6;
+  transform: translateX(5px);
+}
+
+/* ------------------ MOBILE ONLY ------------------ */
+@media (max-width: 1000px) {
+  .blog-container {
+    flex-direction: column; /* stack sidebar below main content */
+  }
+
+  .blog-left,
+  .blog-sidebar {
+    flex: unset; /* remove flex sizing on mobile */
+    width: 100%; /* full width */
+  }
+}
 
 
 /* Meditation CSS */
@@ -2411,6 +2680,8 @@ button:hover {
 }
 
 
+
+
 /* Responsive */
 @media (max-width: 992px) {
   .blog-card,
@@ -2458,6 +2729,7 @@ button:hover {
 .back-btn:hover {
   background-color: darkgreen; /* darker on hover */
 */
+
 
 /* Image Styling */
 .image-placeholder {
@@ -2519,18 +2791,25 @@ button:hover {
   margin-top: 70px;
 }
 
-/* Top Text */
-.top-text {
-  flex: 1;
-  padding-right: 20px;
-}
+
 
 /* Category styling */
 .category {
-  color: #2f7a44;
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: #e8f5e9;
+  border-left: 4px solid #4caf50;
   font-weight: bold;
-  margin-bottom: 5px; /* smaller space to title */
+  font-size: 13px;
+  text-transform: uppercase;
+  color: black;
+  white-space: nowrap;
+  width: 200px;
+  height: 40px;
+  margin-bottom: 20px;
 }
+
 
 /* Title adjustment */
 .top-text h2 {
@@ -3198,9 +3477,6 @@ button:hover {
   line-height: 30px;
 }
 
-
-
-
 .thick-progress {
   height: 20px;
  
@@ -3226,10 +3502,8 @@ button:hover {
 
 .blog-left {
   flex: 2;
+  
 }
-
-
-
 
 .blog-image {
   display: flex;
@@ -3265,7 +3539,12 @@ button:hover {
   color: #333;
   word-spacing: 1px;
 }
-
+.blog-content h1{
+  font-size: 24px;
+  font-weight: bold;
+  margin: 20px 0 10px;
+  color: #2e7d32; /* green tone */
+}
 .blog-sidebar {
   flex: 1;
 }
@@ -3303,16 +3582,7 @@ button:hover {
   line-height: 1.6;
 }
 
-.learn-more {
-  margin-top: 15px;
-  padding: 10px 20px;
-  background: rgb(58, 189, 58);
-  color: black;
-  font-weight: bold;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-}
+
 
 .categories h4 {
   font-size: 14px;
@@ -3362,6 +3632,16 @@ button:hover {
   padding-bottom: 5px;
   align-items: flex-start;
 }
+.blog-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: green;
+  margin: 0; /* remove default margin */
+  position: relative;
+  top: 1px; /* move title slightly upward */
+  margin-bottom: 1px; /* space below the title */
+}
+
 
 .food-divider {
   border: none;
@@ -3369,6 +3649,8 @@ button:hover {
   margin: 5px 0;
   gap: 2px;
 }
+
+
 /* ==============================
    Admin Dashboard Styles
    Green + White Theme
@@ -3705,5 +3987,77 @@ button:hover {
 .modal-header {
   background-color: white; /* match floating button color */
   color: black;              /* make text readable */
-  border-bottom: none;       /* remove default border */
+  border-bottom: none;     
+  
+  /* remove default border */
+}
+
+ 
+  /* Notification.css*/
+  /* Scroll area styles */
+.notification-scroll-area {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: lightgrey  #f1f1f1; /* Sky blue thumb, light background */
+}
+
+/* Chrome, Edge, Safari */
+.notification-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notification-scroll-area::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.notification-scroll-area::-webkit-scrollbar-thumb {
+  background-color: grey; /* Sky blue */
+  border-radius: 10px;
+}
+
+.notification-scroll-area::-webkit-scrollbar-thumb:hover {
+  background-color: grey; /* Navy hover */
+}
+.notification-dropdown {
+  width: 320px;
+  border-radius: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 10px 12px;
+}
+
+.notification-item:hover {
+  background-color: #f8f9fa;
+}
+
+.notification-item.unread {
+  background-color: #eef5ff;
+}
+
+.blue-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #007bff;
+  border-radius: 50%;
+  margin-left: auto;
+}
+
+.notification-footer {
+  border-top: 1px solid #dee2e6;
+}
+
+.notification-dropdown-wrapper {
+  position: relative;
+}
+
+.notification-list {
+  max-height: 300px;
+  overflow-y: auto;
 }

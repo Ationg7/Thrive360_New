@@ -9,6 +9,7 @@ use App\Models\Meditation;
 use App\Models\Blog;
 use App\Models\PostReport;
 use App\Models\Psychiatrist;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -155,7 +156,6 @@ class AdminController extends Controller
     {
         $user = User::findOrFail($id);
         
-        // Don't allow deleting the last admin
         if ($user->isAdmin() && User::where('role', 'admin')->count() <= 1) {
             return response()->json(['message' => 'Cannot delete the last admin'], 400);
         }
@@ -248,12 +248,26 @@ class AdminController extends Controller
             'title', 'description', 'duration', 'category'
         ]));
 
-        // Handle optional image file
         if ($request->hasFile('image_file')) {
             $meditation->image_url = $request->file('image_file')->store('meditations/images', 'public');
         }
 
         $meditation->save();
+
+       // Notify all users
+$users = User::all();
+foreach ($users as $user) {
+    Notification::createNotification(
+        $user->id,
+        'meditation',
+        'New Meditation Available',
+        "A new meditation '{$meditation->title}' is now available.",
+        [
+            'meditation_id' => $meditation->id,
+            'redirect_url' => url("/meditations/{$meditation->id}") // Add redirect URL
+        ]
+    );
+}
 
         return response()->json($meditation, 201);
     }
@@ -294,20 +308,34 @@ class AdminController extends Controller
         }
 
         $blogData = $request->only(['title', 'content', 'category', 'excerpt']);
-        
-        // Handle tags - convert comma-separated string to array
+
         if ($request->tags) {
             $blogData['tags'] = array_map('trim', explode(',', $request->tags));
         }
 
         $blog = new Blog($blogData);
 
-        // Handle optional image
         if ($request->hasFile('image_file')) {
             $blog->image_url = $request->file('image_file')->store('blogs/images', 'public');
         }
 
         $blog->save();
+
+        // Notify all users
+$users = User::where('id', '!=', auth()->id())->get();
+foreach ($users as $user) {
+    Notification::createNotification(
+        $user->id,
+        'blog',
+        'New Blog Uploaded',
+        "A new blog titled '{$blog->title}' has been uploaded.",
+        [
+            'blog_id' => $blog->id,
+            'redirect_url' => url("/blogs/{$blog->id}") // Add redirect URL
+        ]
+    );
+}
+
 
         return response()->json($blog, 201);
     }
@@ -347,7 +375,7 @@ class AdminController extends Controller
         }
 
         $report = PostReport::findOrFail($id);
-        
+
         $report->update([
             'status' => $request->status,
             'admin_notes' => $request->admin_notes,
@@ -366,14 +394,12 @@ class AdminController extends Controller
         $report = PostReport::findOrFail($reportId);
         $post = $report->post;
 
-        // Delete the post and its associated image
         if ($post->image_path) {
             Storage::disk('public')->delete($post->image_path);
         }
 
         $post->delete();
 
-        // Update report status
         $report->update([
             'status' => 'resolved',
             'admin_notes' => 'Post deleted by admin due to violation',
@@ -408,7 +434,6 @@ class AdminController extends Controller
         return response()->json($psychiatrists);
     }
 
-    // Public: Only active psychiatrists for user-facing pages
     public function getActivePsychiatrists()
     {
         $psychiatrists = Psychiatrist::where('is_active', true)
@@ -440,12 +465,10 @@ class AdminController extends Controller
             'description', 'consultation_fee', 'is_active'
         ]);
 
-        // Set default availability
         $psychiatristData['availability'] = Psychiatrist::getDefaultAvailability();
 
         $psychiatrist = new Psychiatrist($psychiatristData);
 
-        // Handle optional image
         if ($request->hasFile('image_file')) {
             $psychiatrist->image_url = $request->file('image_file')->store('psychiatrists/images', 'public');
         }
@@ -480,9 +503,7 @@ class AdminController extends Controller
             'description', 'consultation_fee', 'is_active'
         ]);
 
-        // Handle optional image
         if ($request->hasFile('image_file')) {
-            // Delete old image if exists
             if ($psychiatrist->image_url) {
                 Storage::disk('public')->delete($psychiatrist->image_url);
             }

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card, ListGroup, Badge, Button, Row, Col } from 'react-bootstrap';
+import { Card, ListGroup, Badge, Button } from 'react-bootstrap';
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';
 
-const Events = () => {
+const Events = ({ hideHeader = false }) => {
   const [events, setEvents] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Load events
   const loadEvents = async () => {
     setLoading(true);
     try {
@@ -23,7 +22,6 @@ const Events = () => {
     }
   };
 
-  // Load event suggestions
   const loadSuggestions = async () => {
     try {
       const token = localStorage.getItem('authToken');
@@ -45,7 +43,6 @@ const Events = () => {
     }
   };
 
-  // Join event
   const joinEvent = async (eventId) => {
     try {
       const token = localStorage.getItem('authToken');
@@ -71,37 +68,24 @@ const Events = () => {
     }
   };
 
-  // Get category badge variant
   const getCategoryVariant = (category) => {
     switch (category) {
-      case 'wellness':
-        return 'success';
-      case 'meditation':
-        return 'info';
-      case 'fitness':
-        return 'warning';
-      case 'education':
-        return 'primary';
-      default:
-        return 'secondary';
+      case 'wellness': return 'success';
+      case 'meditation': return 'info';
+      case 'fitness': return 'warning';
+      case 'education': return 'primary';
+      default: return 'secondary';
     }
   };
 
-  // Format date and time
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
   };
 
-  // Check if event is upcoming
-  const isUpcoming = (startDate) => {
-    return new Date(startDate) > new Date();
-  };
+  const isUpcoming = (startDate) => new Date(startDate) > new Date();
 
   useEffect(() => {
     loadEvents();
@@ -112,14 +96,19 @@ const Events = () => {
     <div>
       {/* Event Suggestions */}
       {suggestions.length > 0 && (
-        <Card className="mb-3">
-          <Card.Header>
-            <div className="d-flex align-items-center">
+        <Card className="mb-3 shadow-sm">
+          {!hideHeader && (
+            <div
+              className="d-flex align-items-center px-3 py-2 mb-2"
+              style={{
+                fontWeight: 500,
+                fontSize: '0.95rem',
+              }}
+            >
               <Calendar className="me-2" />
               Suggested Events
             </div>
-          </Card.Header>
-          <hr className="my-0" />
+          )}
           <ListGroup variant="flush">
             {suggestions.slice(0, 3).map((event) => (
               <ListGroup.Item key={event.id} className="event-item">
@@ -158,15 +147,19 @@ const Events = () => {
       )}
 
       {/* All Events */}
-      <Card className="mb-3">
-        <Card.Header>
-          <div className="d-flex align-items-center">
+      <Card className="mb-3 shadow-sm">
+        {!hideHeader && (
+          <div
+            className="d-flex align-items-center px-3 py-2 mb-2"
+            style={{
+              fontWeight: 500,
+              fontSize: '0.95rem',
+            }}
+          >
             <Calendar className="me-2" />
             Upcoming Events
           </div>
-        </Card.Header>
-        <hr className="my-0" />
-
+        )}
         {loading ? (
           <div className="p-3 text-center">Loading...</div>
         ) : (
@@ -192,8 +185,8 @@ const Events = () => {
                         )}
                       </div>
                       <div className="small text-muted mb-2">
-                        {event.description.length > 100 
-                          ? `${event.description.substring(0, 100)}...` 
+                        {event.description.length > 100
+                          ? `${event.description.substring(0, 100)}...`
                           : event.description
                         }
                       </div>

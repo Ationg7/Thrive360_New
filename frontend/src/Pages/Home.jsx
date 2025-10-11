@@ -104,10 +104,6 @@ const WellnessFeatures = () => {
         </Row>
       </div>
 
-      {/* Events Section */}
-      <div className="mt-5">
-        <Events />
-      </div>
 
       {/* Guest popup (home notification style) */}
       {showPopup && (

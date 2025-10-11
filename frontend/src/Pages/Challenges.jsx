@@ -11,42 +11,73 @@ const ChallengesContext = createContext();
 
 export const ChallengesProvider = ({ children }) => {
   const [joinedChallenges, setJoinedChallenges] = useState([]);
+  const [completedChallenges, setCompletedChallenges] = useState([]);
   const { isLoggedIn } = useAuth();
 
   useEffect(() => {
-  const loadChallenges = async () => {
+    const loadUserChallengeHistory = async () => {
+      try {
+        if (!isLoggedIn) return;
+        const history = await challengesAPI.getUserHistory();
+        const joined = history.filter((h) => !h.is_completed).map((h) => ({
+          id: h.challenge_id,
+          title: h.challenge_title,
+          description: h.challenge_type,
+          type: h.challenge_type,
+          status: h.status === 'Completed' ? 'Completed' : 'In Progress',
+          progress: h.progress_percentage,
+        }));
+        const completed = history.filter((h) => h.is_completed).map((h) => ({
+          id: h.challenge_id,
+          title: h.challenge_title,
+          description: h.challenge_type,
+          type: h.challenge_type,
+          status: 'Completed',
+          progress: h.progress_percentage,
+        }));
+        setJoinedChallenges(joined);
+        setCompletedChallenges(completed);
+      } catch (err) {
+        console.error('Error fetching challenge history:', err);
+      }
+    };
+    loadUserChallengeHistory();
+  }, [isLoggedIn]);
+
+  const joinChallenge = async (challenge) => {
     try {
-      const data = await challengesAPI.getChallenges();
-      setJoinedChallenges(
-        data.map((c) => ({
-          ...c,
-          status: c.status ?? "Not Started",
-          theme: c.theme ?? "blue",
-        }))
-      );
+      if (!isLoggedIn) return;
+      await challengesAPI.joinChallenge(challenge.id);
+      // Refresh history
+      const history = await challengesAPI.getUserHistory();
+      const joined = history.filter((h) => !h.is_completed);
+      const completed = history.filter((h) => h.is_completed);
+      setJoinedChallenges(joined.map((h) => ({ id: h.challenge_id, title: h.challenge_title, description: h.challenge_type, type: h.challenge_type, status: h.status, progress: h.progress_percentage })));
+      setCompletedChallenges(completed.map((h) => ({ id: h.challenge_id, title: h.challenge_title, description: h.challenge_type, type: h.challenge_type, status: 'Completed', progress: h.progress_percentage })));
     } catch (err) {
-      console.error("Error loading challenges:", err);
+      console.error('Failed to join challenge:', err);
     }
   };
-  loadChallenges();
-}, []);
 
-
-  const joinChallenge = (challenge) => {
-    setJoinedChallenges((prev) => {
-      if (prev.some((c) => c.title === challenge.title)) return prev;
-      return [...prev, { ...challenge, status: "In Progress" }];
-    });
-  };
-
-  const markDone = (title) => {
-    setJoinedChallenges((prev) =>
-      prev.map((c) => (c.title === title ? { ...c, status: "Completed" } : c))
-    );
+  const markDone = async (title) => {
+    try {
+      if (!isLoggedIn) return;
+      const item = joinedChallenges.find((c) => c.title === title);
+      if (!item) return;
+      await challengesAPI.updateProgress(item.id, { progress_percentage: 100 });
+      // Refresh lists
+      const history = await challengesAPI.getUserHistory();
+      const joined = history.filter((h) => !h.is_completed);
+      const completed = history.filter((h) => h.is_completed);
+      setJoinedChallenges(joined.map((h) => ({ id: h.challenge_id, title: h.challenge_title, description: h.challenge_type, type: h.challenge_type, status: h.status, progress: h.progress_percentage })));
+      setCompletedChallenges(completed.map((h) => ({ id: h.challenge_id, title: h.challenge_title, description: h.challenge_type, type: h.challenge_type, status: 'Completed', progress: h.progress_percentage })));
+    } catch (err) {
+      console.error('Failed to mark as done:', err);
+    }
   };
 
   return (
-    <ChallengesContext.Provider value={{ joinedChallenges, joinChallenge, markDone }}>
+    <ChallengesContext.Provider value={{ joinedChallenges, completedChallenges, joinChallenge, markDone }}>
       {children}
     </ChallengesContext.Provider>
   );
@@ -57,10 +88,10 @@ export const useChallenges = () => useContext(ChallengesContext);
 // -------------------- Overview Page --------------------
 const ChallengesOverview = () => {
   const { isLoggedIn } = useAuth();
-  const { joinedChallenges, markDone } = useChallenges();
+  const { joinedChallenges, completedChallenges, markDone } = useChallenges(); // include completedChallenges
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
-  const [popupAction, setPopupAction] = useState(null); // "join" or "markDone"
+  const [popupAction, setPopupAction] = useState(null);
   const navigate = useNavigate();
 
   const handleGuestAction = (action) => {
@@ -92,8 +123,9 @@ const ChallengesOverview = () => {
     return { ...base, borderColor: "#007bff", color: "#007bff" };
   };
 
-  const totalChallenges = joinedChallenges.length || 1;
-  const completedCount = joinedChallenges.filter((c) => c.status === "Completed").length;
+  // Correct progress calculation
+  const totalChallenges = joinedChallenges.length + completedChallenges.length || 1;
+  const completedCount = completedChallenges.length;
   const completedPercent = Math.round((completedCount / totalChallenges) * 100);
 
   return (
@@ -135,8 +167,7 @@ const ChallengesOverview = () => {
 
       {/* Challenge Sections */}
       {challengeTypes.map((type) => {
-        const filteredChallenges = joinedChallenges.filter((c) => c.type === type);
-        if (!filteredChallenges.length) return null;
+        const filteredChallenges = joinedChallenges.filter((c) => c.type === type && c.status !== "Completed");
 
         return (
           <div
@@ -162,6 +193,14 @@ const ChallengesOverview = () => {
             </div>
 
             <div className="challenges-grid" style={{ display: "flex", flexWrap: "wrap", gap: "20px", justifyContent: "flex-start" }}>
+              {!filteredChallenges.length && (
+                <div style={{ width: "100%", display: "flex", justifyContent: "center", alignItems: "center", padding: "20px 0" }}>
+                  <p style={{ margin: 0, fontSize: "16px", color: "#666" }}>
+                    No joined challenges yet.
+                  </p>
+                </div>
+              )}
+
               {filteredChallenges.map((challenge, index) => (
                 <div key={index} style={{ flex: "0 0 32%", minWidth: "280px", maxWidth: "32%" }}>
                   <Card
@@ -196,7 +235,6 @@ const ChallengesOverview = () => {
                       </Button>
                     </Card.Body>
 
-                    {/* Guest Overlay */}
                     {!isLoggedIn && (
                       <div className="challenge-card-overlay">
                         Login to view this challenge
@@ -250,7 +288,7 @@ const ChallengesOverview = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #2e7d32; /* green */
+          color: #2e7d32;
           font-weight: 600;
           font-size: 1rem;
           text-align: center;
@@ -258,60 +296,58 @@ const ChallengesOverview = () => {
           border-radius: 8px;
           pointer-events: none;
         }
-       /* Guest popup overlay (Meditation style) */
-.guest-popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  backdrop-filter: blur(3px); /* subtle blur like Meditation */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
 
-.guest-popup {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px 25px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* softer shadow like Meditation */
-  max-width: 350px;
-  width: 90%;
-  text-align: center;
-  animation: slideUp 0.3s ease forwards;
-}
+        .guest-popup-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          backdrop-filter: blur(3px);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 2000;
+        }
 
-.guest-popup-line {
-  height: 1px;
-  background-color: rgba(0,0,0,0.1); /* subtle line like Meditation */
-  margin-bottom: 15px;
-}
+        .guest-popup {
+          background: #fff;
+          border-radius: 12px;
+          padding: 20px 25px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+          max-width: 350px;
+          width: 90%;
+          text-align: center;
+          animation: slideUp 0.3s ease forwards;
+        }
 
-.guest-popup-message {
-  font-size: 1rem;
-  color: #333;
-  margin-bottom: 20px;
-  line-height: 1.4;
-}
+        .guest-popup-line {
+          height: 1px;
+          background-color: rgba(0,0,0,0.1);
+          margin-bottom: 15px;
+        }
 
-.guest-popup .btn {
-  padding: 0.5rem 2rem;
-  font-size: 1rem;
-  border-radius: 8px;
-}
+        .guest-popup-message {
+          font-size: 1rem;
+          color: #333;
+          margin-bottom: 20px;
+          line-height: 1.4;
+        }
 
-.guest-popup .btn + .btn {
-  margin-left: 15px; /* spacing between Cancel and Sign In */
-}
+        .guest-popup .btn {
+          padding: 0.5rem 2rem;
+          font-size: 1rem;
+          border-radius: 8px;
+        }
 
-/* Slide-up animation */
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+        .guest-popup .btn + .btn {
+          margin-left: 15px;
+        }
 
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
       `}</style>
     </Container>
   );

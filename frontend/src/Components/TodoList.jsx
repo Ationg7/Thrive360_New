@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ListGroup, Button, Form, Modal, Card, Badge } from 'react-bootstrap';
-import { Plus, CheckCircle, Circle, Trash2, Edit3 } from 'lucide-react';
+import { Plus, CheckCircle, Circle, Trash2, Edit3 , BookOpen } from 'lucide-react';
 
 const TodoList = () => {
   const [todos, setTodos] = useState([]);
@@ -13,7 +13,6 @@ const TodoList = () => {
     priority: 1
   });
 
-  // Load todos from API
   const loadTodos = async () => {
     setLoading(true);
     try {
@@ -36,7 +35,6 @@ const TodoList = () => {
     }
   };
 
-  // Create or update todo
   const saveTodo = async () => {
     if (!formData.title.trim()) return;
 
@@ -68,7 +66,6 @@ const TodoList = () => {
     }
   };
 
-  // Toggle todo completion
   const toggleTodo = async (id) => {
     try {
       const token = localStorage.getItem('authToken');
@@ -88,7 +85,6 @@ const TodoList = () => {
     }
   };
 
-  // Delete todo
   const deleteTodo = async (id) => {
     if (!window.confirm('Are you sure you want to delete this todo?')) return;
 
@@ -110,7 +106,6 @@ const TodoList = () => {
     }
   };
 
-  // Edit todo
   const editTodo = (todo) => {
     setEditingTodo(todo);
     setFormData({
@@ -121,7 +116,6 @@ const TodoList = () => {
     setShowModal(true);
   };
 
-  // Get priority badge variant
   const getPriorityVariant = (priority) => {
     switch (priority) {
       case 3: return 'danger';
@@ -130,7 +124,6 @@ const TodoList = () => {
     }
   };
 
-  // Get priority text
   const getPriorityText = (priority) => {
     switch (priority) {
       case 3: return 'High';
@@ -145,86 +138,93 @@ const TodoList = () => {
 
   return (
     <>
-      <Card className="mb-3 right-sidebar-card position-relative">
-        <Card.Header className="d-flex justify-content-between align-items-center">
-          To Do List
-          <Button className="plus-button" onClick={() => setShowModal(true)}>
-            <Plus size={16} />
-          </Button>
-        </Card.Header>
-        <hr className="my-0" />
+
+<Card className="mb-3 right-sidebar-card position-relative">
+  <Card.Header className="d-flex justify-content-between align-items-center" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 'bold' }}>
+    <div className="d-flex align-items-center">
+      <BookOpen size={20} className="me-2" />
+      To Do List
+    </div>
+    <Button className="plus-button" onClick={() => setShowModal(true)}>
+      <Plus size={16} />
+    </Button>
+  </Card.Header>
+  <hr className="my-0" />
 
         {loading ? (
           <div className="p-3 text-center">Loading...</div>
         ) : (
-          <ListGroup variant="flush">
-            {todos.map((todo) => (
-              <ListGroup.Item 
-                key={todo.id} 
-                className="d-flex justify-content-between align-items-center recent-activity-item"
-              >
-                <div className="d-flex align-items-center flex-grow-1">
-                  <Button
-                    variant="link"
-                    className="p-0 me-2"
-                    onClick={() => toggleTodo(todo.id)}
-                  >
-                    {todo.is_completed ? (
-                      <CheckCircle size={20} className="text-success" />
-                    ) : (
-                      <Circle size={20} className="text-muted" />
-                    )}
-                  </Button>
-                  
-                  <div className="flex-grow-1">
-                    <div className={`${todo.is_completed ? 'text-decoration-line-through text-muted' : ''}`}>
-                      {todo.title}
-                    </div>
-                    {todo.description && (
-                      <small className="text-muted">{todo.description}</small>
-                    )}
-                    <div className="d-flex align-items-center mt-1">
-                      <Badge bg={getPriorityVariant(todo.priority)} size="sm" className="me-2">
-                        {getPriorityText(todo.priority)}
-                      </Badge>
-                      <small className="text-muted">
-                        {new Date(todo.created_at).toLocaleDateString()}
-                      </small>
+          // SCROLLABLE WRAPPER START
+          <div className="scrollable-wrapper">
+            <ListGroup variant="flush">
+              {todos.map((todo) => (
+                <ListGroup.Item 
+                  key={todo.id} 
+                  className="d-flex justify-content-between align-items-center recent-activity-item"
+                >
+                  <div className="d-flex align-items-center flex-grow-1">
+                    <Button
+                      variant="link"
+                      className="p-0 me-2"
+                      onClick={() => toggleTodo(todo.id)}
+                    >
+                      {todo.is_completed ? (
+                        <CheckCircle size={20} className="text-success" />
+                      ) : (
+                        <Circle size={20} className="text-muted" />
+                      )}
+                    </Button>
+                    
+                    <div className="flex-grow-1">
+                      <div className={`${todo.is_completed ? 'text-decoration-line-through text-muted' : ''}`}>
+                        {todo.title}
+                      </div>
+                      {todo.description && (
+                        <small className="text-muted">{todo.description}</small>
+                      )}
+                      <div className="d-flex align-items-center mt-1">
+                        <Badge bg={getPriorityVariant(todo.priority)} size="sm" className="me-2">
+                          {getPriorityText(todo.priority)}
+                        </Badge>
+                        <small className="text-muted">
+                          {new Date(todo.created_at).toLocaleDateString()}
+                        </small>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="d-flex">
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="p-1 me-1"
-                    onClick={() => editTodo(todo)}
-                  >
-                    <Edit3 size={14} />
-                  </Button>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="p-1 text-danger"
-                    onClick={() => deleteTodo(todo.id)}
-                  >
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
-              </ListGroup.Item>
-            ))}
-            
-            {todos.length === 0 && (
-              <ListGroup.Item className="text-center text-muted">
-                No todos yet. Add one to get started!
-              </ListGroup.Item>
-            )}
-          </ListGroup>
+                  <div className="d-flex">
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-1 me-1"
+                      onClick={() => editTodo(todo)}
+                    >
+                      <Edit3 size={14} />
+                    </Button>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-1 text-danger"
+                      onClick={() => deleteTodo(todo.id)}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                </ListGroup.Item>
+              ))}
+              
+              {todos.length === 0 && (
+                <ListGroup.Item className="text-center text-muted">
+                  No todos yet. Add one to get started!
+                </ListGroup.Item>
+              )}
+            </ListGroup>
+          </div>
+          // SCROLLABLE WRAPPER END
         )}
       </Card>
 
-      {/* Todo Modal */}
       <Modal show={showModal} onHide={() => {
         setShowModal(false);
         setEditingTodo(null);
@@ -282,6 +282,39 @@ const TodoList = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* HIDDEN SCROLLBAR STYLES */}
+      <style>{`
+        .scrollable-wrapper {
+  max-height: 400px;
+  overflow-y: auto;
+
+  /* Firefox */
+  scrollbar-width: thin;  /* makes it thin */
+  scrollbar-color: lightgrey transparent; /* track and thumb colors */
+}
+
+/* Chrome, Safari, Edge */
+.scrollable-wrapper::-webkit-scrollbar {
+  width: 8px; /* thin scrollbar */
+}
+
+.scrollable-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollable-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0); /* hidden by default */
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+/* Show scrollbar on hover */
+.scrollable-wrapper:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.3);
+}
+
+      `}</style>
     </>
   );
 };

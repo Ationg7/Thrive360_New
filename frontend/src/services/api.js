@@ -1,5 +1,5 @@
 // API service functions for Thrive360
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -181,6 +181,15 @@ export const challengesAPI = {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch progress');
+    return response.json();
+  },
+
+  // Get current user's challenge history
+  getUserHistory: async () => {
+    const response = await fetch(`${API_BASE_URL}/challenges/history`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch challenge history');
     return response.json();
   },
 };

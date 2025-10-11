@@ -2,6 +2,7 @@ import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../App.css";
 
+
 const BlogDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -12,31 +13,82 @@ const BlogDetail = () => {
     return null;
   }
 
+  // Define top foods per category
+  const topFoodsByCategory = {
+    "Mental Health": [
+      "Blueberries",
+      "Salmon",
+      "Walnuts",
+      "Dark Chocolate",
+      "Spinach",
+      "Turmeric",
+      "Pumpkin Seeds",
+      "Green Tea",
+      "Oats",
+      "Eggs"
+    ],
+    "Physical Wellness": [
+      "Chicken Breast",
+      "Quinoa",
+      "Broccoli",
+      "Sweet Potatoes",
+      "Almonds",
+      "Salmon",
+      "Greek Yogurt",
+      "Spinach",
+      "Berries",
+      "Avocado"
+    ],
+    "Nutrition": [
+      "Oats",
+      "Chia Seeds",
+      "Lentils",
+      "Brown Rice",
+      "Almonds",
+      "Quinoa",
+      "Spinach",
+      "Eggs",
+      "Avocado",
+      "Greek Yogurt"
+    ],
+    "Stress Management": [
+      "Dark Chocolate",
+      "Chamomile Tea",
+      "Salmon",
+      "Blueberries",
+      "Nuts",
+      "Spinach",
+      "Avocado",
+      "Oats",
+      "Green Tea",
+      "Bananas"
+    ],
+  };
+
+  // Get top foods for this category
+  const topFoods = topFoodsByCategory[blog.category] || [];
+
   return (
-    <div className="guide-wrapper ">
-      {/* Back Button */}
+    <div className="guide-wrapper">
       <button className="back-button" onClick={() => navigate(-1)}>
         ← Back
       </button>
 
       <div className="blog-container">
-        {/* Left Side: Main Blog */}
+        {/* Main Content */}
         <div className="blog-left">
           <div className="card blog-main-card">
             <h1 className="blog-title">{blog.title}</h1>
             <p className="blog-date">{blog.date}</p>
 
-            {/* Category */}
-            <div className="card category-card">
+            <div className="category">
               <p>{blog.category}</p>
             </div>
 
-            {/* Image */}
             <div className="blog-image">
               <img src={blog.image} alt={blog.title} />
             </div>
 
-            {/* Full Blog Text */}
             <div className="blog-content">
               {blog.fullText.split("\n\n").map((para, index) => (
                 <p key={index}>{para}</p>
@@ -45,9 +97,7 @@ const BlogDetail = () => {
           </div>
         </div>
 
-        {/* Right Side: Sidebar */}
-        <div className="blog-sidebar">
-                    {/* Author Info */}
+        <div className="blog-sidebar" >
           <div className="sidebar-section card author-card">
             <img
               src="https://via.placeholder.com/300x200"
@@ -57,31 +107,26 @@ const BlogDetail = () => {
             <h4>HEY, I’M {blog.author}</h4>
             <p>
               I’m a Master Self-Care Coach. Since self-care looks different for
-              everyone, my mission is to help as many families create a
-              personalized self-care routine.
+              everyone, my mission is to help families create personalized
+              wellness routines.
             </p>
-            <button className="learn-more">LEARN MORE</button>
           </div>
-          {/* Top 10 Foods Card */}
-          {blog.topFoods && blog.topFoods.length > 0 && (
-            <div className="card top-foods-card">
-              <h3 className="top-foods-title">Top 10 Foods</h3>
-              <div className="top-foods-list">
-                {blog.topFoods.map((food, index) => (
-                  <div key={index} className="top-food-item">
-                    <span>{index + 1}. {food}</span>
-                    {index !== blog.topFoods.length - 1 && <hr />}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-
+          {/* Top Foods */}
+          <div className="card top-foods-card minimalist">
+            <h3 className="top-foods-header">Top 10 Healthy Foods</h3>
+            <ul className="top-foods-list">
+              {topFoods.map((food, index) => (
+                <li key={index}>
+                  <span className="food-rank">{index + 1}.</span> {food}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </div>
   );
 };
-
 export default BlogDetail;
+

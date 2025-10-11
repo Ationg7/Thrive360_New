@@ -229,8 +229,17 @@ const FreedomWall = () => {
       formData.append("content", newPost);
       if (selectedImage instanceof File) formData.append("image", selectedImage);
 
-      const res = await fetch("http://127.0.0.1:8000/api/freedom-wall/posts", {
+      const token = localStorage.getItem('authToken');
+      const isAuth = !!token && isLoggedIn;
+      const url = isAuth
+        ? "http://127.0.0.1:8000/api/freedom-wall/posts/auth"
+        : "http://127.0.0.1:8000/api/freedom-wall/posts";
+
+      const headers = isAuth ? { 'Authorization': `Bearer ${token}` } : undefined;
+
+      const res = await fetch(url, {
         method: "POST",
+        headers,
         body: formData,
       });
       if (!res.ok) throw new Error("Failed to post");
@@ -349,7 +358,9 @@ const FreedomWall = () => {
       <div className="header">
         <h2 className="title">Freedom Wall</h2>
         <p className="description" style={{ textAlign: "center" }}>
-          Anonymous posting enabled. <Link to="/signin">Sign in</Link> to interact with others.
+                   Express yourself freely, share your thoughts, struggles, victories, or uplifting messages with our community.
+
+
         </p>
       </div>
 

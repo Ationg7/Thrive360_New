@@ -185,14 +185,15 @@ class ChallengeController extends Controller
         
         $challengeHistory = UserChallengeProgress::with(['challenge'])
             ->where('user_id', $userId)
+            ->whereHas('challenge')
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($progress) {
                 return [
                     'id' => $progress->id,
                     'challenge_id' => $progress->challenge_id,
-                    'challenge_title' => $progress->challenge->title,
-                    'challenge_type' => $progress->challenge->type,
+                    'challenge_title' => optional($progress->challenge)->title,
+                    'challenge_type' => optional($progress->challenge)->type,
                     'status' => $progress->status,
                     'progress_percentage' => $progress->progress_percentage,
                     'joined_at' => $progress->created_at,

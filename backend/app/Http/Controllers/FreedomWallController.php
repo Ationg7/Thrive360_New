@@ -59,7 +59,7 @@ class FreedomWallController extends Controller
 
         $postData = [
             'content' => $request->content,
-            'author' => 'Anonymous',
+            'author' => auth()->check() ? (auth()->user()->name ?? 'Anonymous') : 'Anonymous',
             'is_guest_post' => !auth()->check(),
             'user_id' => auth()->id(),
         ];
@@ -72,7 +72,22 @@ class FreedomWallController extends Controller
 
         $post = FreedomWallPost::create($postData);
 
-        return response()->json($post, 201);
+        // shape response similar to index()
+        $reactionCounts = $post->getReactionCounts();
+        return response()->json([
+            'id' => $post->id,
+            'content' => $post->content,
+            'author' => $post->author,
+            'email' => $post->user ? $post->user->email : null,
+            'image_path' => $post->image_path,
+            'created_at' => $post->created_at,
+            'likes' => $reactionCounts['like'],
+            'hearts' => $reactionCounts['heart'],
+            'sad' => $reactionCounts['sad'],
+            'saves' => $post->saves ?? 0,
+            'is_saved' => false,
+            'user_reaction' => null
+        ], 201);
     }
 
     public function react(Request $request, $postId)
@@ -113,7 +128,11 @@ class FreedomWallController extends Controller
                 'reaction',
                 'New Reaction on Your Post',
                 'Someone reacted to your post with a ' . $reactionType . ' emoji.',
-                ['post_id' => $post->id, 'reaction_type' => $reactionType]
+                [
+                    'post_id' => $post->id,
+                    'reaction_type' => $reactionType,
+                    'redirect_url' => '/Home?postId=' . $post->id
+                ]
             );
         }
     }
@@ -157,7 +176,10 @@ class FreedomWallController extends Controller
                     'save',
                     'Post Saved',
                     'Someone saved your post',
-                    ['post_id' => $post->id]
+                    [
+                        'post_id' => $post->id,
+                        'redirect_url' => '/Home?postId=' . $post->id
+                    ]
                 );
             }
         }

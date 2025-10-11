@@ -10,15 +10,14 @@ class AdminChallengeController extends Controller
 {
     // Fetch all challenges
     public function index()
-{
-    $challenges = Challenge::with('user')
-        ->withCount('participantsList') // adds participants_count
-        ->orderBy('created_at', 'desc')
-        ->get();
+    {
+        $challenges = Challenge::with('user')
+            ->withCount('participantsList') // adds participants_count
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    return response()->json($challenges);
-}
-
+        return response()->json($challenges);
+    }
 
     // Upload a new challenge
     public function store(Request $request)
@@ -41,6 +40,21 @@ class AdminChallengeController extends Controller
         }
 
         $challenge->save();
+
+        // Notify all users
+        $users = \App\Models\User::all();
+        foreach ($users as $user) {
+            \App\Models\Notification::createNotification(
+                $user->id,
+                'challenge_joined',
+                'New Challenge Available',
+                "A new challenge '{$challenge->title}' is now available.",
+                [
+                    'challenge_id' => $challenge->id,
+                    'redirect_url' => url("/challenges/{$challenge->id}") // redirect URL
+                ]
+            );
+        }
 
         return response()->json($challenge);
     }

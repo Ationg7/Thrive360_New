@@ -1,4 +1,3 @@
-// GuideDetails.jsx
 import React from "react";
 import { useLocation } from "react-router-dom";
 import "../App.css";
@@ -16,10 +15,11 @@ const GuideDetails = () => {
       {/* Top card */}
       <div className="top-card">
         <div className="top-text">
-  <span className="guide-category-tag">{guide.category}</span>
-  <h2>{guide.title}</h2>
-  <p>{guide.description}</p>
-</div>
+           
+          <h2 className="guide-title">{guide.title}</h2>
+          <span className="category">{guide.category}</span>
+          <p className="guide-description">{guide.description}</p>
+        </div>
 
         <div className="top-image">
           <img src={guide.image} alt={guide.title} />
@@ -50,3 +50,5 @@ const GuideDetails = () => {
 };
 
 export default GuideDetails;
+
+
