@@ -69,7 +69,10 @@ const ChallengesHistory = () => {
   }, []);
 
   return (
-    <Card className="mb-3 right-sidebar-card">
+    <Card
+      className="mb-3 right-sidebar-card"
+      style={{ overflow: 'visible', maxHeight: 'none' }}
+    >
       <Card.Header>
         <div className="d-flex align-items-center">
           <Calendar className="me-2" />
@@ -81,29 +84,37 @@ const ChallengesHistory = () => {
       {loading ? (
         <div className="p-3 text-center">Loading...</div>
       ) : (
-        <ListGroup variant="flush">
+        <ListGroup
+          variant="flush"
+          style={{ overflow: 'visible', maxHeight: 'none' }}
+        >
           {challenges.length === 0 ? (
             <ListGroup.Item className="text-center text-muted">
               No challenges joined yet
             </ListGroup.Item>
           ) : (
-            challenges.slice(0, 5).map((challenge) => (
-              <ListGroup.Item key={challenge.id} className="challenge-history-item">
+            challenges.map((challenge) => (
+              <ListGroup.Item
+                key={challenge.id}
+                className="challenge-history-item"
+              >
                 <div className="d-flex align-items-start">
-                  <div className="me-2">
-                    {getStatusIcon(challenge.status)}
-                  </div>
+                  <div className="me-2">{getStatusIcon(challenge.status)}</div>
                   <div className="flex-grow-1">
                     <div className="d-flex justify-content-between align-items-start mb-1">
                       <div>
-                        <strong className="small">{challenge.challenge_title}</strong>
-                        <div className="small text-muted">{challenge.challenge_type}</div>
+                        <strong className="small">
+                          {challenge.challenge_title}
+                        </strong>
+                        <div className="small text-muted">
+                          {challenge.challenge_type}
+                        </div>
                       </div>
                       <Badge bg={getStatusVariant(challenge.status)} size="sm">
                         {challenge.status}
                       </Badge>
                     </div>
-                    
+
                     {challenge.status === 'In Progress' && (
                       <div className="mt-2">
                         <div className="d-flex justify-content-between small text-muted mb-1">
@@ -113,7 +124,6 @@ const ChallengesHistory = () => {
                         <ProgressBar
                           now={challenge.progress_percentage}
                           variant="primary"
-                          size="sm"
                           style={{ height: '6px' }}
                         />
                       </div>

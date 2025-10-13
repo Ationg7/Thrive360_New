@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('description');
             $table->integer('duration')->nullable(); // in minutes
-            $table->enum('category', ['guided', 'breathing', 'mindfulness', 'sleep'])->default('guided');
+            $table->enum('category', ['Meditation', 'Stretching', 'Workout'])->default('Meditation');
             $table->string('image_url')->nullable();
             $table->timestamps();
         });
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('meditations');
+        Schema::dropIfExists('Meditations');
     }
 };

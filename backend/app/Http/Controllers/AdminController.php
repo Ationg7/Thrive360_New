@@ -237,7 +237,7 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'duration' => 'nullable|string',
-            'category' => 'required|in:guided,breathing,mindfulness,sleep',
+            'category' => 'required|in:Meditation,Stretching,Workout',
             'image_file' => 'nullable|image|max:2048',
             'tutorial_steps' => 'nullable|string',
         ]);

@@ -20,7 +20,7 @@ const AdminBlogs = memo(() => {
     title: '',
     content: '',
     excerpt: '',
-    category: 'wellness',
+    category: 'Mental Health',
     tags: '',
     imageFile: null
   });
@@ -131,7 +131,7 @@ const AdminBlogs = memo(() => {
         title: '',
         content: '',
         excerpt: '',
-        category: 'wellness',
+        category: 'Mental Health',
         tags: '',
         imageFile: null
       });
@@ -250,11 +250,10 @@ const AdminBlogs = memo(() => {
               className="admin-filter-select"
             >
               <option value="all">All Categories</option>
-              <option value="wellness">Wellness</option>
-              <option value="nutrition">Nutrition</option>
-              <option value="fitness">Fitness</option>
-              <option value="mental-health">Mental Health</option>
-              <option value="lifestyle">Lifestyle</option>
+              <option value="Mental Health">Mental Health</option>
+              <option value="Nutrition">Nutrition</option>
+              <option value="Physical-Wellness">Physical Wellness</option>
+              <option value="Stress-Management">Stress Management</option>
             </select>
           </div>
         </div>
@@ -387,11 +386,11 @@ const AdminBlogs = memo(() => {
                       onChange={(e) => setUploadData(prev => ({ ...prev, category: e.target.value }))}
                       className="form-select"
                     >
-                      <option value="wellness">Wellness</option>
-                      <option value="nutrition">Nutrition</option>
-                      <option value="fitness">Fitness</option>
-                      <option value="mental-health">Mental Health</option>
-                      <option value="lifestyle">Lifestyle</option>
+                      <option value="all">All Categories</option>
+              <option value="Mental Health">Mental Health</option>
+              <option value="Nutrition">Nutrition</option>
+              <option value="Physical-Wellness">Physical Wellness</option>
+              <option value="Stress-Management">Stress Management</option>
                     </select>
                   </div>
                   

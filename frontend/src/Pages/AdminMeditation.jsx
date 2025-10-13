@@ -20,7 +20,7 @@ const AdminMeditation = memo(() => {
     title: '',
     description: '',
     duration: '',
-    category: 'guided',
+    category: 'meditation',
     imageFile: null,
     tutorialSteps: [
       { step: 1, title: '', description: '', imageFile: null },
@@ -182,7 +182,7 @@ const AdminMeditation = memo(() => {
         title: '',
         description: '',
         duration: '',
-        category: 'guided',
+        category: 'meditation',
         imageFile: null,
         tutorialSteps: [
           { step: 1, title: '', description: '', imageFile: null },
@@ -304,10 +304,9 @@ const AdminMeditation = memo(() => {
               className="admin-filter-select"
             >
               <option value="all">All Categories</option>
-              <option value="guided">Guided</option>
-              <option value="breathing">Breathing</option>
-              <option value="mindfulness">Mindfulness</option>
-              <option value="sleep">Sleep</option>
+              <option value="Meditation">Meditation</option>
+              <option value="Stretching">Stretching</option>
+              <option value="Workout">Workout</option>
             </select>
           </div>
         </div>
@@ -433,10 +432,9 @@ const AdminMeditation = memo(() => {
                         onChange={(e) => setUploadData(prev => ({ ...prev, category: e.target.value }))}
                         className="form-select"
                       >
-                        <option value="guided">Guided</option>
-                        <option value="breathing">Breathing</option>
-                        <option value="mindfulness">Mindfulness</option>
-                        <option value="sleep">Sleep</option>
+                        <option value="Meditation">Meditation</option>
+                        <option value="Stretching">Stretching</option>
+                        <option value="Workout">Workout</option>
                       </select>
                     </div>
                   </div>

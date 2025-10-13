@@ -17,7 +17,7 @@ const Meditation = () => {
     "All Topics": [],
     Meditation: [],
     Stretching: [],
-    Workouts: [],
+    Workout: [],
   });
 
   const BASE_URL = "http://127.0.0.1:8000";
@@ -51,7 +51,7 @@ const Meditation = () => {
           "https://i.pinimg.com/736x/d7/6d/cd/d76dcddcfaadf653d5ab7a83e91f31d8.jpg",
       },
     ],
-    Workouts: [
+    Workout: [
       {
         title: "Full Body Beginner Workout",
         category: "Fitness",
@@ -92,20 +92,20 @@ const Meditation = () => {
 
         const meditationData = [...hardcodedGuides.Meditation, ...mapped];
         const stretchingData = [...hardcodedGuides.Stretching];
-        const workoutData = [...hardcodedGuides.Workouts];
+        const workoutData = [...hardcodedGuides.Workout];
 
         setGuides({
           "All Topics": [...meditationData, ...stretchingData, ...workoutData],
           Meditation: meditationData,
           Stretching: stretchingData,
-          Workouts: workoutData,
+          Workout: workoutData,
         });
       } catch (e) {
         console.error("Error fetching meditations:", e);
         const all = [
           ...hardcodedGuides.Meditation,
           ...hardcodedGuides.Stretching,
-          ...hardcodedGuides.Workouts,
+          ...hardcodedGuides.Workout,
         ];
         setGuides({ "All Topics": all, ...hardcodedGuides });
       }
@@ -174,33 +174,38 @@ const Meditation = () => {
           </div>
         </div>
 
-        {/* 🔹 Guides Grid */}
-        <div className="guide-grid">
-          {filteredGuides.length > 0 ? (
-            filteredGuides.map((guide, index) => (
-              <Card
-                key={index}
-                className={`meditation-card guide-card ${
-                  !isLoggedIn ? "meditation-card-guest" : ""
-                }`}
-                onClick={() => handleCardClick(guide)}
-              >
-                <img src={guide.image} alt={guide.title} className="card-image" />
-                <Card.Body>
-                  <span className="guide-categories">{guide.category}</span>
-                  <Card.Title className="card-title">{guide.title}</Card.Title>
-                </Card.Body>
-                {!isLoggedIn && (
-                  <div className="meditation-card-overlay">
-                    Login to view this guide
-                  </div>
-                )}
-              </Card>
-            ))
-          ) : (
-            <p className="text-center">No guides found.</p>
-          )}
-        </div>
+       {/* 🔹 Guides Grid */}
+<div className="guide-grid">
+  {(guides[activeTab] || []).filter(guide =>
+    guide.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    guide.description.toLowerCase().includes(searchTerm.toLowerCase())
+  ).length > 0 ? (
+    (guides[activeTab] || []).filter(guide =>
+      guide.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guide.description.toLowerCase().includes(searchTerm.toLowerCase())
+    ).map((guide, index) => (
+      <Card
+        key={index}
+        className={`meditation-card guide-card ${!isLoggedIn ? "meditation-card-guest" : ""}`}
+        onClick={() => handleCardClick(guide)}
+      >
+        <img src={guide.image} alt={guide.title} className="card-image" />
+        <Card.Body>
+          <span className="guide-categories">{guide.category}</span>
+          <Card.Title className="card-title">{guide.title}</Card.Title>
+        </Card.Body>
+        {!isLoggedIn && (
+          <div className="meditation-card-overlay">
+            Login to view this guide
+          </div>
+        )}
+      </Card>
+    ))
+  ) : (
+    <p className="text-center">No guides found.</p>
+  )}
+</div>
+
       </Container>
 
       {/* 🔹 Guest Popup */}

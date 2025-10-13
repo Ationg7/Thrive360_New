@@ -86,13 +86,14 @@ const Profile = () => {
   };
 
   // ---------------- Post Handlers ----------------
-  const handlePost = async () => {
+ // ---------------- Post Handlers ----------------
+const handlePost = async () => {
   if (newPost.trim() === "" && !selectedImage) return;
 
   try {
     const formData = new FormData();
     formData.append("content", newPost);
-    if (selectedImage) formData.append("image", selectedImage); // important!
+    if (selectedImage) formData.append("image", selectedImage);
 
     const token = localStorage.getItem("authToken");
     const isAuth = !!token && isLoggedIn;
@@ -100,10 +101,7 @@ const Profile = () => {
       ? "http://127.0.0.1:8000/api/freedom-wall/posts/auth"
       : "http://127.0.0.1:8000/api/freedom-wall/posts";
 
-    const headers = isAuth ? { Authorization: `Bearer ${token}` } : {}; // ✅ do NOT set Content-Type manually
-
-    // Log FormData for debugging
-    for (let pair of formData.entries()) console.log(pair[0], pair[1]);
+    const headers = isAuth ? { Authorization: `Bearer ${token}` } : {}; // Do NOT set Content-Type manually
 
     const res = await fetch(url, {
       method: "POST",
@@ -113,22 +111,20 @@ const Profile = () => {
 
     if (!res.ok) {
       const errorData = await res.json();
-      console.error("Post creation failed:", errorData);
       throw new Error(errorData.message || "Failed to post");
     }
 
     const p = await res.json();
     console.log("Post created successfully:", p);
 
-    const imageUrl =
-      p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
-
+    // Normalize the post object
+    const imageUrl = p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
     const newEntry = {
       id: p.id,
       author: p.author || user?.name || "Anonymous",
       email: user?.email || null,
       date: p.created_at ? new Date(p.created_at).toLocaleString() : new Date().toLocaleString(),
-      content: p.content,
+      content: censorText(p.content),
       likes: p.likes || 0,
       hearts: p.hearts || 0,
       saves: p.saves || 0,
@@ -139,10 +135,16 @@ const Profile = () => {
       images: imageUrl ? [imageUrl] : [],
     };
 
+    // Show immediately
     setPosts((prev) => [newEntry, ...prev]);
+
+    // Reset form
     setNewPost("");
     setSelectedImage(null);
     setShowPostModal(false);
+
+    // Ensure backend sync (optional, for persistence after refresh)
+    await loadPosts(postFilter);
 
   } catch (e) {
     console.error("Error creating post:", e);
@@ -291,68 +293,51 @@ const Profile = () => {
   };
 
   // Load Posts and Events
-  const loadPosts = async (filter) => {
-    try {
-      const token = localStorage.getItem("authToken");
-      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-      let response;
-      let allPosts = [];
-      
-      // First, get all posts based on the main filter
-      switch (filter) {
-        case "saved":
-          response = await fetch("http://127.0.0.1:8000/api/freedom-wall/saved-posts", { headers });
-          break;
-        default:
-          response = await fetch("http://127.0.0.1:8000/api/freedom-wall/my-posts", { headers });
-          break;
-      }
-      
-      if (response.ok) {
-        const data = await response.json();
-        allPosts = Array.isArray(data) ? data : [];
-      }
+  // ---------------- Load Posts ----------------
+const loadPosts = async (filter = "my-posts") => {
+  try {
+    const token = localStorage.getItem("authToken");
+    const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
-      // Apply additional filters
-      let filteredPosts = allPosts;
-      
-      // Apply sorting/filtering based on the current filter state
-      if (postFilter === "date") {
-        filteredPosts = allPosts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      } else if (postFilter === "likes") {
-        filteredPosts = allPosts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-      } else if (postFilter === "hearts") {
-        filteredPosts = allPosts.sort((a, b) => (b.hearts || 0) - (a.hearts || 0));
-      } else if (postFilter === "images") {
-        filteredPosts = allPosts.filter(post => post.image_path || post.image_url);
-      }
-
-      const normalizedPosts = filteredPosts.map((post) => {
-        const imageUrl = post.image_url || (post.image_path
-          ? `http://127.0.0.1:8000/storage/${post.image_path}`
-          : null);
-        const userReaction = post.user_reaction || null;
-        return {
-          ...post,
-          email: post.email || post.user?.email || null,
-          author: post.author || post.user?.name || "Anonymous",
-          content: censorText(post.content),
-          date: post.created_at ? new Date(post.created_at).toLocaleString() : "",
-          image: imageUrl,
-          liked: userReaction === "like",
-          hearted: userReaction === "heart",
-          saved: !!post.is_saved,
-          likes: post.likes || 0,
-          hearts: post.hearts || 0,
-          sad: post.sad || 0,
-        };
-      });
-
-      setPosts(normalizedPosts);
-    } catch (error) {
-      console.error("Error loading posts:", error);
+    let url;
+    switch (filter) {
+      case "saved":
+        url = "http://127.0.0.1:8000/api/freedom-wall/saved-posts";
+        break;
+      default:
+        url = "http://127.0.0.1:8000/api/freedom-wall/my-posts";
     }
-  };
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) throw new Error("Failed to load posts");
+
+    const data = await response.json();
+    const normalizedPosts = Array.isArray(data) ? data.map((post) => {
+      const imageUrl = post.image_url || (post.image_path ? `http://127.0.0.1:8000/storage/${post.image_path}` : null);
+      const userReaction = post.user_reaction || null;
+      return {
+        ...post,
+        author: post.author || post.user?.name || "Anonymous",
+        email: post.email || post.user?.email || null,
+        content: censorText(post.content),
+        date: post.created_at ? new Date(post.created_at).toLocaleString() : "",
+        image: imageUrl,
+        images: imageUrl ? [imageUrl] : [],
+        liked: userReaction === "like",
+        hearted: userReaction === "heart",
+        saved: !!post.is_saved,
+        likes: post.likes || 0,
+        hearts: post.hearts || 0,
+        sad: post.sad || 0,
+      };
+    }) : [];
+
+    setPosts(normalizedPosts);
+
+  } catch (error) {
+    console.error("Error loading posts:", error);
+  }
+};
 
   const loadEvents = async () => {
     try {
@@ -441,7 +426,7 @@ const Profile = () => {
 
     
    
-    <div className="events-scroll-wrapper">
+    <div >
       <Events hideCardHeader /> {/* pass a prop to hide the header in Events.jsx */}
     </div>
   </Card>
@@ -782,14 +767,16 @@ const Profile = () => {
                                   </div>
         
                         <p className="post-content ">{censorText(post.content)}</p>
-        
-{post.images && post.images.length > 0 && (
-  <div className="post-image-wrapper">
+  {post.images && post.images.length > 0 && (
+  <div className={`post-image-wrapper ${post.images.length > 1 ? "multiple-images" : ""}`}>
     {post.images.map((img, idx) => (
-      <img key={idx} src={img} alt={`Post image ${idx + 1}`} />
+      <div key={idx} className="post-image-container">
+        <img src={img} alt={`Post image ${idx + 1}`} className="post-image" />
+      </div>
     ))}
   </div>
 )}
+
 
 
 

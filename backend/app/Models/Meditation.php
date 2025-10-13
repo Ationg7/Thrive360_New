@@ -26,7 +26,7 @@ class Meditation extends Model
     // Category options
     public static function getCategories()
     {
-        return ['guided', 'breathing', 'mindfulness', 'sleep'];
+        return ['Meditation' , 'Stretching' , 'Workout'];
     }
 
     // Scope for filtering by category
