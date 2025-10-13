@@ -32,11 +32,20 @@ const GuideDetails = () => {
         <div className="steps-grid">
           {guide.steps && guide.steps.length > 0 ? (
             guide.steps.map((item) => (
-              <div className="step-card" key={item.step}>
-                <img src={item.img} alt={`Step ${item.step}`} />
+              <div className="step-cards" key={item.step}>
+                {item.img ? (
+                  <img src={item.img} alt={`Step ${item.step}`} />
+                ) : (
+                  <div className="step-placeholder">
+                    <span className="step-number">{item.step}</span>
+                  </div>
+                )}
                 <div className="step-text">
                   <h4>Step {item.step}</h4>
                   <p>{item.title}</p>
+                  {item.description && (
+                    <p className="step-description">{item.description}</p>
+                  )}
                 </div>
               </div>
             ))

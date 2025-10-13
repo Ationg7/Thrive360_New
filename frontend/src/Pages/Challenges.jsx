@@ -19,22 +19,26 @@ export const ChallengesProvider = ({ children }) => {
       try {
         if (!isLoggedIn) return;
         const history = await challengesAPI.getUserHistory();
-        const joined = history.filter((h) => !h.is_completed).map((h) => ({
-          id: h.challenge_id,
-          title: h.challenge_title,
-          description: h.challenge_type,
-          type: h.challenge_type,
-          status: h.status === 'Completed' ? 'Completed' : 'In Progress',
-          progress: h.progress_percentage,
-        }));
-        const completed = history.filter((h) => h.is_completed).map((h) => ({
-          id: h.challenge_id,
-          title: h.challenge_title,
-          description: h.challenge_type,
-          type: h.challenge_type,
-          status: 'Completed',
-          progress: h.progress_percentage,
-        }));
+        const joined = history
+          .filter((h) => !h.is_completed)
+          .map((h) => ({
+            id: h.challenge_id,
+            title: h.challenge_title,
+            description: h.challenge_type,
+            type: h.challenge_type,
+            status: h.status === 'Completed' ? 'Completed' : 'In Progress',
+            progress: h.progress_percentage,
+          }));
+        const completed = history
+          .filter((h) => h.is_completed)
+          .map((h) => ({
+            id: h.challenge_id,
+            title: h.challenge_title,
+            description: h.challenge_type,
+            type: h.challenge_type,
+            status: 'Completed',
+            progress: h.progress_percentage,
+          }));
         setJoinedChallenges(joined);
         setCompletedChallenges(completed);
       } catch (err) {
@@ -48,12 +52,29 @@ export const ChallengesProvider = ({ children }) => {
     try {
       if (!isLoggedIn) return;
       await challengesAPI.joinChallenge(challenge.id);
-      // Refresh history
       const history = await challengesAPI.getUserHistory();
       const joined = history.filter((h) => !h.is_completed);
       const completed = history.filter((h) => h.is_completed);
-      setJoinedChallenges(joined.map((h) => ({ id: h.challenge_id, title: h.challenge_title, description: h.challenge_type, type: h.challenge_type, status: h.status, progress: h.progress_percentage })));
-      setCompletedChallenges(completed.map((h) => ({ id: h.challenge_id, title: h.challenge_title, description: h.challenge_type, type: h.challenge_type, status: 'Completed', progress: h.progress_percentage })));
+      setJoinedChallenges(
+        joined.map((h) => ({
+          id: h.challenge_id,
+          title: h.challenge_title,
+          description: h.challenge_type,
+          type: h.challenge_type,
+          status: h.status,
+          progress: h.progress_percentage,
+        }))
+      );
+      setCompletedChallenges(
+        completed.map((h) => ({
+          id: h.challenge_id,
+          title: h.challenge_title,
+          description: h.challenge_type,
+          type: h.challenge_type,
+          status: 'Completed',
+          progress: h.progress_percentage,
+        }))
+      );
     } catch (err) {
       console.error('Failed to join challenge:', err);
     }
@@ -65,12 +86,29 @@ export const ChallengesProvider = ({ children }) => {
       const item = joinedChallenges.find((c) => c.title === title);
       if (!item) return;
       await challengesAPI.updateProgress(item.id, { progress_percentage: 100 });
-      // Refresh lists
       const history = await challengesAPI.getUserHistory();
       const joined = history.filter((h) => !h.is_completed);
       const completed = history.filter((h) => h.is_completed);
-      setJoinedChallenges(joined.map((h) => ({ id: h.challenge_id, title: h.challenge_title, description: h.challenge_type, type: h.challenge_type, status: h.status, progress: h.progress_percentage })));
-      setCompletedChallenges(completed.map((h) => ({ id: h.challenge_id, title: h.challenge_title, description: h.challenge_type, type: h.challenge_type, status: 'Completed', progress: h.progress_percentage })));
+      setJoinedChallenges(
+        joined.map((h) => ({
+          id: h.challenge_id,
+          title: h.challenge_title,
+          description: h.challenge_type,
+          type: h.challenge_type,
+          status: h.status,
+          progress: h.progress_percentage,
+        }))
+      );
+      setCompletedChallenges(
+        completed.map((h) => ({
+          id: h.challenge_id,
+          title: h.challenge_title,
+          description: h.challenge_type,
+          type: h.challenge_type,
+          status: 'Completed',
+          progress: h.progress_percentage,
+        }))
+      );
     } catch (err) {
       console.error('Failed to mark as done:', err);
     }
@@ -88,7 +126,7 @@ export const useChallenges = () => useContext(ChallengesContext);
 // -------------------- Overview Page --------------------
 const ChallengesOverview = () => {
   const { isLoggedIn } = useAuth();
-  const { joinedChallenges, completedChallenges, markDone } = useChallenges(); // include completedChallenges
+  const { joinedChallenges, completedChallenges, markDone } = useChallenges();
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
   const [popupAction, setPopupAction] = useState(null);
@@ -123,7 +161,6 @@ const ChallengesOverview = () => {
     return { ...base, borderColor: "#007bff", color: "#007bff" };
   };
 
-  // Correct progress calculation
   const totalChallenges = joinedChallenges.length + completedChallenges.length || 1;
   const completedCount = completedChallenges.length;
   const completedPercent = Math.round((completedCount / totalChallenges) * 100);
@@ -165,6 +202,20 @@ const ChallengesOverview = () => {
         </div>
       </div>
 
+      {/* + Join More Challenges button outside sections */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' , marginLeft: '1260px' }}>
+        <Button
+          variant="success"
+          size="sm"
+          onClick={() => {
+            if (!isLoggedIn) handleGuestAction("join");
+            else navigate("/challenges/categories");
+          }}
+        >
+          + Join More Challenges
+        </Button>
+      </div>
+
       {/* Challenge Sections */}
       {challengeTypes.map((type) => {
         const filteredChallenges = joinedChallenges.filter((c) => c.type === type && c.status !== "Completed");
@@ -177,19 +228,6 @@ const ChallengesOverview = () => {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <h4 style={{ textAlign: "left", margin: 0 }}>{type} Challenges</h4>
-
-              {type === "Daily" && (
-                <Button
-                  variant="success"
-                  size="sm"
-                  onClick={() => {
-                    if (!isLoggedIn) handleGuestAction("join");
-                    else navigate("/challenges/categories");
-                  }}
-                >
-                  + Join More Challenges
-                </Button>
-              )}
             </div>
 
             <div className="challenges-grid" style={{ display: "flex", flexWrap: "wrap", gap: "20px", justifyContent: "flex-start" }}>

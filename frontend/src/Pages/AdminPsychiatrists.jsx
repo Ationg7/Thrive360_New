@@ -283,7 +283,7 @@ const AdminPsychiatrists = memo(() => {
               <div key={psychiatrist.id} className="psychiatrist-card">
                 <div className="psychiatrist-image">
                   <img 
-                    src={psychiatrist.image_url || `https://i.pravatar.cc/150?img=${psychiatrist.id}`}
+                    src={psychiatrist.image_url ? `http://127.0.0.1:8000/storage/${psychiatrist.image_url}` : `https://i.pravatar.cc/150?img=${psychiatrist.id}`}
                     alt={psychiatrist.name}
                     onError={(e) => {
                       e.target.src = `https://i.pravatar.cc/150?img=${psychiatrist.id}`;

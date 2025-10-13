@@ -10,6 +10,7 @@ use App\Models\Blog;
 use App\Models\PostReport;
 use App\Models\Psychiatrist;
 use App\Models\Notification;
+use App\Models\PasswordResetCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -238,6 +239,7 @@ class AdminController extends Controller
             'duration' => 'nullable|string',
             'category' => 'required|in:guided,breathing,mindfulness,sleep',
             'image_file' => 'nullable|image|max:2048',
+            'tutorial_steps' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -250,6 +252,31 @@ class AdminController extends Controller
 
         if ($request->hasFile('image_file')) {
             $meditation->image_url = $request->file('image_file')->store('meditations/images', 'public');
+        }
+
+        // Handle tutorial steps
+        if ($request->has('tutorial_steps')) {
+            $tutorialSteps = json_decode($request->tutorial_steps, true);
+            $tutorialData = [];
+            
+            foreach ($tutorialSteps as $index => $step) {
+                $stepData = [
+                    'step' => $step['step'],
+                    'title' => $step['title'],
+                    'description' => $step['description'],
+                    'image_url' => null
+                ];
+                
+                // Handle tutorial step images
+                $imageKey = "tutorial_step_" . ($index + 1) . "_image";
+                if ($request->hasFile($imageKey)) {
+                    $stepData['image_url'] = $request->file($imageKey)->store('meditations/tutorial-steps', 'public');
+                }
+                
+                $tutorialData[] = $stepData;
+            }
+            
+            $meditation->tutorial_steps = json_encode($tutorialData);
         }
 
         $meditation->save();
@@ -544,6 +571,330 @@ foreach ($users as $user) {
         return response()->json([
             'message' => 'Availability updated successfully',
             'psychiatrist' => $psychiatrist
+        ]);
+    }
+
+    // Password Reset Code Management
+    public function getPasswordResetRequests()
+    {
+        try {
+            $requests = PasswordResetCode::where('is_used', false)
+                ->where('expires_at', '>', now())
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json($requests);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching password reset requests: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch requests'], 500);
+        }
+    }
+
+    public function generatePasswordResetCode(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $email = $request->email;
+        
+        // Check if user exists
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        // Check if there's a pending request
+        $pendingRequest = PasswordResetCode::where('email', $email)
+            ->where('code', 'PENDING')
+            ->where('is_used', false)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if ($pendingRequest) {
+            // Update the pending request with actual code
+            $pendingRequest->update([
+                'code' => PasswordResetCode::generateCode(),
+                'expires_at' => now()->addHours(1) // Reset to 1 hour from now
+            ]);
+            $resetCode = $pendingRequest;
+        } else {
+            // Create new reset code
+            $resetCode = PasswordResetCode::createForEmail($email);
+        }
+
+        return response()->json([
+            'message' => 'Password reset code generated successfully',
+            'code' => $resetCode->code,
+            'email' => $email,
+            'expires_at' => $resetCode->expires_at
+        ]);
+    }
+
+    public function verifyPasswordResetCode(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'code' => 'required|string|size:6'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $isValid = PasswordResetCode::isValidCode($request->email, $request->code);
+
+        if ($isValid) {
+            return response()->json(['message' => 'Code verified successfully']);
+        }
+
+        return response()->json(['error' => 'Invalid or expired code'], 400);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        \Log::info('Password reset request received', [
+            'request_data' => $request->all()
+        ]);
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+            'code' => 'required|string|size:6',
+            'password' => 'required|string|min:8|confirmed'
+        ]);
+
+        if ($validator->fails()) {
+            \Log::error('Password reset validation failed', [
+                'errors' => $validator->errors(),
+                'request_data' => $request->all()
+            ]);
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Verify the code first (without marking as used)
+        \Log::info('Checking code validity', [
+            'email' => $request->email,
+            'code' => $request->code
+        ]);
+        
+        $isValid = PasswordResetCode::isValidCode($request->email, $request->code);
+        
+        \Log::info('Code validity result', [
+            'is_valid' => $isValid,
+            'email' => $request->email,
+            'code' => $request->code
+        ]);
+        
+        if (!$isValid) {
+            \Log::error('Password reset code verification failed', [
+                'email' => $request->email,
+                'code' => $request->code,
+                'request_data' => $request->all()
+            ]);
+            return response()->json(['error' => 'Invalid or expired code'], 400);
+        }
+
+        // Update user password
+        $user = User::where('email', $request->email)->first();
+        $user->password = bcrypt($request->password);
+        $user->save();
+
+        // Mark the code as used after successful password reset
+        $resetCode = PasswordResetCode::where('email', $request->email)
+            ->where('code', $request->code)
+            ->where('is_used', false)
+            ->first();
+        
+        if ($resetCode) {
+            $resetCode->update([
+                'is_used' => true,
+                'used_at' => now()
+            ]);
+        }
+
+        return response()->json(['message' => 'Password reset successfully']);
+    }
+
+    public function sendNotificationToAllUsers(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'type' => 'required|string',
+            'title' => 'required|string|max:255',
+            'message' => 'required|string',
+            'data' => 'nullable|array'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $users = User::where('role', 'user')->where('is_active', true)->get();
+            $sentCount = 0;
+
+            foreach ($users as $user) {
+                Notification::createNotification(
+                    $user->id,
+                    $request->type,
+                    $request->title,
+                    $request->message,
+                    $request->data
+                );
+                $sentCount++;
+            }
+
+            return response()->json([
+                'message' => "Notification sent to {$sentCount} users successfully",
+                'sent_count' => $sentCount
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send notification to all users', [
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['error' => 'Failed to send notifications'], 500);
+        }
+    }
+
+    public function ensureAllUsersHaveNotifications()
+    {
+        try {
+            $users = User::where('role', 'user')->where('is_active', true)->get();
+            $updatedCount = 0;
+
+            foreach ($users as $user) {
+                // Check if user has any notifications
+                $hasNotifications = $user->notifications()->exists();
+                
+                if (!$hasNotifications) {
+                    // Create welcome notifications for users who don't have any
+                    Notification::createNotification(
+                        $user->id,
+                        'welcome',
+                        'Welcome to Thrive360!',
+                        'Welcome to Thrive360! We\'re excited to have you join our community. Start exploring challenges, events, and connect with others.',
+                        [
+                            'redirect_url' => url('/home')
+                        ]
+                    );
+
+                    // Notify about available challenges
+                    $activeChallenges = \App\Models\Challenge::where('is_active', true)->count();
+                    if ($activeChallenges > 0) {
+                        Notification::createNotification(
+                            $user->id,
+                            'challenge_available',
+                            'Challenges Available',
+                            "There are {$activeChallenges} active challenges waiting for you! Start your wellness journey today.",
+                            [
+                                'redirect_url' => url('/challenges')
+                            ]
+                        );
+                    }
+
+                    $updatedCount++;
+                }
+            }
+
+            return response()->json([
+                'message' => "Ensured {$updatedCount} users have notifications",
+                'updated_count' => $updatedCount,
+                'total_users' => $users->count()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to ensure all users have notifications', [
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['error' => 'Failed to ensure notifications'], 500);
+        }
+    }
+
+    public function requestPasswordResetCode(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|exists:users,email'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $email = $request->email;
+            
+            // Check if user exists
+            $user = User::where('email', $email)->first();
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
+
+            // Check if there's already a pending request
+            if (PasswordResetCode::hasAnyPendingRequest($email)) {
+                return response()->json(['message' => 'Password reset request already pending. Please wait for admin to generate code.']);
+            }
+
+            // Create a pending request (without code yet)
+            $resetRequest = PasswordResetCode::create([
+                'email' => $email,
+                'code' => 'PENDING', // Special status for pending requests
+                'expires_at' => now()->addHours(24), // Give admin 24 hours to respond
+            ]);
+
+            // Send email notification to all admins
+            try {
+                $admins = User::where('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    Notification::createNotification(
+                        $admin->id,
+                        'password_reset_request',
+                        'Password Reset Request',
+                        "User {$user->name} ({$email}) has requested a password reset code.",
+                        [
+                            'user_email' => $email,
+                            'user_name' => $user->name,
+                            'request_id' => $resetRequest->id,
+                            'redirect_url' => url('/admin/password-reset')
+                        ]
+                    );
+                }
+            } catch (\Exception $e) {
+                // Log the error but don't fail the request
+                \Log::error('Failed to create notification: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'message' => 'Password reset request sent to admin. You will receive the code shortly.'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Password reset request error: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal server error'], 500);
+        }
+    }
+
+    public function checkPasswordResetRequest(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $hasRequest = PasswordResetCode::hasPendingRequest($request->email);
+        $latestCode = null;
+
+        if ($hasRequest) {
+            $latestCode = PasswordResetCode::getLatestPendingCode($request->email);
+        }
+
+        return response()->json([
+            'has_pending_request' => $hasRequest,
+            'code' => $latestCode ? $latestCode->code : null,
+            'expires_at' => $latestCode ? $latestCode->expires_at : null
         ]);
     }
 }

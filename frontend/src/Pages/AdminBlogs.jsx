@@ -276,7 +276,7 @@ const AdminBlogs = memo(() => {
               <div key={blog.id} className="blog-card">
                 <div className="blog-image">
                   {blog.image_url ? (
-                    <img src={blog.image_url} alt={blog.title} />
+                    <img src={`http://127.0.0.1:8000/storage/${blog.image_url}`} alt={blog.title} />
                   ) : (
                     <div className="blog-placeholder">📝</div>
                   )}

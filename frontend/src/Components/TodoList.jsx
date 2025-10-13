@@ -155,7 +155,7 @@ const TodoList = () => {
           <div className="p-3 text-center">Loading...</div>
         ) : (
           // SCROLLABLE WRAPPER START
-          <div className="scrollable-wrapper">
+         
             <ListGroup variant="flush">
               {todos.map((todo) => (
                 <ListGroup.Item 
@@ -220,7 +220,7 @@ const TodoList = () => {
                 </ListGroup.Item>
               )}
             </ListGroup>
-          </div>
+        
           // SCROLLABLE WRAPPER END
         )}
       </Card>

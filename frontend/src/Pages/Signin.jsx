@@ -130,11 +130,13 @@ const SignIn = () => {
         </div>
       </div>
 
-      {success && (
+       {success && (
         <div className="snackbar">
-          Successfully signed in as {email}!
+          Successfully Sign In with {email}!
         </div>
       )}
+
+
 
       <style>{`
         .password-container {

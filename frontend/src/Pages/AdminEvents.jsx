@@ -250,6 +250,7 @@ const editEvent = (event) => {
             <Table responsive>
               <thead>
                 <tr>
+                  <th>Image</th>
                   <th>Title</th>
                   <th>Category</th>
                   <th>Start Date</th>
@@ -262,6 +263,19 @@ const editEvent = (event) => {
               <tbody>
                 {events.map((event) => (
                   <tr key={event.id}>
+                    <td>
+                      {event.image_path ? (
+                        <img 
+                          src={`http://127.0.0.1:8000/storage/${event.image_path}`} 
+                          alt={event.title}
+                          style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
+                        />
+                      ) : (
+                        <div style={{ width: '50px', height: '50px', backgroundColor: '#f8f9fa', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          📅
+                        </div>
+                      )}
+                    </td>
                     <td>
                       <div>
                         <strong>{event.title}</strong>

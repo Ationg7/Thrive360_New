@@ -21,7 +21,12 @@ const AdminMeditation = memo(() => {
     description: '',
     duration: '',
     category: 'guided',
-    imageFile: null
+    imageFile: null,
+    tutorialSteps: [
+      { step: 1, title: '', description: '', imageFile: null },
+      { step: 2, title: '', description: '', imageFile: null },
+      { step: 3, title: '', description: '', imageFile: null }
+    ]
   });
   const navigate = useNavigate();
 
@@ -86,6 +91,48 @@ const AdminMeditation = memo(() => {
     }
   };
 
+  // Handle tutorial step changes
+  const handleTutorialStepChange = (stepIndex, field, value) => {
+    setUploadData(prev => ({
+      ...prev,
+      tutorialSteps: prev.tutorialSteps.map((step, index) => 
+        index === stepIndex ? { ...step, [field]: value } : step
+      )
+    }));
+  };
+
+  // Handle tutorial step image upload
+  const handleTutorialStepImageChange = (stepIndex, file) => {
+    setUploadData(prev => ({
+      ...prev,
+      tutorialSteps: prev.tutorialSteps.map((step, index) => 
+        index === stepIndex ? { ...step, imageFile: file } : step
+      )
+    }));
+  };
+
+  // Add new tutorial step
+  const addTutorialStep = () => {
+    setUploadData(prev => ({
+      ...prev,
+      tutorialSteps: [
+        ...prev.tutorialSteps,
+        { step: prev.tutorialSteps.length + 1, title: '', description: '', imageFile: null }
+      ]
+    }));
+  };
+
+  // Remove tutorial step
+  const removeTutorialStep = (stepIndex) => {
+    if (uploadData.tutorialSteps.length > 1) {
+      setUploadData(prev => ({
+        ...prev,
+        tutorialSteps: prev.tutorialSteps.filter((_, index) => index !== stepIndex)
+          .map((step, index) => ({ ...step, step: index + 1 }))
+      }));
+    }
+  };
+
   // Upload new meditation
   const handleUpload = useCallback(async () => {
     try {
@@ -96,9 +143,26 @@ const AdminMeditation = memo(() => {
       formData.append('description', uploadData.description);
       formData.append('duration', uploadData.duration);
       formData.append('category', uploadData.category);
+      
       if (uploadData.imageFile) {
         formData.append('image_file', uploadData.imageFile);
       }
+
+      // Add tutorial steps
+      formData.append('tutorial_steps', JSON.stringify(
+        uploadData.tutorialSteps.map(step => ({
+          step: step.step,
+          title: step.title,
+          description: step.description
+        }))
+      ));
+
+      // Add tutorial step images
+      uploadData.tutorialSteps.forEach((step, index) => {
+        if (step.imageFile) {
+          formData.append(`tutorial_step_${index + 1}_image`, step.imageFile);
+        }
+      });
 
       const response = await fetch(API_ENDPOINTS.UPLOAD_MEDITATION, {
         method: 'POST',
@@ -119,7 +183,12 @@ const AdminMeditation = memo(() => {
         description: '',
         duration: '',
         category: 'guided',
-        imageFile: null
+        imageFile: null,
+        tutorialSteps: [
+          { step: 1, title: '', description: '', imageFile: null },
+          { step: 2, title: '', description: '', imageFile: null },
+          { step: 3, title: '', description: '', imageFile: null }
+        ]
       });
       fetchMeditations();
       clearMessages();
@@ -260,7 +329,7 @@ const AdminMeditation = memo(() => {
               <div key={meditation.id} className="meditation-card">
                 <div className="meditation-image">
                   {meditation.image_url ? (
-                    <img src={meditation.image_url} alt={meditation.title} />
+                    <img src={`http://127.0.0.1:8000/storage/${meditation.image_url}`} alt={meditation.title} />
                   ) : (
                     <div className="meditation-placeholder">🧘‍♀️</div>
                   )}
@@ -308,9 +377,9 @@ const AdminMeditation = memo(() => {
         {/* Upload Modal */}
         {showUploadModal && (
           <div className="modal-overlay">
-            <div className="modal-content">
+            <div className="modal-content tutorial-modal">
               <div className="modal-header">
-                <h3>Upload New Meditation</h3>
+                <h3>Upload New Meditation Tutorial</h3>
                 <button 
                   onClick={() => setShowUploadModal(false)}
                   className="modal-close"
@@ -320,63 +389,135 @@ const AdminMeditation = memo(() => {
               </div>
               
               <div className="modal-body">
-                <div className="form-group">
-                  <label>Title *</label>
-                  <input
-                    type="text"
-                    value={uploadData.title}
-                    onChange={(e) => setUploadData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Enter meditation title"
-                    className="form-input"
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Description *</label>
-                  <textarea
-                    value={uploadData.description}
-                    onChange={(e) => setUploadData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Enter meditation description"
-                    className="form-textarea"
-                    rows="3"
-                  />
-                </div>
-                
-                <div className="form-row">
+                {/* Basic Information */}
+                <div className="tutorial-section">
+                  <h4>Basic Information</h4>
                   <div className="form-group">
-                    <label>Duration (minutes)</label>
+                    <label>Title *</label>
                     <input
-                      type="number"
-                      value={uploadData.duration}
-                      onChange={(e) => setUploadData(prev => ({ ...prev, duration: e.target.value }))}
-                      placeholder="e.g., 10"
+                      type="text"
+                      value={uploadData.title}
+                      onChange={(e) => setUploadData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Enter meditation title"
                       className="form-input"
                     />
                   </div>
                   
                   <div className="form-group">
-                    <label>Category</label>
-                    <select
-                      value={uploadData.category}
-                      onChange={(e) => setUploadData(prev => ({ ...prev, category: e.target.value }))}
-                      className="form-select"
-                    >
-                      <option value="guided">Guided</option>
-                      <option value="breathing">Breathing</option>
-                      <option value="mindfulness">Mindfulness</option>
-                      <option value="sleep">Sleep</option>
-                    </select>
+                    <label>Description *</label>
+                    <textarea
+                      value={uploadData.description}
+                      onChange={(e) => setUploadData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Enter meditation description"
+                      className="form-textarea"
+                      rows="3"
+                    />
+                  </div>
+                  
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Duration (minutes)</label>
+                      <input
+                        type="number"
+                        value={uploadData.duration}
+                        onChange={(e) => setUploadData(prev => ({ ...prev, duration: e.target.value }))}
+                        placeholder="e.g., 10"
+                        className="form-input"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Category</label>
+                      <select
+                        value={uploadData.category}
+                        onChange={(e) => setUploadData(prev => ({ ...prev, category: e.target.value }))}
+                        className="form-select"
+                      >
+                        <option value="guided">Guided</option>
+                        <option value="breathing">Breathing</option>
+                        <option value="mindfulness">Mindfulness</option>
+                        <option value="sleep">Sleep</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Main Image (Optional)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileChange(e, 'imageFile')}
+                      className="form-file"
+                    />
                   </div>
                 </div>
-                
-                <div className="form-group">
-                  <label>Image File (Optional)</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, 'imageFile')}
-                    className="form-file"
-                  />
+
+                {/* Tutorial Steps */}
+                <div className="tutorial-section">
+                  <div className="tutorial-header">
+                    <h4>Step-by-Step Tutorial</h4>
+                    <button 
+                      type="button"
+                      onClick={addTutorialStep}
+                      className="btn-add-step"
+                    >
+                      + Add Step
+                    </button>
+                  </div>
+                  
+                  {uploadData.tutorialSteps.map((step, index) => (
+                    <div key={index} className="tutorial-step">
+                      <div className="step-header">
+                        <h5>Step {step.step}</h5>
+                        {uploadData.tutorialSteps.length > 1 && (
+                          <button 
+                            type="button"
+                            onClick={() => removeTutorialStep(index)}
+                            className="btn-remove-step"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Step Title</label>
+                        <input
+                          type="text"
+                          value={step.title}
+                          onChange={(e) => handleTutorialStepChange(index, 'title', e.target.value)}
+                          placeholder={`Enter step ${step.step} title`}
+                          className="form-input"
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Step Description</label>
+                        <textarea
+                          value={step.description}
+                          onChange={(e) => handleTutorialStepChange(index, 'description', e.target.value)}
+                          placeholder={`Describe what to do in step ${step.step}`}
+                          className="form-textarea"
+                          rows="2"
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Step Image (Optional)</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleTutorialStepImageChange(index, e.target.files[0])}
+                          className="form-file"
+                        />
+                        {step.imageFile && (
+                          <div className="file-preview">
+                            <small>Selected: {step.imageFile.name}</small>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
               
@@ -392,7 +533,7 @@ const AdminMeditation = memo(() => {
                   className="btn-upload"
                   disabled={!uploadData.title || !uploadData.description}
                 >
-                  Upload Meditation
+                  Upload Meditation Tutorial
                 </button>
               </div>
             </div>

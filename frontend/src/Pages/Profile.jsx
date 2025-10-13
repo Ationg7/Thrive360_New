@@ -16,12 +16,12 @@ import { ThreeDotsVertical, Image } from "react-bootstrap-icons";
 import EmojiPicker from "emoji-picker-react";
 import { FaEllipsisV } from "react-icons/fa";
 import TodoList from "../Components/TodoList";
-import Notifications from "../Components/Notifications";
 import Avatar from "../Components/Avatar";
 import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import { Calendar  , History } from 'lucide-react';
+import {  History } from 'lucide-react';
 import Events from "../Components/Events";
+import ChangePhoto from "./ChangePhoto"; // <-- import your component
 
 
 
@@ -35,9 +35,8 @@ const Profile = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [postFilter, setPostFilter] = useState("my");
-  const [events, setEvents] = useState([]);
-  const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [showGuestPopup, setShowGuestPopup] = useState(false);
+  const [ setEvents] = useState([]);
+  const [setShowGuestPopup] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showAlreadyReportedModal, setShowAlreadyReportedModal] = useState(false);
   const [showReportSnackbar, setShowReportSnackbar] = useState(false);
@@ -46,6 +45,8 @@ const Profile = () => {
   const [reportingPostId, setReportingPostId] = useState(null);
   const [hiddenPosts, setHiddenPosts] = useState([]);
   const [showUndo, setShowUndo] = useState(false);
+   const [showChangePhoto, setShowChangePhoto] = useState(false); // <-- new state
+   const [showNoReasonModal, setShowNoReasonModal] = useState(false);
 
   const reportReasons = [
     { value: "spam", label: "Spam or misleading" },
@@ -86,45 +87,69 @@ const Profile = () => {
 
   // ---------------- Post Handlers ----------------
   const handlePost = async () => {
-    if (!newPost.trim() && !selectedImage) return;
-    try {
-      const formData = new FormData();
-      formData.append("content", newPost);
-      if (selectedImage instanceof File) formData.append("image", selectedImage);
+  if (newPost.trim() === "" && !selectedImage) return;
 
-      const token = localStorage.getItem("authToken");
-      const res = await fetch("http://127.0.0.1:8000/api/freedom-wall/posts/auth", {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Failed to post");
-      const p = await res.json();
-      const entry = {
-        id: p.id,
-        author: p.author || (user?.name || "You"),
-        email: p.email || user?.email || getUserEmail(),
-        date: p.created_at ? new Date(p.created_at).toLocaleString() : new Date().toLocaleString(),
-        content: censorText(p.content),
-        likes: p.likes || 0,
-        hearts: p.hearts || 0,
-        sads: p.sad || 0,
-        saved: !!p.is_saved,
-        liked: !!(p.user_reaction === 'like'),
-        hearted: !!(p.user_reaction === 'heart'),
-        sadded: !!(p.user_reaction === 'sad'),
-        image: p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null,
-      };
-      setPosts((prev) => [entry, ...prev]);
-      setNewPost("");
-      setSelectedImage(null);
-      setShowEmojiPicker(false);
-      setShowPostModal(false);
-    } catch (e) {
-      console.error("Error creating post:", e);
-      alert("Failed to create post. Please try again.");
+  try {
+    const formData = new FormData();
+    formData.append("content", newPost);
+    if (selectedImage) formData.append("image", selectedImage); // important!
+
+    const token = localStorage.getItem("authToken");
+    const isAuth = !!token && isLoggedIn;
+    const url = isAuth
+      ? "http://127.0.0.1:8000/api/freedom-wall/posts/auth"
+      : "http://127.0.0.1:8000/api/freedom-wall/posts";
+
+    const headers = isAuth ? { Authorization: `Bearer ${token}` } : {}; // ✅ do NOT set Content-Type manually
+
+    // Log FormData for debugging
+    for (let pair of formData.entries()) console.log(pair[0], pair[1]);
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      console.error("Post creation failed:", errorData);
+      throw new Error(errorData.message || "Failed to post");
     }
-  };
+
+    const p = await res.json();
+    console.log("Post created successfully:", p);
+
+    const imageUrl =
+      p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
+
+    const newEntry = {
+      id: p.id,
+      author: p.author || user?.name || "Anonymous",
+      email: user?.email || null,
+      date: p.created_at ? new Date(p.created_at).toLocaleString() : new Date().toLocaleString(),
+      content: p.content,
+      likes: p.likes || 0,
+      hearts: p.hearts || 0,
+      saves: p.saves || 0,
+      liked: false,
+      hearted: false,
+      saved: false,
+      image: imageUrl,
+      images: imageUrl ? [imageUrl] : [],
+    };
+
+    setPosts((prev) => [newEntry, ...prev]);
+    setNewPost("");
+    setSelectedImage(null);
+    setShowPostModal(false);
+
+  } catch (e) {
+    console.error("Error creating post:", e);
+    alert(`Failed to create post: ${e.message}`);
+  }
+};
+
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -212,9 +237,10 @@ const Profile = () => {
   };
 
   const submitReport = async () => {
-    if (!selectedReason) {
-      alert("Please select a reason for reporting this post.");
-      return;
+  if (!selectedReason) {
+    setShowNoReasonModal(true); // show our custom modal instead of alert
+    return;
+  
     }
     try {
       const response = await fetch(
@@ -270,6 +296,9 @@ const Profile = () => {
       const token = localStorage.getItem("authToken");
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
       let response;
+      let allPosts = [];
+      
+      // First, get all posts based on the main filter
       switch (filter) {
         case "saved":
           response = await fetch("http://127.0.0.1:8000/api/freedom-wall/saved-posts", { headers });
@@ -278,31 +307,48 @@ const Profile = () => {
           response = await fetch("http://127.0.0.1:8000/api/freedom-wall/my-posts", { headers });
           break;
       }
+      
       if (response.ok) {
         const data = await response.json();
-        const normalizedPosts = (Array.isArray(data) ? data : []).map((post) => {
-          const imageUrl = post.image_path
-            ? `http://127.0.0.1:8000/storage/${post.image_path}`
-            : null;
-          const userReaction = post.user_reaction || null;
-          return {
-            ...post,
-            email: post.email || post.user?.email || null,
-            author: post.author || post.user?.name || "Anonymous",
-            content: censorText(post.content),
-            date: post.created_at ? new Date(post.created_at).toLocaleString() : "",
-            image: imageUrl,
-            liked: userReaction === "like",
-            hearted: userReaction === "heart",
-            saved: !!post.is_saved,
-            likes: post.likes || 0,
-            hearts: post.hearts || 0,
-            sad: post.sad || 0,
-          };
-        });
-
-        setPosts(normalizedPosts);
+        allPosts = Array.isArray(data) ? data : [];
       }
+
+      // Apply additional filters
+      let filteredPosts = allPosts;
+      
+      // Apply sorting/filtering based on the current filter state
+      if (postFilter === "date") {
+        filteredPosts = allPosts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      } else if (postFilter === "likes") {
+        filteredPosts = allPosts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+      } else if (postFilter === "hearts") {
+        filteredPosts = allPosts.sort((a, b) => (b.hearts || 0) - (a.hearts || 0));
+      } else if (postFilter === "images") {
+        filteredPosts = allPosts.filter(post => post.image_path || post.image_url);
+      }
+
+      const normalizedPosts = filteredPosts.map((post) => {
+        const imageUrl = post.image_url || (post.image_path
+          ? `http://127.0.0.1:8000/storage/${post.image_path}`
+          : null);
+        const userReaction = post.user_reaction || null;
+        return {
+          ...post,
+          email: post.email || post.user?.email || null,
+          author: post.author || post.user?.name || "Anonymous",
+          content: censorText(post.content),
+          date: post.created_at ? new Date(post.created_at).toLocaleString() : "",
+          image: imageUrl,
+          liked: userReaction === "like",
+          hearted: userReaction === "heart",
+          saved: !!post.is_saved,
+          likes: post.likes || 0,
+          hearts: post.hearts || 0,
+          sad: post.sad || 0,
+        };
+      });
+
+      setPosts(normalizedPosts);
     } catch (error) {
       console.error("Error loading posts:", error);
     }
@@ -329,7 +375,7 @@ const Profile = () => {
 
 
   return (
-    <Container fluid className="profile-container">
+     <Container fluid className="profile-container">
       <Row className="gx-3">
         <Col xs={12}>
           <Card className="profile-header position-relative">
@@ -351,78 +397,43 @@ const Profile = () => {
                 <ThreeDotsVertical />
               </Dropdown.Toggle>
               <Dropdown.Menu>
-                <Dropdown.Item href="#">Settings</Dropdown.Item>
-                <Dropdown.Item onClick={() => setShowPhotoModal(true)}>
+                <Dropdown.Item onClick={() => setShowChangePhoto(true)}>
                   Change Photo
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
 
-            <Modal
-              show={showPhotoModal}
-              onHide={() => setShowPhotoModal(false)}
-              centered
-              className="photo-modal"
-            >
-              <Modal.Header closeButton>
-                <Modal.Title>Change Photo</Modal.Title>
-              </Modal.Header>
-              <Modal.Body>
-                <Row className="g-2">
-                  <Col xs={4}>
-                    <img
-                      src="/images/photo1.jpg"
-                      alt="Photo 1"
-                      className="img-fluid rounded"
-                    />
-                  </Col>
-                  <Col xs={4}>
-                    <img
-                      src="/images/photo2.jpg"
-                      alt="Photo 2"
-                      className="img-fluid rounded"
-                    />
-                  </Col>
-                  <Col xs={4}>
-                    <img
-                      src="/images/photo3.jpg"
-                      alt="Photo 3"
-                      className="img-fluid rounded"
-                    />
-                  </Col>
-                  <Col xs={4}>
-                    <img
-                      src="/images/photo4.jpg"
-                      alt="Photo 4"
-                      className="img-fluid rounded"
-                    />
-                  </Col>
-                  <Col xs={4}>
-                    <img
-                      src="/images/photo5.jpg"
-                      alt="Photo 5"
-                      className="img-fluid rounded"
-                    />
-                  </Col>
-                </Row>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowPhotoModal(false)}
-                >
-                  Close
-                </Button>
-              </Modal.Footer>
-            </Modal>
-
             <Card.Body>
               <div className="profile-info">
-                 <Avatar email={getUserEmail()} size={60} />
+                 <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} className="avatar" size={60} />
               </div>
             </Card.Body>
           </Card>
         </Col>
+
+        {/* Floating ChangePhoto Modal */}
+       {showChangePhoto && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      backgroundColor: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+    onClick={() => setShowChangePhoto(false)}
+  >
+    <div onClick={(e) => e.stopPropagation()}>
+      <ChangePhoto closeModal={() => setShowChangePhoto(false)} />
+    </div>
+  </div>
+)}
+
 
         {/* Left Side */}
         <Col md={3} className="events-container">
@@ -434,8 +445,109 @@ const Profile = () => {
       <Events hideCardHeader /> {/* pass a prop to hide the header in Events.jsx */}
     </div>
   </Card>
+{showUndo && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px", // flush to left edge
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)", // white background
+      borderLeft: "4px solid green", // green accent
+      borderRadius: "0 6px 6px 0", // rounded except left edge
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+    }}
+  >
+    <span style={{ color: "#fff", fontWeight: 600 }}>
+      Post hidden
+    </span>
+    
+    <div style={{ display: "flex", gap: "14px" }}>
+      <span
+        onClick={undoHide}
+        style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600, display:"underline" }}
+      >
+        Undo
+      </span>
+      <span
+        onClick={() => setShowUndo(false)}
+        style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600 }}
+      >
+        Ok
+      </span>
+    </div>
+  </div>
+)}
 
+{showReportSnackbar && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px", // flush to left edge
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)",
+      borderLeft: "6px solid green",
+      borderRadius: "0 6px 6px 0",
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+    }}
+  >
+    <span style={{ color: "#fff", fontWeight: 600 }}>
+      You successfully reported this post.
+    </span>
+    
+    <span
+      onClick={() => setShowReportSnackbar(false)}
+      style={{ cursor: "pointer", color: "rgb(138, 180, 248)rgb(138, 180, 248)", fontWeight: 600, marginLeft: "12px" }}
+    >
+      Ok
+    </span>
+  </div>
+)}
 
+<Modal
+  show={showNoReasonModal}
+  onHide={() => setShowNoReasonModal(false)}
+  centered
+>
+  <Modal.Header closeButton>
+    <Modal.Title>Notice</Modal.Title>
+  </Modal.Header>
+
+  <Modal.Body className="text-center">
+    Please select a reason for reporting this post.
+  </Modal.Body>
+
+  <Modal.Footer className="justify-content-center">
+    <Button
+      variant="success"
+      onClick={() => setShowNoReasonModal(false)}
+      style={{ width: '150px', minWidth: '120px' }}
+    >
+      OK
+    </Button>
+  </Modal.Footer>
+</Modal>
            
            {/* history of joined challenge */}
 <Card className="mb-3 events-card shadow-sm border-0" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -515,11 +627,7 @@ const Profile = () => {
           >
             <div className="post-input d-flex align-items-center p-2">
               <div className="me-3">
-                <Avatar
-                  email={getUserEmail()}
-                  size={40}
-                  style={{ backgroundColor: "#4CAF50", color: "#fff" }}
-                />
+                 <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} className="avatar" size={40} />
               </div>
               <Form.Control type="text" placeholder="What's on your mind?" readOnly />
             </div>
@@ -556,7 +664,7 @@ const Profile = () => {
                <Modal.Header closeButton style={{ backgroundColor: "#e6f4ea" }}>
                  <Modal.Title>{isLoggedIn ? "Create Post" : "Share Anonymously"}</Modal.Title>
                </Modal.Header>
-               <Modal.Body style={{ backgroundColor: "#f7fff9" }}>
+               <Modal.Body >
                  <div className="post-header" style={{ alignItems: "center" }}>
                     <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} className="avatar" size={40} />
        
@@ -583,16 +691,29 @@ const Profile = () => {
                    </div>
                  )}
        
-            <div
-            className="add-post-container mt-2 d-flex align-items-center"
-            style={{ border: "1px solid green", borderRadius: "8px", padding: "6px", gap: "10px" }}
-          >
-            <label htmlFor="image-upload" style={{ cursor: "pointer" }} title="Add image">
-              <Image size={20} className="post-icon" />
-            </label>
-            <input type="file" id="image-upload" accept="image/*" style={{ display: "none" }} onChange={handleImageUpload} />
-            <Smile size={20} className="post-icon" onClick={() => setShowEmojiPicker((s) => !s)} style={{ cursor: "pointer" }} />
-          </div>
+          <div
+  className="add-post-container mt-2 d-flex align-items-center"
+  style={{ border: "1px solid green", borderRadius: "8px", padding: "6px", gap: "10px" }}
+>
+  <label htmlFor="image-upload" style={{ cursor: "pointer" }} title="Add image">
+    <Image size={20} className="post-icon" />
+  </label>
+  <input
+    type="file"
+    id="image-upload"
+    accept="image/*"
+    style={{ display: "none" }}
+    onChange={handleImageUpload}
+  />
+  
+  <Smile
+    size={20}
+    className="post-icon"
+    onClick={() => setShowEmojiPicker((s) => !s)}
+    style={{ cursor: "pointer" }}
+  />
+  
+</div>
 
           {showEmojiPicker && <EmojiPicker onEmojiClick={handleEmojiClick} />}
         </Modal.Body>
@@ -662,7 +783,16 @@ const Profile = () => {
         
                         <p className="post-content ">{censorText(post.content)}</p>
         
-                        {post.image && <img src={post.image} alt="Post" className="img-fluid post-image" />}
+{post.images && post.images.length > 0 && (
+  <div className="post-image-wrapper">
+    {post.images.map((img, idx) => (
+      <img key={idx} src={img} alt={`Post image ${idx + 1}`} />
+    ))}
+  </div>
+)}
+
+
+
         
                         <div className="post-actions d-flex align-items-center mt-3" style={{ justifyContent: "flex-start" }}>
                           <div className="d-flex align-items-center me-3 like-action" onClick={isLoggedIn ? () => handleLike(post.id) : undefined} style={{ cursor: isLoggedIn ? "pointer" : "default" }}>
@@ -690,21 +820,8 @@ const Profile = () => {
                   </Card>
                 ))}
               </div>
-  <Modal
-         show={showAlreadyReportedModal}
-         onHide={() => setShowAlreadyReportedModal(false)}
-         centered
-       >
-         <Modal.Header closeButton>
-           <Modal.Title>Notice</Modal.Title>
-         </Modal.Header>
-         <Modal.Body>
-           You have already reported this post.
-         </Modal.Body>
-         <Modal.Footer>
-           <Button variant="success" onClick={() => setShowAlreadyReportedModal(false)}>OK</Button>
-         </Modal.Footer>
-       </Modal>
+
+         
        
           {/* Report Modals */}
           <Modal show={showReportModal} onHide={() => setShowReportModal(false)} centered>
@@ -712,24 +829,35 @@ const Profile = () => {
               <Modal.Title>Report Post</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <Form.Select
-                value={selectedReason}
-                onChange={(e) => setSelectedReason(e.target.value)}
-              >
-                <option value="">Select a reason</option>
-                {reportReasons.map((r) => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-              </Form.Select>
+              <h6 style={{ fontWeight: 500, marginBottom: "15px"}}>
+      Why did you report this post?
+    </h6>
 
-              {selectedReason === "other" && (
-                <Form.Control
-                  className="mt-2"
-                  placeholder="Please specify"
-                  value={selectedReasonCustom}
-                  onChange={(e) => setSelectedReasonCustom(e.target.value)}
-                />
-              )}
+<Form>
+  {reportReasons.map((r) => (
+    <Form.Check
+      type="radio"
+      key={r.value}
+      id={`report-${r.value}`}
+      name="reportReason"
+      label={r.label}
+      value={r.value}
+      checked={selectedReason === r.value}
+      onChange={(e) => setSelectedReason(e.target.value)}
+      className="mb-2"
+    />
+  ))}
+
+  {selectedReason === "other" && (
+    <Form.Control
+      className="mt-2"
+      placeholder="Please specify"
+      value={selectedReasonCustom}
+      onChange={(e) => setSelectedReasonCustom(e.target.value)}
+    />
+  )}
+</Form>
+
             </Modal.Body>
             <Modal.Footer>
               <Button variant="secondary" onClick={() => setShowReportModal(false)}>Cancel</Button>
@@ -737,22 +865,47 @@ const Profile = () => {
             </Modal.Footer>
           </Modal>
 
-          <Modal show={showAlreadyReportedModal} onHide={() => setShowAlreadyReportedModal(false)} centered>
-            <Modal.Header closeButton>
-              <Modal.Title>Notice</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>You have already reported this post.</Modal.Body>
-            <Modal.Footer>
-              <Button variant="success" onClick={() => setShowAlreadyReportedModal(false)}>OK</Button>
-            </Modal.Footer>
-          </Modal>
+          <Modal
 
-          {showReportSnackbar && <div className="report-snackbar">Report submitted successfully</div>}
+  show={showAlreadyReportedModal}
+  onHide={() => setShowAlreadyReportedModal(false)}
+  centered
+>
+  <Modal.Header closeButton>
+    <Modal.Title>Notice</Modal.Title>
+  </Modal.Header>
+
+  <Modal.Body className="text-center">
+    You have already reported this post.
+  </Modal.Body>
+
+  <Modal.Footer className="justify-content-center">
+    <Button
+      variant="success"
+      onClick={() => setShowAlreadyReportedModal(false)}
+      style={{ width: '150px', minWidth: '120px' }} // Adjust width here
+    >
+      OK
+    </Button>
+  </Modal.Footer>
+</Modal>
+
+
+            {showReportSnackbar && <div className="report-snackbar">Report submitted successfully</div>}
         </Col>
         {/* Right Sidebar */}
-        <Col md={3} className="right-sidebar">
-          <TodoList />
-        </Col>
+        <Col
+  xs={12}
+  md={3}
+  className="right-sidebar"
+  style={{
+    maxHeight: "calc(100vh - 20px)", // leave a little space from top/bottom
+    overflowY: "auto",
+  }}
+>
+  <TodoList />
+</Col>
+
       </Row>
     </Container>
   );

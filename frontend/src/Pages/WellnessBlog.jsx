@@ -68,9 +68,9 @@ const WellnessBlog = () => {
             id: b.id,
             title: b.title,
             category: b.category || "General",
-            image:
-              b.image_url ||
-              "https://via.placeholder.com/600x400?text=Health+%26+Wellness",
+            image: b.image_url 
+              ? `http://127.0.0.1:8000/storage/${b.image_url}`
+              : "https://via.placeholder.com/600x400?text=Health+%26+Wellness",
             fullText: b.content,
             author: b.author_name || "Admin",
           }));

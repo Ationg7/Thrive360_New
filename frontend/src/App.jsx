@@ -40,6 +40,9 @@ import AdminMeditation from "./Pages/AdminMeditation";
 import AdminBlogs from "./Pages/AdminBlogs";
 import AdminSettings from "./Pages/AdminSettings";
 import AdminEvents from "./Pages/AdminEvents";
+import AdminPasswordReset from "./Pages/AdminPasswordReset";
+import Settings from "./Pages/Settings";
+import ChangePhoto from "./Pages/ChangePhoto";
 
 
 import { AuthProvider, useAuth } from "./AuthContext";
@@ -62,6 +65,7 @@ function Layout() {
     "/admin/psychiatrists",
     "/admin/settings",
     "/admin/events",
+    "/admin/password-reset",
   ];
   const noNavbarRoutes = ["/dashboard"];
   const noFooterRoutes = [
@@ -77,6 +81,8 @@ function Layout() {
     "/admin/reports",
     "/admin/psychiatrists",
     "/admin/settings",
+    "/admin/events",
+    "/admin/password-reset",
   ];
 
   const pathname = location.pathname.toLowerCase();
@@ -135,6 +141,8 @@ const router = createBrowserRouter([
       { path: "meditation", element: <Meditation /> },
       { path: "wellnessblog", element: <WellnessBlog /> },
       { path: "profile", element: <Profile /> },
+      { path: "settings", element: <Settings /> },
+      { path: "change-photo", element: <ChangePhoto /> },
       { path: "dashboard", element: <Dashboard /> },
       { path: "guide-detail", element: <GuideDetail /> },
       { path: "blogdetail", element: <BlogDetail /> },
@@ -166,6 +174,7 @@ const router = createBrowserRouter([
       { path: "admin/psychiatrists", element: <AdminPsychiatrists /> },
       { path: "admin/settings", element: <AdminSettings /> },
       { path: "admin/events", element: <AdminEvents /> },
+      { path: "admin/password-reset", element: <AdminPasswordReset /> },
 
     ],
   },

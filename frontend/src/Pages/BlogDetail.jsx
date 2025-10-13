@@ -78,16 +78,21 @@ const BlogDetail = () => {
         {/* Main Content */}
         <div className="blog-left">
           <div className="card blog-main-card">
-            <h1 className="blog-title">{blog.title}</h1>
+            <h1 className="blog-titles">{blog.title}</h1>
             <p className="blog-date">{blog.date}</p>
 
             <div className="category">
               <p>{blog.category}</p>
             </div>
 
-            <div className="blog-image">
-              <img src={blog.image} alt={blog.title} />
-            </div>
+           <div className="blog-images">
+  <img 
+    src={blog.image} 
+    alt={blog.title} 
+    onLoad={(e) => e.target.style.height = "auto"} 
+  />
+</div>
+
 
             <div className="blog-content">
               {blog.fullText.split("\n\n").map((para, index) => (

@@ -54,7 +54,7 @@ const FreedomWall = () => {
   const [reportPostId, setReportPostId] = useState(null);
   const [selectedReason, setSelectedReason] = useState("");
   const [selectedReasonCustom, setSelectedReasonCustom] = useState("");
-
+  const [showNoReasonModal, setShowNoReasonModal] = useState(false);
   // New: Already Reported Modal
   const [showAlreadyReportedModal, setShowAlreadyReportedModal] = useState(false);
 
@@ -89,25 +89,31 @@ const FreedomWall = () => {
         const res = await fetch("http://127.0.0.1:8000/api/freedom-wall/posts");
         if (!res.ok) throw new Error("Failed to load posts");
         const data = await res.json();
-        const normalized = (Array.isArray(data) ? data : []).map((p) => ({
-          id: p.id,
-         // Prefer explicit author/name fields from API; fallback to Anonymous
-          author: p.author || p.user?.name || "Anonymous",
-          // Capture email if API provides it (directly or nested under user)
-          email: p.email || p.user?.email || null,
+        const normalized = (Array.isArray(data) ? data : []).map((p) => {
+          const imageUrl = p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
+          if (imageUrl) {
+            console.log('Post image URL:', imageUrl, 'for post:', p.id);
+          }
+          return {
+            id: p.id,
+           // Prefer explicit author/name fields from API; fallback to Anonymous
+            author: p.author || p.user?.name || "Anonymous",
+            // Capture email if API provides it (directly or nested under user)
+            email: p.email || p.user?.email || null,
 
-          date: p.created_at ? new Date(p.created_at).toLocaleString() : new Date().toLocaleString(),
-          content: p.content,
-          likes: p.likes || 0,
-          hearts: p.hearts || 0,
-          sad: p.sad || 0,
-          saves: p.saves || 0,
-          liked: p.user_reaction === 'like',
-          hearted: p.user_reaction === 'heart',
-          saved: p.is_saved || false,
-          user_reaction: p.user_reaction,
-          image: p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null,
-        }));
+            date: p.created_at ? new Date(p.created_at).toLocaleString() : new Date().toLocaleString(),
+            content: p.content,
+            likes: p.likes || 0,
+            hearts: p.hearts || 0,
+            sad: p.sad || 0,
+            saves: p.saves || 0,
+            liked: p.user_reaction === 'like',
+            hearted: p.user_reaction === 'heart',
+            saved: p.is_saved || false,
+            user_reaction: p.user_reaction,
+            image: imageUrl,
+          };
+        });
         setPosts(normalized);
       } catch (e) {
         console.error("Error fetching posts:", e);
@@ -222,52 +228,67 @@ const FreedomWall = () => {
     }
   };
 
-  const handlePost = async () => {
-    if (newPost.trim() === "" && !selectedImage) return;
-    try {
-      const formData = new FormData();
-      formData.append("content", newPost);
-      if (selectedImage instanceof File) formData.append("image", selectedImage);
+ const handlePost = async () => {
+  if (newPost.trim() === "" && !selectedImage) return;
 
-      const token = localStorage.getItem('authToken');
-      const isAuth = !!token && isLoggedIn;
-      const url = isAuth
-        ? "http://127.0.0.1:8000/api/freedom-wall/posts/auth"
-        : "http://127.0.0.1:8000/api/freedom-wall/posts";
+  try {
+    const formData = new FormData();
+    formData.append("content", newPost);
+    if (selectedImage instanceof File) formData.append("image", selectedImage);
 
-      const headers = isAuth ? { 'Authorization': `Bearer ${token}` } : undefined;
+    const token = localStorage.getItem("authToken");
+    const isAuth = !!token && isLoggedIn;
+    const url = isAuth
+      ? "http://127.0.0.1:8000/api/freedom-wall/posts/auth"
+      : "http://127.0.0.1:8000/api/freedom-wall/posts";
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers,
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Failed to post");
-      const p = await res.json();
-      const entry = {
-        id: p.id,
-          author: p.author || user?.name || "Anonymous",
-        email: user?.email || null,
+    // Only include Authorization if logged in
+    const headers = isAuth ? { Authorization: `Bearer ${token}` } : undefined;
 
-        date: p.created_at ? new Date(p.created_at).toLocaleString() : new Date().toLocaleString(),
-        content: p.content,
-        likes: p.likes || 0,
-        hearts: p.hearts || 0,
-        saves: p.saves || 0,
-        liked: false,
-        hearted: false,
-        saved: false,
-        image: p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null,
-      };
-      setPosts((prev) => [entry, ...prev]);
-      setNewPost("");
-      setSelectedImage(null);
-      setShowPostModal(false);
-    } catch (e) {
-      console.error("Error creating post:", e);
-      alert("Failed to create post. Please try again.");
+    const res = await fetch(url, {
+      method: "POST",
+      headers, // don't set Content-Type, browser handles FormData
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      console.error("Post creation failed:", errorData);
+      throw new Error(errorData.message || "Failed to post");
     }
-  };
+
+    const p = await res.json();
+    console.log("Post created successfully:", p);
+
+    // Handle image URL
+    const imageUrl =
+      p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
+
+    const newEntry = {
+      id: p.id,
+      author: p.author || user?.name || "Anonymous",
+      email: user?.email || null,
+      date: p.created_at ? new Date(p.created_at).toLocaleString() : new Date().toLocaleString(),
+      content: p.content,
+      likes: p.likes || 0,
+      hearts: p.hearts || 0,
+      saves: p.saves || 0,
+      liked: false,
+      hearted: false,
+      saved: false,
+      image: imageUrl,
+    };
+
+    setPosts((prev) => [newEntry, ...prev]);
+    setNewPost("");
+    setSelectedImage(null);
+    setShowPostModal(false);
+
+  } catch (e) {
+    console.error("Error creating post:", e);
+    alert(`Failed to create post: ${e.message}`);
+  }
+};
 
   const handleEmojiClick = (emojiObject) => {
     setNewPost((prev) => prev + emojiObject.emoji);
@@ -284,10 +305,10 @@ const FreedomWall = () => {
     setShowReportModal(true);
   };
 
-  const submitReport = async () => {
-    if (!selectedReason) {
-      alert("Please select a reason for reporting this post.");
-      return;
+ const submitReport = async () => {
+  if (!selectedReason) {
+    setShowNoReasonModal(true); // show our custom modal instead of alert
+    return;
     }
     try {
       const response = await fetch(
@@ -365,15 +386,74 @@ const FreedomWall = () => {
       </div>
 
       {/* Undo Snackbar */}
-      {showUndo && (
-        <div className="undo-toast show">
-          Post hidden.{" "}
-          <span onClick={undoHide} style={{ cursor: "pointer", color: "green", fontWeight: "600" }}>
-            Undo
-          </span>
-        </div>
-      )}
+{showUndo && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px", // flush to left edge
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)", // white background
+      borderLeft: "4px solid green", // green accent
+      borderRadius: "0 6px 6px 0", // rounded except left edge
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+    }}
+  >
+    <span style={{ color: "#fff", fontWeight: 600 }}>
+      Post hidden
+    </span>
+    
+    <div style={{ display: "flex", gap: "14px" }}>
+      <span
+        onClick={undoHide}
+        style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600, display:"underline" }}
+      >
+        Undo
+      </span>
+      <span
+        onClick={() => setShowUndo(false)}
+        style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600 }}
+      >
+        Ok
+      </span>
+    </div>
+  </div>
+)}
 
+<Modal
+  show={showNoReasonModal}
+  onHide={() => setShowNoReasonModal(false)}
+  centered
+>
+  <Modal.Header closeButton>
+    <Modal.Title>Notice</Modal.Title>
+  </Modal.Header>
+
+  <Modal.Body className="text-center">
+    Please select a reason for reporting this post.
+  </Modal.Body>
+
+  <Modal.Footer className="justify-content-center">
+    <Button
+      variant="success"
+      onClick={() => setShowNoReasonModal(false)}
+      style={{ width: '150px', minWidth: '120px' }}
+    >
+      OK
+    </Button>
+  </Modal.Footer>
+</Modal>
+           
       {/* New Post Input */}
       <Card className="post-input-card" style={{ cursor: "text" }}>
         <div className="post-header" style={{ alignItems: "center" }}>    
@@ -534,7 +614,18 @@ const FreedomWall = () => {
 
                 <p className="post-content ">{censorText(post.content)}</p>
 
-                {post.image && <img src={post.image} alt="Post" className="img-fluid post-image" />}
+              {post.image && (
+            <div className="post-image-wrapper">
+            <img
+             src={post.image}
+           alt="Post"
+      className="post-image-adjusted"
+      onLoad={() => console.log('Image loaded successfully:', post.image)}
+      onError={(e) => console.error('Image failed to load:', post.image, e)}
+    />
+  </div>
+)}
+
 
                 <div className="post-actions d-flex align-items-center mt-3" style={{ justifyContent: "flex-start" }}>
                   <div className="d-flex align-items-center me-3 like-action" onClick={isLoggedIn ? () => handleLike(post.id) : undefined} style={{ cursor: isLoggedIn ? "pointer" : "default" }}>
@@ -586,24 +677,34 @@ const FreedomWall = () => {
           <Modal.Title>Report Post</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form.Select
-            value={selectedReason}
-            onChange={(e) => setSelectedReason(e.target.value)}
-          >
-            <option value="">Select a reason</option>
+           <h6 style={{ fontWeight: 500, marginBottom: "15px"}}>
+                Why did you report this post?
+              </h6>
+          
+          <Form>
             {reportReasons.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
+              <Form.Check
+                type="radio"
+                key={r.value}
+                id={`report-${r.value}`}
+                name="reportReason"
+                label={r.label}
+                value={r.value}
+                checked={selectedReason === r.value}
+                onChange={(e) => setSelectedReason(e.target.value)}
+                className="mb-2"
+              />
             ))}
-          </Form.Select>
-
-          {selectedReason === "other" && (
-            <Form.Control
-              className="mt-2"
-              placeholder="Please specify"
-              value={selectedReasonCustom}
-              onChange={(e) => setSelectedReasonCustom(e.target.value)}
-            />
-          )}
+          
+            {selectedReason === "other" && (
+              <Form.Control
+                className="mt-2"
+                placeholder="Please specify"
+                value={selectedReasonCustom}
+                onChange={(e) => setSelectedReasonCustom(e.target.value)}
+              />
+            )}
+          </Form>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowReportModal(false)}>Cancel</Button>
@@ -612,8 +713,41 @@ const FreedomWall = () => {
       </Modal>
 
       {/* Report Snackbar */}
-      {showReportSnackbar && <div className="report-snackbar">Report submitted successfully</div>}
-
+      {showReportSnackbar && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px", // flush to left edge
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)",
+      borderLeft: "6px solid green",
+      borderRadius: "0 6px 6px 0",
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+    }}
+  >
+    <span style={{ color: "#fff", fontWeight: 600 }}>
+      You successfully reported this post.
+    </span>
+    
+    <span
+      onClick={() => setShowReportSnackbar(false)}
+      style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600, marginLeft: "12px" }}
+    >
+      Ok
+    </span>
+  </div>
+)}
       {/* Styles for guest popup */}
       <style>{`
         .guest-popup-overlay {

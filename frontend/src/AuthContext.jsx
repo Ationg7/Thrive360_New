@@ -30,6 +30,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
   useEffect(() => {
     // Sync state with localStorage on mount
     const token = localStorage.getItem("authToken");
@@ -56,7 +61,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isLoggedIn, isAdmin, authToken, user, login, logout }}
+      value={{ isLoggedIn, isAdmin, authToken, user, login, logout, updateUser }}
     >
       {children}
     </AuthContext.Provider>

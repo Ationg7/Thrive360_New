@@ -223,7 +223,7 @@ const SignUp = () => {
           visibility: visible;
           min-width: 280px;
           background-color: white;
-          color: #28a745; 
+          color: black; 
           text-align: center;
           border-radius: 8px;
           padding: 14px 24px;

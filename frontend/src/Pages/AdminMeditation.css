@@ -557,6 +557,190 @@
   }
 }
 
+/* Tutorial Modal Styles */
+.tutorial-modal {
+  max-width: 800px;
+  max-height: 95vh;
+}
+
+.tutorial-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.tutorial-section h4 {
+  margin: 0 0 20px 0;
+  color: var(--dark-text);
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tutorial-section h4::before {
+  content: "📚";
+  font-size: 1.2rem;
+}
+
+.tutorial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.tutorial-header h4 {
+  margin: 0;
+}
+
+.btn-add-step {
+  padding: 8px 16px;
+  background: #28a745;
+  color: var(--white);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-add-step:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.tutorial-step {
+  background: var(--white);
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.tutorial-step:last-child {
+  margin-bottom: 0;
+}
+
+.step-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.step-header h5 {
+  margin: 0;
+  color: var(--dark-text);
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-header h5::before {
+  content: "📍";
+  font-size: 1.1rem;
+}
+
+.btn-remove-step {
+  padding: 6px 12px;
+  background: #dc3545;
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-remove-step:hover {
+  background: #c82333;
+}
+
+.file-preview {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #e8f5e8;
+  border: 1px solid #c3e6c3;
+  border-radius: 4px;
+  color: #155724;
+}
+
+.file-preview small {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Enhanced form styling for tutorial */
+.tutorial-step .form-group {
+  margin-bottom: 15px;
+}
+
+.tutorial-step .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.tutorial-step .form-textarea {
+  min-height: 60px;
+}
+
+/* Step numbering animation */
+.tutorial-step {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive tutorial styles */
+@media (max-width: 768px) {
+  .tutorial-modal {
+    width: 98%;
+    margin: 10px;
+  }
+  
+  .tutorial-section {
+    padding: 15px;
+  }
+  
+  .tutorial-step {
+    padding: 15px;
+  }
+  
+  .tutorial-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  
+  .step-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+}
+
 /* CSS Variables */
 :root {
   --light-bg: #f8f9fa;

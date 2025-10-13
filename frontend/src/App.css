@@ -9,7 +9,7 @@
   padding: 10px 30px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  height: 80px; /* Ensure enough height */
+  height: 70px; /* Ensure enough height */
   font-family: 'Poppins', sans-serif;
 }
 
@@ -37,7 +37,7 @@
 
 
 .navbar-nav .nav-link {
-  font-size: 1.5rem; /* Increase font size */
+  font-size: 1.3rem; /* Increase font size */
   color: black !important; /* default text color */
   transition: color 0.3s ease-in-out;
   background-color: transparent !important; /* no background */
@@ -261,10 +261,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 16px;
-  width: 20px;
+  padding: 5px 15px;
+  width: 10px;
   background: var(--light-bg);
-  border: 1px solid #e9ecef;
+  border: 1px solid rgb(46, 192, 46);
   border-radius: 25px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -278,8 +278,8 @@
 }
 
 .user-profile-avatar {
-  width: 35px;
-  height: 35px;
+  width: 30px;
+  height: 30px;
   background: var(--primary-color);
   color: var(--white);
   border-radius: 50%;
@@ -1494,7 +1494,27 @@ label {
 /* Profile CSS */
 /* General Styles */
 
+
+
 /* Make sidebars sticky on desktop, normal on mobile */
+.post-image-wrapper {
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-start;
+  overflow: hidden;
+  border-radius: 8px; /* optional, rounded corners */
+}
+
+.post-image-adjusted {
+  max-width: 100%;   /* prevent overflow horizontally */
+  max-height: 400px; /* optional, limit height */
+  height: auto;      /* keep aspect ratio */
+  width: auto;
+  object-fit: contain; /* scale image inside the container */
+  border-radius: 8px;
+}
+
 .sidebar-left,
 .sidebar-right {
   position: sticky;
@@ -2246,12 +2266,7 @@ button:hover {
   max-width: 800px;
 }
 
-.featured-blog img {
-  width: 300px;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 8px;
-}
+
 
 .featured-blog-content {
   flex: 1;
@@ -2747,23 +2762,33 @@ button:hover {
   object-fit: cover;
 }
 
-
-.step-card {
+.step-cards {
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 12px;
   padding: 15px;
   text-align: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  width: 300px;       /* fixed width like WellnessBlog cards */
+  height: 350px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
-.step-card img {
-  width: 100%;
-  max-height: 150px;
-  object-fit: cover;
+/* Step image styling */
+.step-cards img {
+  width: 100%;        /* fill the card width */
+  height: 200px;      /* fixed height */
+  object-fit: cover;  /* fully cover container, may crop */
   border-radius: 8px;
   margin-bottom: 10px;
+  display: block;
 }
+
+
+
+
 
 .step-text h4 {
   margin: 5px 0;
@@ -2909,6 +2934,38 @@ button:hover {
   font-size: 14px;
   color: #444;
   line-height: 1.4;
+}
+
+.step-description {
+  font-size: 13px !important;
+  color: #666 !important;
+  margin-top: 5px !important;
+  font-style: italic;
+}
+
+.step-placeholder {
+  width: 100%;
+  height: 150px;
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.step-number {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2e7d32;
+  background: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .back-btn-wrapper {
@@ -3492,80 +3549,116 @@ button:hover {
 }
 
 /* Blog Details css scoped to avoid affecting challenges */
+/* Blog Container */
 .blog-container {
   display: flex;
   justify-content: space-between;
+  gap: 50px;
   padding: 40px;
   background: white;
-  gap: 50px;
 }
 
+/* Left Column */
 .blog-left {
   flex: 2;
-  
 }
 
-.blog-image {
+/* Blog Main Card */
+.blog-main-card {
+  background: #fafafa;
+  border: 1px solid #eee;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* Blog Title */
+.blog-titles {
+  font-size: 28px;
+  font-weight: 700;
+  color: green;
+  margin: 0 0 10px 0;
+}
+
+/* Blog Date */
+.blog-date {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 10px;
+}
+
+/* Category */
+.category {
+  font-weight: bold;
+  color: #2e7d32;
+  margin-bottom: 20px;
+}
+.blog-images {
+  width: 100%;            /* container width */
+  max-width: 600px;       /* fixed max width */
+  height: 400px;          /* fixed height */
+  margin-bottom: 20px;
+  border-radius: 5px;
+  overflow: hidden;       /* hide any overflow */
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  align-items: center;
+  background: #f0f0f0;    /* optional background for empty space */
 }
 
-.blog-image img {
-  max-width: 900px;
-  max-height: 300px;
+.blog-images img {
   width: 100%;
-  border-radius: 5px;
-  object-fit: cover;
-  margin-bottom: 20px;
+  height: 100%;
+  object-fit: contain;    /* maintain full image, no cropping */
+  display: block;
 }
 
-/* Default paragraph styling in blog content */
+
+
+
+/* Blog Content */
 .blog-content p {
   font-size: 16px;
   color: #333;
   line-height: 1.8;
-  margin-bottom: 15px;
-  text-align: justify;
-}
-
-/* Ensure justification only in BlogDetail */
-.blog-main-card .blog-content p,
-.blog-paragraph {
-  text-align: justify !important;
-  line-height: 1.8;
   margin-bottom: 18px;
-  font-size: 16px;
-  color: #333;
+  text-align: justify;
   word-spacing: 1px;
 }
-.blog-content h1{
+
+.blog-content h1 {
   font-size: 24px;
   font-weight: bold;
+  color: #2e7d32;
   margin: 20px 0 10px;
-  color: #2e7d32; /* green tone */
 }
+
+/* Sidebar */
 .blog-sidebar {
   flex: 1;
 }
 
+/* Sidebar Sections */
 .sidebar-section {
   margin-bottom: 30px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-.search-input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-}
-
+/* Author Card */
 .author-card {
   text-align: left;
 }
 
 .author-card .author-img {
   width: 100%;
+  max-width: 300px;
+  height: 200px; /* fixed height */
+  object-fit: cover; /* crop nicely for author images */
   border-radius: 5px;
   margin-bottom: 15px;
 }
@@ -3582,72 +3675,38 @@ button:hover {
   line-height: 1.6;
 }
 
-
-
-.categories h4 {
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.categories li {
-  font-size: 14px;
-  color: #222;
-  margin-bottom: 8px;
-  cursor: pointer;
-}
-
-/* Scoped blog-specific card to avoid challenges conflicts */
-.blog-container .card {
+/* Top Foods Card */
+.top-foods-card {
   background: #fafafa;
   border: 1px solid #eee;
   padding: 20px;
   border-radius: 8px;
-  margin-bottom: 20px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-/* Scoped blog-specific category card */
-.blog-container .category-card {
-  display: inline-block;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: #e8f5e9;
-  border-left: 4px solid #4caf50;
-  font-weight: bold;
-  font-size: 14px;
-  text-transform: uppercase;
-  color: #2e7d32;
-  white-space: nowrap;
-  width: 200px;
-  height: 40px;
-}
-
-.top-foods-title {
+.top-foods-header {
   font-size: 19px;
-  font-weight: 100;
+  font-weight: 700;
   text-align: center;
   margin-bottom: 15px;
   border-bottom: 1px solid #000;
   padding-bottom: 5px;
-  align-items: flex-start;
-}
-.blog-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: green;
-  margin: 0; /* remove default margin */
-  position: relative;
-  top: 1px; /* move title slightly upward */
-  margin-bottom: 1px; /* space below the title */
 }
 
+.top-foods-list {
+  list-style: none;
+  padding: 0;
+}
 
-.food-divider {
-  border: none;
-  border-top: 1px solid #000;
-  margin: 5px 0;
-  gap: 2px;
+.top-foods-list li {
+  font-size: 14px;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+.food-rank {
+  font-weight: bold;
+  margin-right: 5px;
 }
 
 
@@ -3864,69 +3923,25 @@ button:hover {
 }
 
 /* Floating Psychologists Button */
-.floating-psychologists-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 60px;               /* equal width */
-  height: 60px;              /* equal height */
-  border-radius: 50% !important; /* force circle */
-  display: flex;             /* center icon */
-  align-items: center;
-  justify-content: center;
-  background-color: #fff;
-  border: 2px solid #28a745;
-  color: #28a745;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 9999;
-  transition: all 0.3s ease;
-  padding: 0 !important;     /* remove Bootstrap default padding */
-}
-
-.floating-psychologists-btn:hover {
-  background-color: #28a745;
-  color: #fff;
-}
-/* Floating Button */
-.floating-psychologists-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 60px;               /* equal width */
-  height: 60px;              /* equal height */
-  border-radius: 50% !important; /* force circle */
-  display: flex;             /* center icon */
-  align-items: center;
-  justify-content: center;
-  background-color: #fff;
-  border: 2px solid #28a745;
-  color: #28a745;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 9999;
-  transition: all 0.3s ease;
-  padding: 0 !important;     /* remove Bootstrap default padding */
-}
-
-.floating-psychologists-btn:hover {
-  background-color: #28a745;
-  color: #fff;
-}
+.floating-psychologists-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; /* equal width */ height: 60px; /* equal height */ border-radius: 50% !important; /* force circle */ display: flex; /* center icon */ align-items: center; justify-content: center; background-color: #fff; border: 2px solid #28a745; color: #28a745; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 9999; transition: all 0.3s ease; padding: 0 !important; /* remove Bootstrap default padding */ } 
+.floating-psychologists-btn:hover { background-color: #28a745; color: #fff; }
 
 /* Psychologist Card */
 .psychologist-card {
   display: flex;
+  flex-direction: row;   /* or column if you want image on top */
   align-items: center;
-  background-color: #f8f9fa;
+  background-color: #fff;
   padding: 12px 15px;
-  border-radius: 10px;
+  border-radius: 12px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .psychologist-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.12);
 }
 
 /* Left: Profile Picture */
@@ -3936,9 +3951,9 @@ button:hover {
   border-radius: 50%;        /* make it circular */
   overflow: hidden;          /* ensure img stays inside circle */
   flex-shrink: 0;            /* prevent shrinking */
-  margin-right: 25px;        /* push info to the right */
+  margin-right: 25px;   
+     /* push info to the right */
 }
-
 .psychologist-pic img {
   width: 100%;
   height: 100%;
@@ -3950,46 +3965,61 @@ button:hover {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;   /* vertically center text */
+  justify-content: center;
 }
+.specialization {
+  color: #333333;        /* semi-black (dark gray) */
+  font-weight: 400;      /* medium weight for emphasis */
+  margin-bottom: 5px;
+}
+
+.specialization strong {
+  color: inherit;        /* keeps "Specialization:" the same color */
+}
+
 
 .psychologist-info h5 {
   margin: 0 0 4px 0;
+  font-weight: 500;
+  font-size: 1rem;
+  color: #2e7d32; /* main green accent */
+}
+.psychologist-name {
+  font-size: 1.5rem; /* bigger name */
   font-weight: 600;
-  color: #2c3e50;
+  margin-bottom: 4px;
 }
 
-.psychologist-info p {
+.psychologist-contact-row {
+  display: flex;
+  justify-content: space-between; /* left and right align */
+  margin-top: 6px;
+}
+
+.contact-left p,
+.contact-right p {
   margin: 2px 0;
   font-size: 0.95rem;
   color: #555;
 }
-
-.psychologist-info a {
-  color: green;
+.contact-right{
+  margin-right: 170px;
+}
+.contact-left a {
+  color: #28a745;
   text-decoration: none;
 }
 
-.psychologist-info a:hover {
-  color: darkgreen;
+.contact-left a:hover {
   text-decoration: underline;
 }
 
-/* Optional: if using ListGroup variant */
-.psychologist-item {
-  display: flex;
-  align-items: center;
-  gap: 25px;                /* spacing between image and info */
-  padding: 12px 10px;
-  border-bottom: 1px solid #e0e0e0;
-}
 /* Modal Header Color */
 .modal-header {
   background-color: white; /* match floating button color */
   color: black;              /* make text readable */
   border-bottom: none;     
   
-  /* remove default border */
 }
 
  
@@ -4060,4 +4090,280 @@ button:hover {
 .notification-list {
   max-height: 300px;
   overflow-y: auto;
+}
+
+/* Setting */
+.settings-card {
+  max-width: 1400px; /* adjust this number */
+  margin: 0 auto; /* centers the card */
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  background: #fff;
+}
+/* Mobile styles */
+@media (max-width: 768px) {
+  .profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .settings-card {
+    width: 100% !important; /* full width on mobile */
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .btn-reset, .btn-save {
+    width: 100%; /* buttons full width on mobile */
+  }
+
+  .settings-grid {
+    flex-direction: column !important;
+  }
+
+  .setting-item {
+    min-width: 100% !important;
+  }
+}
+
+.profile-card{
+
+  max-width: 300px; /* adjust this number */
+  margin: 0 auto; /* centers the card */
+  padding: 30px;
+  border-radius: 100px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  background: #fff;
+  align-items: center;
+}
+
+.settings-header {
+  text-align: center;
+  margin-top: 80px;
+}
+
+.settings-header h1 {
+  color: #2c3e50;
+  margin-bottom: 5px;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.settings-header p {
+  color: #6c757d;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.settings-card {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  margin-bottom: 30px;
+  width: 1300px;
+}
+.profile-section img {
+  display: block;
+  margin: 0 auto;
+  align-items: center;
+
+}
+
+.settings-card h5 {
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #28a745;
+  padding-bottom: 8px;
+}
+
+.setting-item label {
+  font-weight: 500;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.setting-input,
+.setting-select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 15px;
+}
+
+.setting-input:focus,
+.setting-select:focus {
+  outline: none;
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40,167,69,0.1);
+}
+
+.setting-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  margin-bottom: 15px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-label {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle-label:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-label {
+  background-color: #28a745;
+}
+
+input:checked + .toggle-label:before {
+  transform: translateX(26px);
+}
+
+.btn-save,
+.btn-reset {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.btn-save {
+  background: #28a745;
+  color: #fff;
+}
+
+.btn-reset {
+  background: #ffc107;
+  color: #2c3e50;
+}
+
+.btn-save:hover {
+  background: #218838;
+}
+
+.btn-reset:hover {
+  background: #e0a800;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .user-settings {
+    padding: 20px 15px;
+  }
+
+  .settings-card {
+    padding: 20px;
+  }
+}
+/* Toggle switch container */
+.setting-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8f9fa;
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 1px solid #dee2e6;
+}
+
+/* Toggle wrapper */
+.toggle-switch {
+  position: relative;
+  width: 45px;
+  height: 24px;
+}
+
+/* Hide the checkbox */
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Slider track */
+.toggle-label {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  border-radius: 34px;
+  transition: 0.3s;
+}
+
+/* The circular knob */
+.toggle-label::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+/* Checked state */
+.toggle-switch input:checked + .toggle-label {
+  background-color: #28a745; /* green */
+}
+
+.toggle-switch input:checked + .toggle-label::before {
+  transform: translateX(21px);
+}
+
+/* Optional: hover effect */
+.toggle-label:hover {
+  background-color: #bdbdbd;
 }

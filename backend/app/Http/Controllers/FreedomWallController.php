@@ -30,8 +30,8 @@ class FreedomWallController extends Controller
                 'content' => $post->content,
                 'author' => $post->author,
                 'email' => $post->user ? $post->user->email : null,
-
                 'image_path' => $post->image_path,
+                'image_url' => $post->image_path ? 'http://127.0.0.1:8000' . Storage::url($post->image_path) : null,
                 'created_at' => $post->created_at,
                 'updated_at' => $post->updated_at,
                 'likes' => $reactionCounts['like'],
@@ -68,6 +68,10 @@ class FreedomWallController extends Controller
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('freedom-wall-images', 'public');
             $postData['image_path'] = $imagePath;
+            \Log::info('Image uploaded successfully', [
+                'image_path' => $imagePath,
+                'full_url' => Storage::url($imagePath)
+            ]);
         }
 
         $post = FreedomWallPost::create($postData);
@@ -80,6 +84,7 @@ class FreedomWallController extends Controller
             'author' => $post->author,
             'email' => $post->user ? $post->user->email : null,
             'image_path' => $post->image_path,
+            'image_url' => $post->image_path ? 'http://127.0.0.1:8000' . Storage::url($post->image_path) : null,
             'created_at' => $post->created_at,
             'likes' => $reactionCounts['like'],
             'hearts' => $reactionCounts['heart'],

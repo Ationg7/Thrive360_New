@@ -60,8 +60,13 @@ const Notifications = ({ onUnreadUpdate }) => {
       case 'reaction': return <Heart size={16} className="text-danger" />;
       case 'save': return <Bookmark size={16} className="text-success" />;
       case 'challenge_joined': return <CheckCircle size={16} className="text-primary" />;
+      case 'challenge_available': return <CheckCircle size={16} className="text-primary" />;
       case 'event': return <Calendar size={16} className="text-info" />;
-      case 'blog': return <Bell size={16} className="text-warning" />;
+      case 'event_available': return <Calendar size={16} className="text-info" />;
+      case 'blog': return <Bell size={17} className="text-warning" />;
+      case 'welcome': return <Bell size={16} className="text-success" />;
+      case 'getting_started': return <Bell size={16} className="text-info" />;
+      case 'password_reset_request': return <Bell size={16} className="text-warning" />;
       default: return <Bell size={16} className="text-muted" />;
     }
   };

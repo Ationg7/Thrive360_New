@@ -17,7 +17,7 @@ const ForgotPassword = () => {
 
   // OTP states
   const [showOtp, setShowOtp] = useState(false);
-  const [otp, setOtp] = useState(["", "", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const firstOtpRef = useRef(null);
 
   // Eye toggle states
@@ -27,8 +27,8 @@ const ForgotPassword = () => {
   // Snackbar visibility
   const [showSnackbar, setShowSnackbar] = useState(false);
 
-  // Handle sending OTP
-  const handleResend = (e) => {
+  // Handle requesting password reset code
+  const handleRequestCode = async (e) => {
     e.preventDefault();
     setError({});
     setSuccessMessage("");
@@ -38,7 +38,68 @@ const ForgotPassword = () => {
       return;
     }
 
-    setShowOtp(true);
+    try {
+      // Request a password reset code
+      const response = await fetch("http://127.0.0.1:8000/api/password-reset/request-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage("Password reset request sent to admin! You will receive the code shortly.");
+        setShowSnackbar(true);
+        setTimeout(() => setShowSnackbar(false), 3000);
+        
+        // Start checking for the code
+        checkForCode();
+      } else {
+        setError({ 
+          email: data.error || "Failed to send reset request. Please try again." 
+        });
+      }
+    } catch (error) {
+      console.error("Error requesting reset code:", error);
+      setError({ 
+        email: "Error sending reset request. Please try again." 
+      });
+    }
+  };
+
+  // Check for available code
+  const checkForCode = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/password-reset/check-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.has_pending_request && data.code) {
+        // Auto-fill the code if available
+        const codeArray = data.code.split('');
+        setOtp(codeArray);
+        setShowOtp(true);
+        setSuccessMessage("Reset code received! Please enter the code provided by admin.");
+        setShowSnackbar(true);
+        setTimeout(() => setShowSnackbar(false), 3000);
+      } else {
+        // Keep checking every 5 seconds
+        setTimeout(checkForCode, 5000);
+      }
+    } catch (error) {
+      console.error("Error checking for code:", error);
+      // Keep checking even if there's an error
+      setTimeout(checkForCode, 5000);
+    }
   };
 
   // Focus first OTP box when modal opens
@@ -63,21 +124,43 @@ const ForgotPassword = () => {
   };
 
   // Handle OTP verification
-  const handleOtpSubmit = () => {
-    if (otp.join("").length < 5) {
-      setError({ otp: "Please enter the full code" });
+  const handleOtpSubmit = async () => {
+    if (otp.join("").length < 6) {
+      setError({ otp: "Please enter the full 6-digit code" });
       return;
     }
-    setShowOtp(false);
-    setResetStage(true);
-    setSuccessMessage("OTP verified! You can reset your password.");
-    setShowSnackbar(true);
 
-    setTimeout(() => setShowSnackbar(false), 2000);
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/password-reset/verify-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          code: otp.join("")
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setShowOtp(false);
+        setResetStage(true);
+        setSuccessMessage("Code verified! You can now reset your password.");
+        setShowSnackbar(true);
+        setTimeout(() => setShowSnackbar(false), 2000);
+      } else {
+        setError({ otp: data.error || "Invalid or expired code" });
+      }
+    } catch (error) {
+      console.error("Error verifying code:", error);
+      setError({ otp: "Error verifying code. Please try again." });
+    }
   };
 
   // Handle password reset
-  const handleReset = (e) => {
+  const handleReset = async (e) => {
     e.preventDefault();
     setError({});
     setSuccessMessage("");
@@ -91,10 +174,34 @@ const ForgotPassword = () => {
       return;
     }
 
-    setSuccessMessage("Password successfully reset! Redirecting...");
-    setShowSnackbar(true);
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/password-reset/reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          code: otp.join(""),
+          password: password,
+          password_confirmation: confirm
+        }),
+      });
 
-    setTimeout(() => navigate("/SignIn"), 2000);
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage("Password successfully reset! Redirecting to login...");
+        setShowSnackbar(true);
+        setTimeout(() => navigate("/SignIn"), 2000);
+      } else {
+        console.error("Password reset error:", data);
+        setError({ general: data.error || data.message || "Failed to reset password" });
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      setError({ general: "Error resetting password. Please try again." });
+    }
   };
 
   return (
@@ -116,10 +223,10 @@ const ForgotPassword = () => {
           {!resetStage ? (
             <>
               <p className="description">
-                Enter your email address to receive password reset instructions.
+                Enter your email address to request a password reset code from admin.
               </p>
 
-              <form className="forgot-form" onSubmit={handleResend}>
+              <form className="forgot-form" onSubmit={handleRequestCode}>
                 <div className="form-group">
                   <label className="label-with-tooltip">
                     Email Address
@@ -137,7 +244,7 @@ const ForgotPassword = () => {
                 </div>
 
                 <button className="register-btn" type="submit" style={{ marginTop: "20px" }}>
-                  Resend
+                  Request Reset Code
                 </button>
               </form>
 
@@ -214,7 +321,7 @@ const ForgotPassword = () => {
           <div className="otp-container">
             <span className="otp-close" onClick={() => setShowOtp(false)}>×</span>
             <h3>Enter Verification Code</h3>
-            <p>We sent a code to your email</p>
+            <p>Enter the 6-digit code provided by admin</p>
 
 <div className="otp-inputs">
   {otp.map((digit, index) => (
@@ -268,7 +375,7 @@ const ForgotPassword = () => {
         .label-with-tooltip { display: flex; align-items: center; gap: 6px; font-weight: 500; }
         .password-container { position: relative; }
         .eye-icon { position: absolute; right: 10px; top: 52px; transform: translateY(-50%); cursor: pointer; }
-        .snackbar { visibility: visible; min-width: 280px; background-color: white; color: #28a745; text-align: center; border-radius: 8px; padding: 14px 24px; position: fixed; top: 20px; right: 20px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-weight: 500; opacity: 0; transform: translateY(-20px); animation: slideIn 0.3s forwards, fadeOut 0.3s 1.7s forwards; }
+        .snackbar { visibility: visible; min-width: 280px; background-color: white; color: black; text-align: center; border-radius: 8px; padding: 14px 24px; position: fixed; top: 20px; right: 20px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-weight: 500; opacity: 0; transform: translateY(-20px); animation: slideIn 0.3s forwards, fadeOut 0.3s 1.7s forwards; }
         @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
 

@@ -67,7 +67,7 @@ const Meditation = () => {
   const getImageUrl = (image) => {
     if (!image) return "https://via.placeholder.com/600x400?text=Meditation";
     if (image.startsWith("http")) return image;
-    return `${BASE_URL}${image}`;
+    return `${BASE_URL}/storage/${image}`;
   };
 
   // ✅ Fetch backend and merge with hardcoded
@@ -83,6 +83,11 @@ const Meditation = () => {
           category: m.category || "Meditation",
           description: m.description,
           image: getImageUrl(m.image_url || m.image),
+          steps: m.tutorial_steps ? (Array.isArray(m.tutorial_steps) ? m.tutorial_steps : JSON.parse(m.tutorial_steps || '[]')).map(step => ({
+            step: step.step,
+            title: step.title,
+            img: step.image_url ? getImageUrl(step.image_url) : null
+          })) : []
         }));
 
         const meditationData = [...hardcodedGuides.Meditation, ...mapped];

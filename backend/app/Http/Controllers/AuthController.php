@@ -33,6 +33,65 @@ class AuthController extends Controller
                 'is_active' => true,  // Set default active status
             ]);
 
+            // Create welcome notifications for new user
+            try {
+                \App\Models\Notification::createNotification(
+                    $user->id,
+                    'welcome',
+                    'Welcome to Thrive360!',
+                    'Welcome to Thrive360! We\'re excited to have you join our community. Start exploring challenges, events, and connect with others.',
+                    [
+                        'redirect_url' => url('/home')
+                    ]
+                );
+
+                \App\Models\Notification::createNotification(
+                    $user->id,
+                    'getting_started',
+                    'Getting Started Guide',
+                    'Check out our getting started guide to learn about all the features available to you.',
+                    [
+                        'redirect_url' => url('/guide-detail')
+                    ]
+                );
+
+                // Notify about available challenges
+                $activeChallenges = \App\Models\Challenge::where('is_active', true)->count();
+                if ($activeChallenges > 0) {
+                    \App\Models\Notification::createNotification(
+                        $user->id,
+                        'challenge_available',
+                        'Challenges Available',
+                        "There are {$activeChallenges} active challenges waiting for you! Start your wellness journey today.",
+                        [
+                            'redirect_url' => url('/challenges')
+                        ]
+                    );
+                }
+
+                // Notify about upcoming events
+                $upcomingEvents = \App\Models\Event::where('is_active', true)
+                    ->where('start_date', '>', now())
+                    ->count();
+                if ($upcomingEvents > 0) {
+                    \App\Models\Notification::createNotification(
+                        $user->id,
+                        'event_available',
+                        'Upcoming Events',
+                        "There are {$upcomingEvents} upcoming events you can join. Don't miss out!",
+                        [
+                            'redirect_url' => url('/home')
+                        ]
+                    );
+                }
+
+            } catch (\Exception $e) {
+                \Log::error('Failed to create welcome notifications', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             // Create token for the user
             $token = $user->createToken('auth-token')->plainTextToken;
 

@@ -1,0 +1,206 @@
+import React, { useState, useEffect } from 'react';
+import { Form, Button, Card } from 'react-bootstrap';
+import { Save, Shield, Eye, EyeOff, X } from 'lucide-react';
+import { useAuth } from '../AuthContext';
+import Avatar from '../Components/Avatar';
+import '../App.css';
+import './AdminSettings.css'; // ✅ uses the same CSS toggle styles as admin
+
+const Settings = () => {
+  const { user, isLoggedIn } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  const [profileData, setProfileData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailNotifications: true,
+    pushNotifications: true,
+    eventReminders: true,
+    challengeUpdates: true,
+    postReactions: true
+  });
+
+  useEffect(() => {
+    if (user) {
+      setProfileData(prev => ({ ...prev }));
+    }
+  }, [user]);
+
+  if (!isLoggedIn) {
+    return (
+      <Card className="settings-card text-center">
+        <Card.Body>
+          <h3>Please log in to access settings</h3>
+          <p>You need to be logged in to view and modify your settings.</p>
+        </Card.Body>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="admin-settings">
+      {/* Settings Header */}
+      <div className="settings-header mb-4">
+        <h1>Settings</h1>
+        <p>Manage your profile, password, and notifications</p>
+      </div>
+
+  {/* Profile Section */}
+<div className="profile-section  d-flex flex-column align-items-center text-center">
+  <Avatar
+    email={user?.email}
+    name={user?.name}
+    size={120}
+    customAvatar={user?.avatar_url}
+  />
+  <p className="mt-3 fw-bold">{user?.name}</p>
+  <p className="text-muted">{user?.email}</p>
+</div>
+
+      {/* Change Password */}
+      <Card className="settings-card mt-4">
+        <h5>Change Password</h5>
+        <Form>
+          <Form.Group className="mb-3">
+            <Form.Label>Current Password</Form.Label>
+            <div className="position-relative">
+              <Form.Control
+                type={showPassword ? 'text' : 'password'}
+                className="setting-input"
+                value={profileData.currentPassword}
+                onChange={e =>
+                  setProfileData(prev => ({
+                    ...prev,
+                    currentPassword: e.target.value
+                  }))
+                }
+                placeholder="Enter current password"
+              />
+              <Button
+                variant="link"
+                className="position-absolute end-0 top-50 translate-middle-y"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ border: 'none', padding: '0.375rem' }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </Button>
+            </div>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>New Password</Form.Label>
+            <Form.Control
+              type="password"
+              className="setting-input"
+              value={profileData.newPassword}
+              onChange={e =>
+                setProfileData(prev => ({
+                  ...prev,
+                  newPassword: e.target.value
+                }))
+              }
+              placeholder="Enter new password"
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Confirm New Password</Form.Label>
+            <div className="position-relative">
+              <Form.Control
+                type={showConfirmPassword ? 'text' : 'password'}
+                className="setting-input"
+                value={profileData.confirmPassword}
+                onChange={e =>
+                  setProfileData(prev => ({
+                    ...prev,
+                    confirmPassword: e.target.value
+                  }))
+                }
+                placeholder="Confirm new password"
+              />
+              <Button
+                variant="link"
+                className="position-absolute end-0 top-50 translate-middle-y"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{ border: 'none', padding: '0.375rem' }}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </Button>
+            </div>
+          </Form.Group>
+
+          <Button type="submit" className="btn-reset">
+            <Shield size={18} className="me-2" />
+            Change Password
+          </Button>
+        </Form>
+      </Card>
+
+      {/* Notifications */}
+      <Card className="settings-card mt-4">
+        <h5>Notifications</h5>
+        <div className="settings-grid">
+          {Object.keys(notificationSettings).map(key => (
+            <div className="setting-item setting-toggle" key={key}>
+              <label className="fw-semibold">
+                {key
+                  .replace(/([A-Z])/g, ' $1')
+                  .replace(/^./, str => str.toUpperCase())}
+              </label>
+
+              <div className="toggle-switch">
+                <input
+                  type="checkbox"
+                  id={key}
+                  checked={notificationSettings[key]}
+                  onChange={e =>
+                    setNotificationSettings(prev => ({
+                      ...prev,
+                      [key]: e.target.checked
+                    }))
+                  }
+                />
+                <label htmlFor={key} className="toggle-label"></label>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Button className="btn-save mt-3">
+          <Save size={18} className="me-2" />
+          Save Notifications
+        </Button>
+      </Card>
+
+      {/* ✅ Modal Section */}
+      {showModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowModal(false)} // click outside closes modal
+        >
+          <div
+            className="modal-content"
+            onClick={e => e.stopPropagation()} // prevent closing when clicking inside
+          >
+            <button
+              className="modal-close"
+              onClick={() => setShowModal(false)}
+            >
+              <X size={22} />
+            </button>
+            <h4>Edit Profile</h4>
+            <p>This is an example modal with clickable background.</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Settings;

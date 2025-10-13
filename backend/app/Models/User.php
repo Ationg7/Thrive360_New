@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'role',
         'is_active',
+        'avatar_url',
     ];
 
     /**
@@ -92,5 +93,10 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Event::class, 'event_participants')
                     ->withTimestamps();
+    }
+
+    public function passwordResetCodes()
+    {
+        return $this->hasMany(PasswordResetCode::class, 'email', 'email');
     }
 }

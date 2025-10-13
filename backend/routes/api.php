@@ -69,6 +69,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     
+    // User profile routes
+    Route::put('/user/profile', [UserController::class, 'updateProfile']);
+    Route::post('/user/change-password', [UserController::class, 'changePassword']);
+    Route::post('/user/avatar', [UserController::class, 'updateAvatar']);
+    Route::post('/user/upload-avatar', [UserController::class, 'uploadAvatar']);
+    Route::delete('/user/remove-avatar', [UserController::class, 'removeAvatar']);
+    Route::get('/user/notification-settings', [UserController::class, 'getNotificationSettings']);
+    Route::put('/user/notification-settings', [UserController::class, 'updateNotificationSettings']);
+    Route::get('/user/privacy-settings', [UserController::class, 'getPrivacySettings']);
+    Route::put('/user/privacy-settings', [UserController::class, 'updatePrivacySettings']);
+    
     // Event protected routes
     Route::post('/events', [EventController::class, 'store']);
     Route::put('/events/{id}', [EventController::class, 'update']);
@@ -110,6 +121,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/psychiatrists/{id}', [AdminController::class, 'deletePsychiatrist']);
         Route::put('/psychiatrists/{id}/availability', [AdminController::class, 'updatePsychiatristAvailability']);
 
+        // Password Reset Code Management routes (temporarily moved outside admin middleware for testing)
+        // Route::get('/password-reset-requests', [AdminController::class, 'getPasswordResetRequests']);
+        // Route::post('/generate-password-reset-code', [AdminController::class, 'generatePasswordResetCode']);
+
         // --- Admin Challenge Routes ---
         Route::get('/challenges', [AdminChallengeController::class, 'index']);
         Route::post('/challenges', [AdminChallengeController::class, 'store']);
@@ -134,6 +149,22 @@ Route::prefix('admin')->group(function () {
     Route::get('/psychiatrists/active', [AdminController::class, 'getActivePsychiatrists']);
 });
 
+// Public password reset routes
+Route::prefix('password-reset')->group(function () {
+    Route::post('/request-code', [AdminController::class, 'requestPasswordResetCode']);
+    Route::post('/check-request', [AdminController::class, 'checkPasswordResetRequest']);
+    Route::post('/verify-code', [AdminController::class, 'verifyPasswordResetCode']);
+    Route::post('/reset', [AdminController::class, 'resetPassword']);
+});
+
+// Temporary public admin routes for testing (remove in production)
+Route::get('/admin/password-reset-requests', [AdminController::class, 'getPasswordResetRequests']);
+Route::post('/admin/generate-password-reset-code', [AdminController::class, 'generatePasswordResetCode']);
+
+// Notification management routes
+Route::post('/admin/send-notification-to-all', [AdminController::class, 'sendNotificationToAllUsers']);
+Route::post('/admin/ensure-all-users-notifications', [AdminController::class, 'ensureAllUsersHaveNotifications']);
+
 // Test route
 Route::get('/test-db', function () {
     try {
@@ -149,4 +180,5 @@ Route::get('/test-db', function () {
         ], 500);
     }
 });
+
 

@@ -36,6 +36,7 @@ export const ROUTES = {
   PSYCHIATRISTS: '/admin/psychiatrists',
   SETTINGS: '/admin/settings',
   EVENTS_MANAGEMENT: '/admin/events',
+  PASSWORD_RESET: '/admin/password-reset',
 };
 
 export const COLORS = {
@@ -85,5 +86,5 @@ export const NAVIGATION_BUTTONS = [
   { id: 'reports', label: 'Reports', color: COLORS.INFO, route: ROUTES.REPORTS, badge: 0 },
   { id: 'psychiatrists', label: 'Psychiatrists', color: '#16a085', route: ROUTES.PSYCHIATRISTS, badge: 0 },
   { id: 'events', label: 'Events', color: COLORS.PURPLE, route: ROUTES.EVENTS_MANAGEMENT, badge: 0 },
-
+  { id: 'password-reset', label: 'Password Reset', color: '#ff6b35', route: ROUTES.PASSWORD_RESET, badge: 0 },
 ];

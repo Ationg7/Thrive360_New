@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Button } from "react-bootstrap";
 
-const FloatingPopup = ({ show, onHide, message, duration = 2000 }) => {
+const FloatingPopup = ({ show, onHide,  duration = 2000 }) => {
   const [displayMessage, setDisplayMessage] = useState("");
 
   const comfortingMessages = [

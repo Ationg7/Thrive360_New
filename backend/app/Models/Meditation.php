@@ -14,11 +14,13 @@ class Meditation extends Model
         'description',
         'duration',
         'category',
-        'image_url'
+        'image_url',
+        'tutorial_steps'
     ];
 
     protected $casts = [
         'duration' => 'integer',
+        'tutorial_steps' => 'array',
     ];
 
     // Category options
