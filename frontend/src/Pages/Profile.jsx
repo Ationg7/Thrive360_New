@@ -47,6 +47,7 @@ const Profile = () => {
   const [showUndo, setShowUndo] = useState(false);
    const [showChangePhoto, setShowChangePhoto] = useState(false); // <-- new state
    const [showNoReasonModal, setShowNoReasonModal] = useState(false);
+  const [profileCoverUrl, setProfileCoverUrl] = useState(() => localStorage.getItem('profileCoverUrl') || null);
 
   const reportReasons = [
     { value: "spam", label: "Spam or misleading" },
@@ -357,6 +358,14 @@ const loadPosts = async (filter = "my-posts") => {
   useEffect(() => { if (user?.email) localStorage.setItem("userEmail", user.email); }, [user]);
   useEffect(() => { loadEvents(); }, []);
   
+  useEffect(() => {
+    const onCoverUpdated = (e) => {
+      const url = e?.detail?.url || localStorage.getItem('profileCoverUrl');
+      if (url) setProfileCoverUrl(url);
+    };
+    window.addEventListener('profile-cover-updated', onCoverUpdated);
+    return () => window.removeEventListener('profile-cover-updated', onCoverUpdated);
+  }, []);
 
 
   return (
@@ -366,7 +375,7 @@ const loadPosts = async (filter = "my-posts") => {
           <Card className="profile-header position-relative">
             <Card.Img
               variant="top"
-              src="../public/images/k.jpg"
+              src={profileCoverUrl || user?.profile_cover_url || "../public/images/k.jpg"}
               className="profile-cover"
             />
             <Dropdown

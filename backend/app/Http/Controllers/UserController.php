@@ -87,6 +87,25 @@ class UserController extends Controller
         ]);
     }
 
+    public function setProfileCover(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'profile_cover_url' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = auth()->user();
+        $user->update(['profile_cover_url' => $request->profile_cover_url]);
+
+        return response()->json([
+            'message' => 'Profile cover updated successfully',
+            'profile_cover_url' => $user->profile_cover_url
+        ]);
+    }
+
     public function uploadAvatar(Request $request)
     {
         $validator = Validator::make($request->all(), [

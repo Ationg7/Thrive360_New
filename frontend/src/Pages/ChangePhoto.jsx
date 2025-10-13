@@ -1,89 +1,69 @@
 import React, { useState, useEffect } from "react";
 import { Card, Button, Row, Col } from "react-bootstrap";
 import { X, Check } from "lucide-react";
-import { useAuth } from "../AuthContext";
-import Avatar from "../Components/Avatar";
 
 const ChangePhoto = ({ closeModal }) => {
-  const { user, updateUser } = useAuth();
-  const [currentAvatar, setCurrentAvatar] = useState(null);
+  const [/* user not needed for cover */, /* setUser */] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showNotification, setShowNotification] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [fadeOut, setFadeOut] = useState(false);
+  const [covers, setCovers] = useState([]);
+  const [selectedCover, setSelectedCover] = useState(null);
 
-  const avatarOptions = [
-    { id: 1, url: "https://ui-avatars.com/api/?name=Avatar+1&background=4CAF50&color=fff&size=100" },
-    { id: 2, url: "https://ui-avatars.com/api/?name=Avatar+2&background=2196F3&color=fff&size=100" },
-    { id: 3, url: "https://ui-avatars.com/api/?name=Avatar+3&background=FF9800&color=fff&size=100" },
-    { id: 4, url: "https://ui-avatars.com/api/?name=Avatar+4&background=9C27B0&color=fff&size=100" },
-    { id: 5, url: "https://ui-avatars.com/api/?name=Avatar+5&background=F44336&color=fff&size=100" },
-    { id: 6, url: "https://ui-avatars.com/api/?name=Avatar+6&background=00BCD4&color=fff&size=100" },
-  ];
+  const toImageUrl = (img) => {
+    if (!img) return null;
+    if (typeof img !== 'string') return null;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    return `http://127.0.0.1:8000${img.startsWith('/storage') ? '' : '/storage/'}${img.replace(/^\/?storage\//, '')}`;
+  };
 
   useEffect(() => {
-    if (user?.avatar_url) setCurrentAvatar(user.avatar_url);
-  }, [user]);
+    // Preselect from saved cover if present
+    const saved = localStorage.getItem('profileCoverUrl');
+    if (saved && !selectedCover) setSelectedCover(saved);
 
-  const handleAvatarSelect = async (avatarUrl) => {
-    if (uploading) return;
-    setUploading(true);
-    try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch("http://127.0.0.1:8000/api/user/avatar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ avatar_url: avatarUrl }),
-      });
-
-      if (response.ok) {
-        setCurrentAvatar(avatarUrl);
-        updateUser({ ...user, avatar_url: avatarUrl });
-        setShowNotification("success");
-      } else {
-        const error = await response.json();
-        setErrorMessage(error.message || "Failed to update avatar");
-        setShowNotification("error");
+    // Load admin profile covers
+    (async () => {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/admin/profile-covers');
+        if (res.ok) {
+          const data = await res.json();
+          setCovers(Array.isArray(data) ? data : []);
+          if (!saved && !selectedCover && Array.isArray(data) && data.length > 0) {
+            const first = toImageUrl(data[0].url || data[0].path);
+            setSelectedCover(first);
+          }
+        }
+      } catch (e) {
+        // ignore silently
       }
-    } catch {
-      setErrorMessage("An error occurred while updating avatar");
-      setShowNotification("error");
-    } finally {
-      setUploading(false);
-      setTimeout(() => setShowNotification(null), 3000);
-    }
+    })();
+  }, [selectedCover]);
+
+  const handleCoverSelect = (coverUrl) => {
+    setSelectedCover(coverUrl);
   };
 
-  const handleRemoveAvatar = async () => {
-    if (uploading) return;
-    setUploading(true);
+  // Avatar actions removed; ChangePhoto now only manages profile cover
+
+  const handleDone = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch("http://127.0.0.1:8000/api/user/remove-avatar", {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.ok) {
-        setCurrentAvatar(null);
-        updateUser({ ...user, avatar_url: null });
-        setShowNotification("success");
-      } else {
-        const error = await response.json();
-        setErrorMessage(error.message || "Failed to remove avatar");
-        setShowNotification("error");
+      if (selectedCover) {
+        const token = localStorage.getItem('authToken');
+        await fetch('http://127.0.0.1:8000/api/user/profile-cover', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ profile_cover_url: selectedCover })
+        }).catch(() => {});
+        // Persist the selected cover locally for immediate UX and reloads
+        localStorage.setItem('profileCoverUrl', selectedCover);
+        const event = new CustomEvent('profile-cover-updated', { detail: { url: selectedCover } });
+        window.dispatchEvent(event);
       }
-    } catch {
-      setErrorMessage("An error occurred while removing avatar");
-      setShowNotification("error");
     } finally {
-      setUploading(false);
-      setTimeout(() => setShowNotification(null), 3000);
+      handleClose();
     }
-  };
-
-  const handleDone = () => {
-    handleClose();
   };
 
   const handleClose = () => {
@@ -120,80 +100,63 @@ const ChangePhoto = ({ closeModal }) => {
         >
           {/* Header */}
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5 className="m-0">Change Photo</h5>
+            <h5 className="m-0">Change Cover Photo</h5>
             <Button variant="light" className="rounded-circle p-0" style={{ width: "35px", height: "35px" }} onClick={handleClose}>
               <X size={20} />
             </Button>
           </div>
 
-        {/* Current Avatar */}
-<div className="text-center mb-4">
-  <div style={{ position: "relative", display: "inline-block" }}>
-    <Avatar email={user?.email} size={100} customAvatar={currentAvatar} />
-    {currentAvatar && (
-      <Button
-        variant="light"
-        className="position-absolute top-0 end-0 rounded-circle border"
-        style={{
-          width: "28px",
-          height: "28px",
-          padding: 0,
-          backgroundColor: "rgba(255,255,255,0.9)",
-          transform: "translate(25%, -25%)", // slightly outside the top-right corner
-        }}
-        onClick={handleRemoveAvatar}
-        disabled={uploading}
-      >
-        <X size={16} />
-      </Button>
-    )}
-  </div>
-  <p className="text-muted mt-2">{currentAvatar ? "Custom avatar" : "Default avatar"}</p>
-</div>
+          {/* Current Avatar removed: this modal is for cover selection only */}
 
-          {/* Avatar Options */}
+          {/* Admin Profile Covers */}
           <div className="mb-4 p-3 border rounded-4 bg-light">
-            <h5 className="fw-semibold text-center mb-3">Choose from Predefined Avatars</h5>
+            <h5 className="fw-semibold text-center mb-3">Choose a Profile Cover</h5>
             <Row className="g-3 justify-content-center">
-              {avatarOptions.map((avatar) => (
-                <Col xs={4} sm={4} md={4} key={avatar.id} className="d-flex justify-content-center">
-                  <div
-                    onClick={() => handleAvatarSelect(avatar.url)}
-                    className="d-flex align-items-center justify-content-center"
-                    style={{
-                      cursor: uploading ? "not-allowed" : "pointer",
-                      borderRadius: "50%",
-                      border: currentAvatar === avatar.url ? "3px solid #28a745" : "1px solid #dee2e6",
-                      padding: "5px",
-                      position: "relative",
-                      transition: "all 0.2s",
-                      width: "80px",
-                      height: "80px",
-                    }}
-                  >
-                    <img src={avatar.url} alt="" className="img-fluid rounded-circle" style={{ width: "65px", height: "65px", objectFit: "cover" }} />
-                    {currentAvatar === avatar.url && (
-                      <div className="position-absolute top-0 end-0 bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: "18px", height: "18px" }}>
-                        <Check size={12} />
-                      </div>
-                    )}
-                  </div>
-                </Col>
-              ))}
+              {(covers || []).map((c, idx) => {
+                const url = toImageUrl(c.url || c.path);
+                const active = selectedCover === url;
+                return (
+                  <Col xs={6} sm={4} md={4} key={idx} className="d-flex justify-content-center">
+                    <div
+                      onClick={() => handleCoverSelect(url)}
+                      className="d-flex align-items-center justify-content-center"
+                      style={{
+                        cursor: uploading ? "not-allowed" : "pointer",
+                        borderRadius: "8px",
+                        border: active ? "3px solid #28a745" : "1px solid #dee2e6",
+                        position: "relative",
+                        transition: "all 0.2s",
+                        width: "100%",
+                        height: "80px",
+                        overflow: "hidden"
+                      }}
+                    >
+                      <img src={url} alt="cover" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      {active && (
+                        <div className="position-absolute top-0 end-0 bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: "18px", height: "18px" }}>
+                          <Check size={12} />
+                        </div>
+                      )}
+                    </div>
+                  </Col>
+                );
+              })}
             </Row>
           </div>
 
+          {/* Avatar Options removed */}
+
           {/* Done Button */}
           <div className="text-end">
-  <Button
-    variant="success"
-    onClick={handleDone}
-    disabled={uploading}
-    style={{ width: "30%",  height: "20%"}} // full width of parent
-  >
-    Done
-  </Button>
-</div>
+            <Button
+              variant="success"
+              onClick={handleDone}
+              disabled={uploading}
+              style={{ width: "30%",  height: "20%"}}
+            >
+              Done
+            </Button>
+          </div>
 
         </Card>
       </div>
@@ -208,21 +171,11 @@ const ChangePhoto = ({ closeModal }) => {
             zIndex: 9999,
             minWidth: "250px",
             maxWidth: "400px",
-            padding: "14px 20px",
-            borderRadius: "0 6px 6px 0",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            backgroundColor: "#20201F",
-            borderLeft: showNotification === "success" ? "4px solid green" : "4px solid red",
-            color: "#fff",
-            fontWeight: 600,
+            transition: "opacity 0.3s ease",
           }}
+          className={`alert ${showNotification === "success" ? "alert-success" : "alert-danger"}`}
         >
-          <span>{showNotification === "success" ? "Profile photo updated successfully!" : errorMessage}</span>
-          <span style={{ cursor: "pointer", color: "rgb(138,180,248)" }} onClick={() => setShowNotification(null)}>
-            X
-          </span>
+          {showNotification === "success" ? "Success!" : errorMessage || "Something went wrong."}
         </div>
       )}
     </>

@@ -15,7 +15,8 @@ export const API_ENDPOINTS = {
   UPLOAD_CHALLENGE: 'http://127.0.0.1:8000/api/admin/challenges', // matches Laravel store route
   UPLOAD_MEDITATION: 'http://127.0.0.1:8000/api/admin/meditation', // matches Laravel storeMeditation
   UPLOAD_BLOG: 'http://127.0.0.1:8000/api/admin/blogs', // matches your backend
-  UPLOAD_EVENT: 'http://127.0.0.1:8000/api/events'
+  UPLOAD_EVENT: 'http://127.0.0.1:8000/api/events',
+  PROFILE_COVERS: 'http://127.0.0.1:8000/api/admin/profile-covers'
 };
 
 export const STORAGE_KEYS = {
@@ -37,6 +38,7 @@ export const ROUTES = {
   SETTINGS: '/admin/settings',
   EVENTS_MANAGEMENT: '/admin/events',
   PASSWORD_RESET: '/admin/password-reset',
+  PROFILE_COVERS: '/admin/profile-covers'
 };
 
 export const COLORS = {
@@ -87,4 +89,5 @@ export const NAVIGATION_BUTTONS = [
   { id: 'psychiatrists', label: 'Psychiatrists', color: '#16a085', route: ROUTES.PSYCHIATRISTS, badge: 0 },
   { id: 'events', label: 'Events', color: COLORS.PURPLE, route: ROUTES.EVENTS_MANAGEMENT, badge: 0 },
   { id: 'password-reset', label: 'Password Reset', color: '#ff6b35', route: ROUTES.PASSWORD_RESET, badge: 0 },
+  { id: 'profile-covers', label: 'Profile Cover', color: COLORS.INFO, route: ROUTES.PROFILE_COVERS, badge: 0 },
 ];

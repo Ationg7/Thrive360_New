@@ -53,6 +53,13 @@ const Events = ({ hideHeader = false }) => {
     }
   };
 
+  const toImageUrl = (img) => {
+    if (!img) return null;
+    if (typeof img !== 'string') return null;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    return `http://127.0.0.1:8000/storage/${img}`;
+  };
+
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -91,10 +98,10 @@ const Events = ({ hideHeader = false }) => {
                       {event.category}
                     </Badge>
                   </div>
-                  {event.image_path && (
+                  {toImageUrl(event.image_url || event.image_path) && (
                     <div className="mb-2">
                       <img
-                        src={`http://127.0.0.1:8000/storage/${event.image_path}`}
+                        src={toImageUrl(event.image_url || event.image_path)}
                         alt={event.title}
                         className="img-fluid rounded"
                         style={{ maxWidth: '100%', maxHeight: '120px', objectFit: 'cover' }}
@@ -153,10 +160,10 @@ const Events = ({ hideHeader = false }) => {
                         </Badge>
                       )}
                     </div>
-{event.image_path && (
+{toImageUrl(event.image_url || event.image_path) && (
   <div className="mb-2">
     <img
-      src={`http://127.0.0.1:8000/storage/${event.image_path}`}
+      src={toImageUrl(event.image_url || event.image_path)}
       alt={event.title}
       className="img-fluid rounded"
       style={{

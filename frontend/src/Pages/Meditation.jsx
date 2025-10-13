@@ -139,12 +139,14 @@ const Meditation = () => {
   };
 
   // ✅ Search filter
-  const filteredGuides = guides[activeTab].filter(
-    (guide) =>
-      guide.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      guide.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      guide.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredGuides = (guides[activeTab] || []).filter((guide) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      (guide.title || "").toLowerCase().includes(term) ||
+      (guide.category || "").toLowerCase().includes(term) ||
+      (guide.description || "").toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="meditation-page">
@@ -174,16 +176,10 @@ const Meditation = () => {
           </div>
         </div>
 
-       {/* 🔹 Guides Grid */}
+      {/* 🔹 Guides Grid */}
 <div className="guide-grid">
-  {(guides[activeTab] || []).filter(guide =>
-    guide.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    guide.description.toLowerCase().includes(searchTerm.toLowerCase())
-  ).length > 0 ? (
-    (guides[activeTab] || []).filter(guide =>
-      guide.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      guide.description.toLowerCase().includes(searchTerm.toLowerCase())
-    ).map((guide, index) => (
+  {filteredGuides.length > 0 ? (
+    filteredGuides.map((guide, index) => (
       <Card
         key={index}
         className={`meditation-card guide-card ${!isLoggedIn ? "meditation-card-guest" : ""}`}

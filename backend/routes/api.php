@@ -75,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/avatar', [UserController::class, 'updateAvatar']);
     Route::post('/user/upload-avatar', [UserController::class, 'uploadAvatar']);
     Route::delete('/user/remove-avatar', [UserController::class, 'removeAvatar']);
+        Route::post('/user/profile-cover', [UserController::class, 'setProfileCover']);
     Route::get('/user/notification-settings', [UserController::class, 'getNotificationSettings']);
     Route::put('/user/notification-settings', [UserController::class, 'updateNotificationSettings']);
     Route::get('/user/privacy-settings', [UserController::class, 'getPrivacySettings']);
@@ -135,6 +136,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/events', [EventController::class, 'store']);
         Route::put('/events/{id}', [EventController::class, 'update']);
         Route::delete('/events/{id}', [EventController::class, 'destroy']);
+
+        // --- Admin Profile Covers ---
+        Route::post('/profile-covers', [AdminController::class, 'uploadProfileCover']);
+        Route::get('/profile-covers', [AdminController::class, 'getProfileCovers']);
+        Route::delete('/profile-covers/{id}', [AdminController::class, 'deleteProfileCover']);
     });
 });
 
@@ -147,6 +153,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/blogs', [AdminController::class, 'getBlogs']);
     Route::get('/meditation', [AdminController::class, 'getMeditations']);
     Route::get('/psychiatrists/active', [AdminController::class, 'getActivePsychiatrists']);
+        Route::get('/profile-covers', [AdminController::class, 'getProfileCovers']);
 });
 
 // Public password reset routes

@@ -41,6 +41,7 @@ import AdminBlogs from "./Pages/AdminBlogs";
 import AdminSettings from "./Pages/AdminSettings";
 import AdminEvents from "./Pages/AdminEvents";
 import AdminPasswordReset from "./Pages/AdminPasswordReset";
+import AdminProfileCovers from "./Pages/AdminProfileCovers";
 import Settings from "./Pages/Settings";
 import ChangePhoto from "./Pages/ChangePhoto";
 
@@ -66,6 +67,7 @@ function Layout() {
     "/admin/settings",
     "/admin/events",
     "/admin/password-reset",
+    "/admin/profile-covers",
   ];
   const noNavbarRoutes = ["/dashboard"];
   const noFooterRoutes = [
@@ -83,6 +85,7 @@ function Layout() {
     "/admin/settings",
     "/admin/events",
     "/admin/password-reset",
+    "/admin/profile-covers",
   ];
 
   const pathname = location.pathname.toLowerCase();
@@ -175,6 +178,7 @@ const router = createBrowserRouter([
       { path: "admin/settings", element: <AdminSettings /> },
       { path: "admin/events", element: <AdminEvents /> },
       { path: "admin/password-reset", element: <AdminPasswordReset /> },
+      { path: "admin/profile-covers", element: <AdminProfileCovers /> },
 
     ],
   },

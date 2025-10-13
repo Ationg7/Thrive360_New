@@ -20,7 +20,7 @@ const AdminMeditation = memo(() => {
     title: '',
     description: '',
     duration: '',
-    category: 'meditation',
+    category: 'Meditation',
     imageFile: null,
     tutorialSteps: [
       { step: 1, title: '', description: '', imageFile: null },
@@ -89,6 +89,13 @@ const AdminMeditation = memo(() => {
         [fileType]: file
       }));
     }
+  };
+
+  const toImageUrl = (img) => {
+    if (!img) return null;
+    if (typeof img !== 'string') return null;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    return `http://127.0.0.1:8000/storage/${img}`;
   };
 
   // Handle tutorial step changes
@@ -327,8 +334,8 @@ const AdminMeditation = memo(() => {
             {filteredMeditations.map((meditation) => (
               <div key={meditation.id} className="meditation-card">
                 <div className="meditation-image">
-                  {meditation.image_url ? (
-                    <img src={`http://127.0.0.1:8000/storage/${meditation.image_url}`} alt={meditation.title} />
+                  {toImageUrl(meditation.image_url) ? (
+                    <img src={toImageUrl(meditation.image_url)} alt={meditation.title} />
                   ) : (
                     <div className="meditation-placeholder">🧘‍♀️</div>
                   )}

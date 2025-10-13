@@ -812,6 +812,45 @@ foreach ($users as $user) {
         }
     }
 
+    // --- Profile Cover Management (storage/public/profile-covers) ---
+    public function uploadProfileCover(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'cover' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $path = \Illuminate\Support\Facades\Storage::disk('public')->putFile('profile-covers', $request->file('cover'));
+        $url = \Illuminate\Support\Facades\Storage::url($path);
+
+        $record = \App\Models\ProfileCover::create([
+            'path' => $path,
+            'url' => $url,
+            'uploaded_by' => auth()->id()
+        ]);
+
+        return response()->json($record, 201);
+    }
+
+    public function getProfileCovers()
+    {
+        $covers = \App\Models\ProfileCover::orderBy('created_at', 'desc')->get(['id','path','url','created_at']);
+        return response()->json($covers);
+    }
+
+    public function deleteProfileCover($id)
+    {
+        $cover = \App\Models\ProfileCover::findOrFail($id);
+        if ($cover->path && \Illuminate\Support\Facades\Storage::disk('public')->exists($cover->path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($cover->path);
+        }
+        $cover->delete();
+        return response()->json(['message' => 'Cover deleted successfully']);
+    }
+
     public function requestPasswordResetCode(Request $request)
     {
         try {

@@ -11,6 +11,9 @@ const Settings = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState(null);
+  const BASE_URL = 'http://127.0.0.1:8000';
 
   const [profileData, setProfileData] = useState({
     currentPassword: '',
@@ -43,6 +46,53 @@ const Settings = () => {
     );
   }
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setMessage(null);
+    if (!profileData.currentPassword || !profileData.newPassword || !profileData.confirmPassword) {
+      setMessage({ type: 'error', text: 'Please fill in all password fields.' });
+      return;
+    }
+    if (profileData.newPassword !== profileData.confirmPassword) {
+      setMessage({ type: 'error', text: 'New password and confirmation do not match.' });
+      return;
+    }
+    if (profileData.newPassword.length < 8) {
+      setMessage({ type: 'error', text: 'New password must be at least 8 characters.' });
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${BASE_URL}/api/user/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          current_password: profileData.currentPassword,
+          new_password: profileData.newPassword,
+          new_password_confirmation: profileData.confirmPassword
+        })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const errorText = result?.message || 'Failed to change password';
+        setMessage({ type: 'error', text: errorText });
+        return;
+      }
+      setMessage({ type: 'success', text: 'Password changed successfully.' });
+      setProfileData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+    } catch (err) {
+      setMessage({ type: 'error', text: 'An unexpected error occurred.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="admin-settings">
       {/* Settings Header */}
@@ -66,7 +116,12 @@ const Settings = () => {
       {/* Change Password */}
       <Card className="settings-card mt-4">
         <h5>Change Password</h5>
-        <Form>
+        {message && (
+          <div className={message.type === 'success' ? 'text-success' : 'text-danger'}>
+            {message.text}
+          </div>
+        )}
+        <Form onSubmit={handleChangePassword}>
           <Form.Group className="mb-3">
             <Form.Label>Current Password</Form.Label>
             <div className="position-relative">
@@ -135,9 +190,9 @@ const Settings = () => {
             </div>
           </Form.Group>
 
-          <Button type="submit" className="btn-reset">
+          <Button type="submit" className="btn-reset" disabled={submitting}>
             <Shield size={18} className="me-2" />
-            Change Password
+            {submitting ? 'Changing...' : 'Change Password'}
           </Button>
         </Form>
       </Card>

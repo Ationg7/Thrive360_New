@@ -87,6 +87,13 @@ const AdminBlogs = memo(() => {
     }
   };
 
+  const toImageUrl = (img) => {
+    if (!img) return null;
+    if (typeof img !== 'string') return null;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    return `http://127.0.0.1:8000/storage/${img}`;
+  };
+
   // Upload new blog
   const handleUpload = useCallback(async () => {
     try {
@@ -274,8 +281,8 @@ const AdminBlogs = memo(() => {
             {filteredBlogs.map((blog) => (
               <div key={blog.id} className="blog-card">
                 <div className="blog-image">
-                  {blog.image_url ? (
-                    <img src={`http://127.0.0.1:8000/storage/${blog.image_url}`} alt={blog.title} />
+                  {toImageUrl(blog.image_url) ? (
+                    <img src={toImageUrl(blog.image_url)} alt={blog.title} />
                   ) : (
                     <div className="blog-placeholder">📝</div>
                   )}

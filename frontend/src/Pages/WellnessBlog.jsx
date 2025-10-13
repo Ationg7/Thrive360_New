@@ -64,13 +64,17 @@ const WellnessBlog = () => {
         if (!Array.isArray(data) || data.length === 0) {
           setBlogs(fallbackBlogs);
         } else {
+          const toImageUrl = (img) => {
+            if (!img) return null;
+            if (typeof img !== 'string') return null;
+            if (img.startsWith('http://') || img.startsWith('https://')) return img;
+            return `http://127.0.0.1:8000/storage/${img}`;
+          };
           const normalized = data.map((b) => ({
             id: b.id,
             title: b.title,
             category: b.category || "General",
-            image: b.image_url 
-              ? `http://127.0.0.1:8000/storage/${b.image_url}`
-              : "https://via.placeholder.com/600x400?text=Health+%26+Wellness",
+            image: toImageUrl(b.image_url) || toImageUrl(b.image_path) || "https://via.placeholder.com/600x400?text=Health+%26+Wellness",
             fullText: b.content,
             author: b.author_name || "Admin",
           }));
