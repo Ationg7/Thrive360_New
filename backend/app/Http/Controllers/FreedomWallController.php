@@ -50,7 +50,7 @@ class FreedomWallController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'content' => 'required|string|max:1000',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5000',
         ]);
 
         if ($validator->fails()) {

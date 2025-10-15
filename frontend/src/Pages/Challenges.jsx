@@ -12,13 +12,21 @@ const ChallengesContext = createContext();
 export const ChallengesProvider = ({ children }) => {
   const [joinedChallenges, setJoinedChallenges] = useState([]);
   const [completedChallenges, setCompletedChallenges] = useState([]);
+  const [allChallenges, setAllChallenges] = useState([]);
   const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     const loadUserChallengeHistory = async () => {
       try {
         if (!isLoggedIn) return;
-        const history = await challengesAPI.getUserHistory();
+
+        const [history, challenges] = await Promise.all([
+          challengesAPI.getUserHistory(),
+          challengesAPI.getChallenges(),
+        ]);
+
+        setAllChallenges(challenges);
+
         const joined = history
           .filter((h) => !h.is_completed)
           .map((h) => ({
@@ -26,9 +34,10 @@ export const ChallengesProvider = ({ children }) => {
             title: h.challenge_title,
             description: h.challenge_type,
             type: h.challenge_type,
-            status: h.status === 'Completed' ? 'Completed' : 'In Progress',
+            status: h.status === "Completed" ? "Completed" : "In Progress",
             progress: h.progress_percentage,
           }));
+
         const completed = history
           .filter((h) => h.is_completed)
           .map((h) => ({
@@ -36,13 +45,14 @@ export const ChallengesProvider = ({ children }) => {
             title: h.challenge_title,
             description: h.challenge_type,
             type: h.challenge_type,
-            status: 'Completed',
+            status: "Completed",
             progress: h.progress_percentage,
           }));
+
         setJoinedChallenges(joined);
         setCompletedChallenges(completed);
       } catch (err) {
-        console.error('Error fetching challenge history:', err);
+        console.error("Error fetching challenge history:", err);
       }
     };
     loadUserChallengeHistory();
@@ -51,10 +61,20 @@ export const ChallengesProvider = ({ children }) => {
   const joinChallenge = async (challenge) => {
     try {
       if (!isLoggedIn) return;
+
       await challengesAPI.joinChallenge(challenge.id);
-      const history = await challengesAPI.getUserHistory();
+
+      // Fetch updated participants
+      const [history, challenges] = await Promise.all([
+        challengesAPI.getUserHistory(),
+        challengesAPI.getChallenges(),
+      ]);
+
+      setAllChallenges(challenges);
+
       const joined = history.filter((h) => !h.is_completed);
       const completed = history.filter((h) => h.is_completed);
+
       setJoinedChallenges(
         joined.map((h) => ({
           id: h.challenge_id,
@@ -71,12 +91,12 @@ export const ChallengesProvider = ({ children }) => {
           title: h.challenge_title,
           description: h.challenge_type,
           type: h.challenge_type,
-          status: 'Completed',
+          status: "Completed",
           progress: h.progress_percentage,
         }))
       );
     } catch (err) {
-      console.error('Failed to join challenge:', err);
+      console.error("Failed to join challenge:", err);
     }
   };
 
@@ -85,10 +105,19 @@ export const ChallengesProvider = ({ children }) => {
       if (!isLoggedIn) return;
       const item = joinedChallenges.find((c) => c.title === title);
       if (!item) return;
+
       await challengesAPI.updateProgress(item.id, { progress_percentage: 100 });
-      const history = await challengesAPI.getUserHistory();
+
+      const [history, challenges] = await Promise.all([
+        challengesAPI.getUserHistory(),
+        challengesAPI.getChallenges(),
+      ]);
+
+      setAllChallenges(challenges);
+
       const joined = history.filter((h) => !h.is_completed);
       const completed = history.filter((h) => h.is_completed);
+
       setJoinedChallenges(
         joined.map((h) => ({
           id: h.challenge_id,
@@ -105,17 +134,19 @@ export const ChallengesProvider = ({ children }) => {
           title: h.challenge_title,
           description: h.challenge_type,
           type: h.challenge_type,
-          status: 'Completed',
+          status: "Completed",
           progress: h.progress_percentage,
         }))
       );
     } catch (err) {
-      console.error('Failed to mark as done:', err);
+      console.error("Failed to mark as done:", err);
     }
   };
 
   return (
-    <ChallengesContext.Provider value={{ joinedChallenges, completedChallenges, joinChallenge, markDone }}>
+    <ChallengesContext.Provider
+      value={{ joinedChallenges, completedChallenges, allChallenges, joinChallenge, markDone }}
+    >
       {children}
     </ChallengesContext.Provider>
   );
@@ -126,15 +157,13 @@ export const useChallenges = () => useContext(ChallengesContext);
 // -------------------- Overview Page --------------------
 const ChallengesOverview = () => {
   const { isLoggedIn } = useAuth();
-  const { joinedChallenges, completedChallenges, markDone } = useChallenges();
+  const { joinedChallenges, completedChallenges, allChallenges, markDone } = useChallenges();
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
-  const [popupAction, setPopupAction] = useState(null);
   const navigate = useNavigate();
 
   const handleGuestAction = (action) => {
     setPopupMessage("You need to sign in to access this feature.");
-    setPopupAction(action);
     setShowPopup(true);
   };
 
@@ -202,8 +231,8 @@ const ChallengesOverview = () => {
         </div>
       </div>
 
-      {/* + Join More Challenges button outside sections */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' , marginLeft: '1260px' }}>
+      {/* + Join More Challenges button */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px", marginLeft: "1260px" }}>
         <Button
           variant="success"
           size="sm"
@@ -233,9 +262,7 @@ const ChallengesOverview = () => {
             <div className="challenges-grid" style={{ display: "flex", flexWrap: "wrap", gap: "20px", justifyContent: "flex-start" }}>
               {!filteredChallenges.length && (
                 <div style={{ width: "100%", display: "flex", justifyContent: "center", alignItems: "center", padding: "20px 0" }}>
-                  <p style={{ margin: 0, fontSize: "16px", color: "#666" }}>
-                    No joined challenges yet.
-                  </p>
+                  <p style={{ margin: 0, fontSize: "16px", color: "#666" }}>No joined challenges yet.</p>
                 </div>
               )}
 
@@ -256,8 +283,8 @@ const ChallengesOverview = () => {
                       <Card.Text>{challenge.description}</Card.Text>
 
                       <div className="details d-flex justify-content-between">
-                        <span>📅 {challenge.days_left ?? challenge.daysLeft ?? 34} days left</span>
-                        <span>👥 {challenge.participants ?? 140} participants</span>
+                        <span>📅 {challenge.days_left ?? challenge.daysLeft} days left</span>
+                        <span>👥 {allChallenges.find(c => c.id === challenge.id)?.participants ?? 0} participants</span>
                       </div>
 
                       <Button
@@ -273,11 +300,7 @@ const ChallengesOverview = () => {
                       </Button>
                     </Card.Body>
 
-                    {!isLoggedIn && (
-                      <div className="challenge-card-overlay">
-                        Login to view this challenge
-                      </div>
-                    )}
+                    {!isLoggedIn && <div className="challenge-card-overlay">Login to view this challenge</div>}
                   </Card>
                 </div>
               ))}

@@ -10,7 +10,7 @@ import {
   Form,
   Modal,
 } from "react-bootstrap";
-import { Heart, ThumbsUp, Smile, Bookmark } from "lucide-react";
+import { Heart, ThumbsUp, Smile, Bookmark, History } from "lucide-react";
 import { BsFilter, BsGear } from "react-icons/bs";
 import { ThreeDotsVertical, Image } from "react-bootstrap-icons";
 import EmojiPicker from "emoji-picker-react";
@@ -19,11 +19,9 @@ import TodoList from "../Components/TodoList";
 import Avatar from "../Components/Avatar";
 import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import {  History } from 'lucide-react';
 import Events from "../Components/Events";
 import ChangePhoto from "./ChangePhoto"; // <-- import your component
-
-
+import './Profile.css'
 
 const Profile = () => {
   const { isLoggedIn, user } = useAuth();
@@ -35,7 +33,7 @@ const Profile = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [postFilter, setPostFilter] = useState("my");
-  const [ setEvents] = useState([]);
+  const [setEvents] = useState([]);
   const [setShowGuestPopup] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showAlreadyReportedModal, setShowAlreadyReportedModal] = useState(false);
@@ -45,9 +43,17 @@ const Profile = () => {
   const [reportingPostId, setReportingPostId] = useState(null);
   const [hiddenPosts, setHiddenPosts] = useState([]);
   const [showUndo, setShowUndo] = useState(false);
-   const [showChangePhoto, setShowChangePhoto] = useState(false); // <-- new state
-   const [showNoReasonModal, setShowNoReasonModal] = useState(false);
+  const [showChangePhoto, setShowChangePhoto] = useState(false); // <-- new state
+  const [showNoReasonModal, setShowNoReasonModal] = useState(false);
   const [profileCoverUrl, setProfileCoverUrl] = useState(() => localStorage.getItem('profileCoverUrl') || null);
+
+  // ---------------- Helper ----------------
+  const toImageUrl = (img) => {
+    if (!img) return null;
+    if (img.startsWith('http')) return img;
+    if (img.startsWith('/storage')) return `http://127.0.0.1:8000${img}`;
+    return `http://127.0.0.1:8000/storage/${img}`;
+  };
 
   const reportReasons = [
     { value: "spam", label: "Spam or misleading" },
@@ -72,7 +78,7 @@ const Profile = () => {
 
   const censorText = (text) => {
     if (!text) return "";
-    const bannedWords = ["badword1", "badword2", "example"]; // Add banned words here
+    const bannedWords = ["badword1", "badword2", "example"];
     let censored = text;
     bannedWords.forEach((word) => {
       const regex = new RegExp(`\\b${word}\\b`, "gi");
@@ -87,72 +93,64 @@ const Profile = () => {
   };
 
   // ---------------- Post Handlers ----------------
- // ---------------- Post Handlers ----------------
-const handlePost = async () => {
-  if (newPost.trim() === "" && !selectedImage) return;
+  const handlePost = async () => {
+    if (newPost.trim() === "" && !selectedImage) return;
 
-  try {
-    const formData = new FormData();
-    formData.append("content", newPost);
-    if (selectedImage) formData.append("image", selectedImage);
+    try {
+      const formData = new FormData();
+      formData.append("content", newPost);
+      if (selectedImage) formData.append("image", selectedImage);
 
-    const token = localStorage.getItem("authToken");
-    const isAuth = !!token && isLoggedIn;
-    const url = isAuth
-      ? "http://127.0.0.1:8000/api/freedom-wall/posts/auth"
-      : "http://127.0.0.1:8000/api/freedom-wall/posts";
+      const token = localStorage.getItem("authToken");
+      const isAuth = !!token && isLoggedIn;
+      const url = isAuth
+        ? "http://127.0.0.1:8000/api/freedom-wall/posts/auth"
+        : "http://127.0.0.1:8000/api/freedom-wall/posts";
 
-    const headers = isAuth ? { Authorization: `Bearer ${token}` } : {}; // Do NOT set Content-Type manually
+      const headers = isAuth ? { Authorization: `Bearer ${token}` } : {};
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.message || "Failed to post");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to post");
+      }
+
+      const p = await res.json();
+      console.log("Post created successfully:", p);
+
+      const imageUrl = p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
+      const newEntry = {
+        id: p.id,
+        author: p.author || user?.name || "Anonymous",
+        email: user?.email || null,
+        date: p.created_at ? new Date(p.created_at).toLocaleString() : new Date().toLocaleString(),
+        content: censorText(p.content),
+        likes: p.likes || 0,
+        hearts: p.hearts || 0,
+        saves: p.saves || 0,
+        liked: false,
+        hearted: false,
+        saved: false,
+        image: imageUrl,
+        images: imageUrl ? [imageUrl] : [],
+      };
+
+      setPosts((prev) => [newEntry, ...prev]);
+      setNewPost("");
+      setSelectedImage(null);
+      setShowPostModal(false);
+      await loadPosts(postFilter);
+
+    } catch (e) {
+      console.error("Error creating post:", e);
+      alert(`Failed to create post: ${e.message}`);
     }
-
-    const p = await res.json();
-    console.log("Post created successfully:", p);
-
-    // Normalize the post object
-    const imageUrl = p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
-    const newEntry = {
-      id: p.id,
-      author: p.author || user?.name || "Anonymous",
-      email: user?.email || null,
-      date: p.created_at ? new Date(p.created_at).toLocaleString() : new Date().toLocaleString(),
-      content: censorText(p.content),
-      likes: p.likes || 0,
-      hearts: p.hearts || 0,
-      saves: p.saves || 0,
-      liked: false,
-      hearted: false,
-      saved: false,
-      image: imageUrl,
-      images: imageUrl ? [imageUrl] : [],
-    };
-
-    // Show immediately
-    setPosts((prev) => [newEntry, ...prev]);
-
-    // Reset form
-    setNewPost("");
-    setSelectedImage(null);
-    setShowPostModal(false);
-
-    // Ensure backend sync (optional, for persistence after refresh)
-    await loadPosts(postFilter);
-
-  } catch (e) {
-    console.error("Error creating post:", e);
-    alert(`Failed to create post: ${e.message}`);
-  }
-};
-
+  };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -240,10 +238,9 @@ const handlePost = async () => {
   };
 
   const submitReport = async () => {
-  if (!selectedReason) {
-    setShowNoReasonModal(true); // show our custom modal instead of alert
-    return;
-  
+    if (!selectedReason) {
+      setShowNoReasonModal(true);
+      return;
     }
     try {
       const response = await fetch(
@@ -277,7 +274,6 @@ const handlePost = async () => {
     }
   };
 
-  // Hide and Undo
   const handleHide = (id) => {
     const postToHide = posts.find((post) => post.id === id);
     if (postToHide) {
@@ -293,52 +289,49 @@ const handlePost = async () => {
     setShowUndo(false);
   };
 
-  // Load Posts and Events
-  // ---------------- Load Posts ----------------
-const loadPosts = async (filter = "my-posts") => {
-  try {
-    const token = localStorage.getItem("authToken");
-    const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  const loadPosts = async (filter = "my-posts") => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
-    let url;
-    switch (filter) {
-      case "saved":
-        url = "http://127.0.0.1:8000/api/freedom-wall/saved-posts";
-        break;
-      default:
-        url = "http://127.0.0.1:8000/api/freedom-wall/my-posts";
+      let url;
+      switch (filter) {
+        case "saved":
+          url = "http://127.0.0.1:8000/api/freedom-wall/saved-posts";
+          break;
+        default:
+          url = "http://127.0.0.1:8000/api/freedom-wall/my-posts";
+      }
+
+      const response = await fetch(url, { headers });
+      if (!response.ok) throw new Error("Failed to load posts");
+
+      const data = await response.json();
+      const normalizedPosts = Array.isArray(data) ? data.map((post) => {
+        const imageUrl = post.image_url || (post.image_path ? `http://127.0.0.1:8000/storage/${post.image_path}` : null);
+        const userReaction = post.user_reaction || null;
+        return {
+          ...post,
+          author: post.author || post.user?.name || "Anonymous",
+          email: post.email || post.user?.email || null,
+          content: censorText(post.content),
+          date: post.created_at ? new Date(post.created_at).toLocaleString() : "",
+          image: imageUrl,
+          images: imageUrl ? [imageUrl] : [],
+          liked: userReaction === "like",
+          hearted: userReaction === "heart",
+          saved: !!post.is_saved,
+          likes: post.likes || 0,
+          hearts: post.hearts || 0,
+          sad: post.sad || 0,
+        };
+      }) : [];
+
+      setPosts(normalizedPosts);
+    } catch (error) {
+      console.error("Error loading posts:", error);
     }
-
-    const response = await fetch(url, { headers });
-    if (!response.ok) throw new Error("Failed to load posts");
-
-    const data = await response.json();
-    const normalizedPosts = Array.isArray(data) ? data.map((post) => {
-      const imageUrl = post.image_url || (post.image_path ? `http://127.0.0.1:8000/storage/${post.image_path}` : null);
-      const userReaction = post.user_reaction || null;
-      return {
-        ...post,
-        author: post.author || post.user?.name || "Anonymous",
-        email: post.email || post.user?.email || null,
-        content: censorText(post.content),
-        date: post.created_at ? new Date(post.created_at).toLocaleString() : "",
-        image: imageUrl,
-        images: imageUrl ? [imageUrl] : [],
-        liked: userReaction === "like",
-        hearted: userReaction === "heart",
-        saved: !!post.is_saved,
-        likes: post.likes || 0,
-        hearts: post.hearts || 0,
-        sad: post.sad || 0,
-      };
-    }) : [];
-
-    setPosts(normalizedPosts);
-
-  } catch (error) {
-    console.error("Error loading posts:", error);
-  }
-};
+  };
 
   const loadEvents = async () => {
     try {
@@ -357,7 +350,7 @@ const loadPosts = async (filter = "my-posts") => {
   useEffect(() => { loadPosts(postFilter); }, [postFilter]);
   useEffect(() => { if (user?.email) localStorage.setItem("userEmail", user.email); }, [user]);
   useEffect(() => { loadEvents(); }, []);
-  
+
   useEffect(() => {
     const onCoverUpdated = (e) => {
       const url = e?.detail?.url || localStorage.getItem('profileCoverUrl');
@@ -367,15 +360,14 @@ const loadPosts = async (filter = "my-posts") => {
     return () => window.removeEventListener('profile-cover-updated', onCoverUpdated);
   }, []);
 
-
   return (
-     <Container fluid className="profile-container">
+    <Container fluid className="profile-container">
       <Row className="gx-3">
         <Col xs={12}>
           <Card className="profile-header position-relative">
             <Card.Img
               variant="top"
-              src={profileCoverUrl || user?.profile_cover_url || "../public/images/k.jpg"}
+              src={toImageUrl(profileCoverUrl) || toImageUrl(user?.profile_cover_url) || "../public/images/k.jpg"}
               className="profile-cover"
             />
             <Dropdown
@@ -399,34 +391,35 @@ const loadPosts = async (filter = "my-posts") => {
 
             <Card.Body>
               <div className="profile-info">
-                 <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} className="avatar" size={60} />
+                <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} className="avatar" size={60} />
               </div>
             </Card.Body>
           </Card>
         </Col>
 
         {/* Floating ChangePhoto Modal */}
-       {showChangePhoto && (
-  <div
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100vw",
-      height: "100vh",
-      backgroundColor: "rgba(0,0,0,0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 9999,
-    }}
-    onClick={() => setShowChangePhoto(false)}
-  >
-    <div onClick={(e) => e.stopPropagation()}>
-      <ChangePhoto closeModal={() => setShowChangePhoto(false)} />
-    </div>
-  </div>
-)}
+        {showChangePhoto && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999,
+            }}
+            onClick={() => setShowChangePhoto(false)}
+          >
+            <div onClick={(e) => e.stopPropagation()}>
+              <ChangePhoto closeModal={() => setShowChangePhoto(false)} toImageUrl={toImageUrl} />
+            </div>
+          </div>
+        )}
+
 
 
         {/* Left Side */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Card, Button, Table, Modal, Form, Row, Col, Badge, Alert } from 'react-bootstrap';
 import { Plus, Edit3, Trash2, Calendar, MapPin, Users } from 'lucide-react';
 
+
 const AdminEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);

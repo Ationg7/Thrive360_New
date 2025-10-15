@@ -1,0 +1,133 @@
+/* ChangePhoto.css */
+
+/* Overlay for modal */
+.change-photo-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Modal card */
+.change-photo-card {
+  background-color: #fff;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.change-photo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Card header */
+.change-photo-card .card-header {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+/* Card body */
+.change-photo-card .card-body {
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Image preview */
+.change-photo-preview {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+/* File input label */
+.change-photo-file-label {
+  display: inline-block;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 2px dashed #198754;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #198754;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.change-photo-file-label:hover {
+  background-color: #198754;
+  color: #fff;
+}
+
+/* Hidden input */
+.change-photo-file-input {
+  display: none;
+}
+
+/* Buttons container */
+.change-photo-buttons {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.change-photo-buttons button {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.change-photo-buttons .cancel-btn {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.change-photo-buttons .cancel-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.change-photo-buttons .save-btn {
+  background-color: #198754;
+  color: #fff;
+}
+
+.change-photo-buttons .save-btn:hover {
+  background-color: #146c43;
+}
+
+@media (max-width: 576px) {
+  .change-photo-preview {
+    max-height: 140px;
+  }
+  .change-photo-file-label {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+  }
+  .change-photo-buttons button {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.4rem;
+  }
+}

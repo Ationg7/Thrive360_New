@@ -28,7 +28,7 @@ class EventController extends Controller
             'location' => 'nullable|string|max:255',
             'start_date' => 'required|date|after:now',
             'end_date' => 'nullable|date|after:start_date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5000',
             'category' => 'required|string|in:general,wellness,meditation,fitness,education',
             'max_participants' => 'nullable|integer|min:1'
         ]);

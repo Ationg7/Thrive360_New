@@ -132,13 +132,17 @@
   padding: 30px;
 }
 
+/* Ensure all post cards have the same height */
 .post-card {
-  background: var(--white);
-  border: 1px solid #e9ecef;
-  border-radius: 12px;
-  padding: 20px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* push actions/stats to bottom */
+  min-height: 600px; /* adjust as needed to match cards with images */
+}
+
+/* Content wrapper inside card */
+.post-card .post-content-wrapper {
+  flex: 1; /* takes remaining space, helps stretch cards */
 }
 
 .post-card:hover {
@@ -376,4 +380,27 @@
   --dark-text: #333333;
   --gray-text: #666666;
   --primary-color: #007bff;
+}
+
+/* Fix for post images */
+.post-image {
+  width: 100%;
+  max-height: 300px; /* Limit height */
+  overflow: hidden;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.post-image img {
+  width: 100%;
+  height: auto; /* Maintain aspect ratio */
+  object-fit: cover; /* Crop if needed to fit container */
+  display: block;
+  border-radius: 10px;
+}
+
+/* Optional: prevent grid overflow for very tall images */
+.posts-grid {
+  align-items: start;
 }

@@ -161,12 +161,9 @@ const ChallengesCategories = () => {
 
                             <div className="details d-flex justify-content-between">
                               <span>
-                                📅{" "}
-                                {challenge.daysLeft ??
-                                  challenge.days_left ??
-                                  34}{" "}
-                                days left
-                              </span>
+  📅 {challenge.duration_days ?? 34} days left
+</span>
+
                               <span>
                                 👥 {challenge.participants ?? 140} participants
                               </span>

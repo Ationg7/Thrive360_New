@@ -1,9 +1,8 @@
 // AdminPosts Page - Posts Management
-// Following Clean Code Principles
-
+// Fetch posts including images from FreedomWall API
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS, STORAGE_KEYS, ROUTES, MESSAGES } from '../constants/adminConstants';
+import { API_ENDPOINTS, STORAGE_KEYS, ROUTES } from '../constants/adminConstants';
 import ErrorBoundary from '../components/ErrorBoundary';
 import MessageDisplay from '../components/MessageDisplay';
 import './AdminPosts.css';
@@ -25,24 +24,31 @@ const AdminPosts = memo(() => {
     }, 5000);
   }, []);
 
-  // Fetch posts data
+  // Convert backend image path to URL
+  const toImageUrl = (img) => {
+    if (!img) return null;
+    if (typeof img !== 'string') return null;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    return `http://127.0.0.1:8000/${img}`;
+  };
+
+  // Fetch posts from Freedom Wall API
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
-      
       if (!adminToken) {
         navigate(ROUTES.ADMIN_LOGIN);
         return;
       }
 
-      const response = await fetch(API_ENDPOINTS.POSTS, {
+      const response = await fetch('http://127.0.0.1:8000/api/freedom-wall/posts', {
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
-          "Content-Type": "application/json"
-        }
+          Authorization: `Bearer ${adminToken}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -56,65 +62,86 @@ const AdminPosts = memo(() => {
       }
 
       const data = await response.json();
-      setPosts(data);
+
+     const normalizedPosts = (Array.isArray(data) ? data : []).map((p) => {
+  const imageUrl = p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
+
+  const userName = p.user?.name || p.author || 'Guest User';
+  const userEmail = p.user?.email || p.email || '';
+  const isGuest = !p.user && !p.author;
+
+  return {
+    id: p.id,
+    content: p.content,
+    created_at: p.created_at,
+    likes_count: p.likes || 0,
+    shares_count: p.saves || 0,
+    is_guest_post: isGuest,
+    user: {
+      name: userName,
+      email: userEmail,
+    },
+    image_url: imageUrl,
+  };
+});
+
+
+
+      setPosts(normalizedPosts);
       setSuccess('Posts loaded successfully');
-      
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      setError(error.message || 'Failed to fetch posts');
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+      setError(err.message || 'Failed to fetch posts');
     } finally {
       setLoading(false);
     }
   }, [navigate]);
 
   // Delete post
-  const handleDeletePost = useCallback(async (postId, postContent) => {
-    if (!window.confirm(`Are you sure you want to delete this post? This action cannot be undone.`)) {
-      return;
-    }
+  const handleDeletePost = useCallback(
+    async (postId) => {
+      if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) return;
 
-    try {
-      const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
-      
-      const response = await fetch(`${API_ENDPOINTS.POSTS}/${postId}`, {
-        method: 'DELETE',
-        headers: {
-          "Authorization": `Bearer ${adminToken}`,
-          "Content-Type": "application/json"
-        }
-      });
+      try {
+        const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+        const response = await fetch(`${API_ENDPOINTS.POSTS}/${postId}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+        setPosts((prev) => prev.filter((post) => post.id !== postId));
+        setSuccess('Post deleted successfully');
+        clearMessages();
+      } catch (err) {
+        console.error('Error deleting post:', err);
+        setError(err.message || 'Failed to delete post');
       }
+    },
+    [clearMessages]
+  );
 
-      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
-      setSuccess('Post deleted successfully');
-      clearMessages();
-      
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      setError(error.message || 'Failed to delete post');
-    }
-  }, [clearMessages]);
-
-  // Filter posts based on search and filters
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (post.user && post.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesType = filterType === 'all' || 
-                       (filterType === 'user' && !post.is_guest_post) ||
-                       (filterType === 'guest' && post.is_guest_post);
-    
+  // Filter posts
+  const filteredPosts = posts.filter((post) => {
+    const matchesSearch =
+      post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (post.user && post.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesType =
+      filterType === 'all' ||
+      (filterType === 'user' && !post.is_guest_post) ||
+      (filterType === 'guest' && post.is_guest_post);
     return matchesSearch && matchesType;
   });
 
-  // Initialize data
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
 
-  if (loading) {
+  if (loading)
     return (
       <div className="admin-loading-container">
         <div className="admin-loading-content">
@@ -123,18 +150,12 @@ const AdminPosts = memo(() => {
         </div>
       </div>
     );
-  }
 
   return (
     <ErrorBoundary>
       <div className="admin-posts-page">
-        <MessageDisplay 
-          error={error} 
-          success={success} 
-          onDismiss={clearMessages} 
-        />
+        <MessageDisplay error={error} success={success} onDismiss={clearMessages} />
 
-        {/* Header */}
         <div className="admin-page-header">
           <div className="admin-page-header-content">
             <h1 className="admin-page-title">Posts Management</h1>
@@ -142,7 +163,6 @@ const AdminPosts = memo(() => {
           </div>
         </div>
 
-        {/* Filters and Search */}
         <div className="admin-filters">
           <div className="admin-search-box">
             <input
@@ -153,7 +173,7 @@ const AdminPosts = memo(() => {
               className="admin-search-input"
             />
           </div>
-          
+
           <div className="admin-filter-group">
             <select
               value={filterType}
@@ -167,49 +187,48 @@ const AdminPosts = memo(() => {
           </div>
         </div>
 
-        {/* Posts List */}
         <div className="admin-posts-container">
           <div className="admin-posts-header">
             <h3>Posts ({filteredPosts.length})</h3>
-            <button 
-              onClick={fetchPosts}
-              className="admin-refresh-btn"
-            >
+            <button onClick={fetchPosts} className="admin-refresh-btn">
               Refresh
             </button>
           </div>
-          
+
           <div className="posts-grid">
             {filteredPosts.map((post) => (
               <div key={post.id} className="post-card">
                 <div className="post-header">
                   <div className="post-author">
-                    <div className="post-author-avatar">
-                      {post.user ? post.user.name.charAt(0).toUpperCase() : 'G'}
-                    </div>
+                   <div className="post-author-avatar">
+  {post.user.email
+    ? post.user.email.substring(0, 2).toUpperCase()
+    : 'GU'}
+</div>
+
                     <div className="post-author-info">
-                      <div className="post-author-name">
-                        {post.user ? post.user.name : 'Guest User'}
-                      </div>
-                      <div className="post-author-email">
-                        {post.user ? post.user.email : 'Anonymous'}
-                      </div>
+                      <div className="post-author-name">{post.user ? post.user.name : 'Guest User'}</div>
+                      <div className="post-author-email">{post.user ? post.user.email : 'Anonymous'}</div>
                     </div>
                   </div>
                   <div className="post-meta">
                     <span className={`post-type-badge ${post.is_guest_post ? 'guest' : 'user'}`}>
                       {post.is_guest_post ? 'Guest' : 'User'}
                     </span>
-                    <span className="post-date">
-                      {new Date(post.created_at).toLocaleDateString()}
-                    </span>
+                    <span className="post-date">{new Date(post.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
-                
+
+                {post.image_url && (
+                  <div className="post-image">
+                    <img src={toImageUrl(post.image_url)} alt="Post media" />
+                  </div>
+                )}
+
                 <div className="post-content">
                   <p>{post.content}</p>
                 </div>
-                
+
                 <div className="post-stats">
                   <div className="post-stat">
                     <span className="stat-icon">👍</span>
@@ -220,10 +239,10 @@ const AdminPosts = memo(() => {
                     <span>{post.shares_count || 0}</span>
                   </div>
                 </div>
-                
+
                 <div className="post-actions">
                   <button
-                    onClick={() => handleDeletePost(post.id, post.content)}
+                    onClick={() => handleDeletePost(post.id)}
                     className="action-btn delete"
                     title="Delete Post"
                   >
@@ -232,7 +251,7 @@ const AdminPosts = memo(() => {
                 </div>
               </div>
             ))}
-            
+
             {filteredPosts.length === 0 && (
               <div className="admin-empty-state">
                 <p>No posts found matching your criteria.</p>

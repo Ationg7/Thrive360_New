@@ -143,6 +143,16 @@ const AdminMeditation = memo(() => {
   // Upload new meditation
   const handleUpload = useCallback(async () => {
     try {
+      // Add client-side validation
+      if (!uploadData.title || !uploadData.description) {
+        setError('Title and description are required.');
+        return;
+      }
+      if (uploadData.tutorialSteps.some(step => step.title && !step.description)) {
+        setError('All tutorial steps with titles must have descriptions.');
+        return;
+      }
+
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
 
       const formData = new FormData();
@@ -180,7 +190,8 @@ const AdminMeditation = memo(() => {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorDetails = await response.text();  // Fetch error details
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - Details: ${errorDetails}`);
       }
 
       setSuccess('Meditation content uploaded successfully');
@@ -189,7 +200,7 @@ const AdminMeditation = memo(() => {
         title: '',
         description: '',
         duration: '',
-        category: 'meditation',
+        category: 'Meditation',
         imageFile: null,
         tutorialSteps: [
           { step: 1, title: '', description: '', imageFile: null },
@@ -525,6 +536,8 @@ const AdminMeditation = memo(() => {
                   ))}
                 </div>
               </div>
+              
+              
               
               <div className="modal-footer">
                 <button 

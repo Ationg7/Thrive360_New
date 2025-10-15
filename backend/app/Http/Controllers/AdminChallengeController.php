@@ -8,16 +8,28 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminChallengeController extends Controller
 {
-    // Fetch all challenges
-    public function index()
-    {
-        $challenges = Challenge::with('user')
-            ->withCount('participantsList') // adds participants_count
-            ->orderBy('created_at', 'desc')
-            ->get();
+ // Fetch all challenges
+public function index()
+{$challenges = Challenge::with('user')
+    ->with('participantsList.user:id,name')
+    ->withCount('participantsList')
+    ->orderBy('created_at', 'desc')
+    ->get()
+    ->map(function ($challenge) {
+        // Participants count for frontend
+        $challenge->user_progress_count = $challenge->participants_list_count;
 
-        return response()->json($challenges);
-    }
+        // Map existing days_left to duration_days for frontend
+        $challenge->duration_days = $challenge->days_left ?? 0;
+
+        return $challenge;
+    });
+
+    return response()->json($challenges);
+}
+
+ 
+
 
     // Upload a new challenge
     public function store(Request $request)

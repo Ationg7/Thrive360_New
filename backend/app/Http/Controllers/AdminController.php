@@ -11,6 +11,7 @@ use App\Models\PostReport;
 use App\Models\Psychiatrist;
 use App\Models\Notification;
 use App\Models\PasswordResetCode;
+use App\Models\ProfileCover;    
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -238,7 +239,7 @@ class AdminController extends Controller
             'description' => 'required|string',
             'duration' => 'nullable|string',
             'category' => 'required|in:Meditation,Stretching,Workout',
-            'image_file' => 'nullable|image|max:2048',
+            'image_file' => 'nullable|image|max:5000',
             'tutorial_steps' => 'nullable|string',
         ]);
 
