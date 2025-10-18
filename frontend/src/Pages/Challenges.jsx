@@ -283,7 +283,7 @@ const ChallengesOverview = () => {
                       <Card.Text>{challenge.description}</Card.Text>
 
                       <div className="details d-flex justify-content-between">
-                        <span>📅 {challenge.days_left ?? challenge.daysLeft} days left</span>
+                        
                         <span>👥 {allChallenges.find(c => c.id === challenge.id)?.participants ?? 0} participants</span>
                       </div>
 

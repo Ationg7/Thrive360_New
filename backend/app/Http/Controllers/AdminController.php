@@ -833,6 +833,21 @@ foreach ($users as $user) {
             'uploaded_by' => auth()->id()
         ]);
 
+        // Notify all users about the new profile cover
+        $users = User::all();
+        foreach ($users as $user) {
+            Notification::createNotification(
+                $user->id,
+                'profile_cover',
+                'New Profile Cover Available',
+                "A new profile cover has been uploaded and is now available for use!",
+                [
+                    'profile_cover_id' => $record->id,
+                    'redirect_url' => url("/profile-covers")
+                ]
+            );
+        }
+
         return response()->json($record, 201);
     }
 

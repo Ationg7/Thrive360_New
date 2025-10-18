@@ -14,7 +14,6 @@ class Challenge extends Model
         'description',
         'type',
         'status',
-        'days_left',
         'participants',
         'progress_percentage',
         'start_date',
@@ -28,7 +27,6 @@ class Challenge extends Model
         'is_active' => 'boolean',
         'participants' => 'integer',
         'progress_percentage' => 'integer',
-        'days_left' => 'integer',
         'start_date' => 'date',
         'end_date' => 'date',
     ];

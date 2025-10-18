@@ -16,7 +16,17 @@ const AdminBlogs = memo(() => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingBlog, setEditingBlog] = useState(null);
   const [uploadData, setUploadData] = useState({
+    title: '',
+    content: '',
+    excerpt: '',
+    category: 'Mental Health',
+    tags: '',
+    imageFile: null
+  });
+  const [editData, setEditData] = useState({
     title: '',
     content: '',
     excerpt: '',
@@ -182,6 +192,80 @@ const AdminBlogs = memo(() => {
     }
   }, [clearMessages]);
 
+  // Edit blog
+  const handleEditBlog = useCallback((blog) => {
+    setEditingBlog(blog);
+    setEditData({
+      title: blog.title,
+      content: blog.content,
+      excerpt: blog.excerpt,
+      category: blog.category || 'Mental Health',
+      tags: Array.isArray(blog.tags) ? blog.tags.join(', ') : (blog.tags || ''),
+      imageFile: null
+    });
+    setShowEditModal(true);
+  }, []);
+
+  // Update blog
+  const handleUpdateBlog = useCallback(async () => {
+    try {
+      const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+      
+      const formData = new FormData();
+      formData.append('title', editData.title);
+      formData.append('content', editData.content);
+      formData.append('excerpt', editData.excerpt);
+      formData.append('category', editData.category);
+      formData.append('tags', editData.tags);
+      if (editData.imageFile) {
+        formData.append('image_file', editData.imageFile);
+      }
+
+      const response = await fetch(`${API_ENDPOINTS.BLOGS}/${editingBlog.id}`, {
+        method: 'PUT',
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        let message = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          if (errorData?.message) message = errorData.message;
+          if (errorData?.errors) {
+            const firstError = Object.values(errorData.errors)[0];
+            if (Array.isArray(firstError) && firstError.length) message = firstError[0];
+          }
+        } catch {}
+        throw new Error(message);
+      }
+
+      const updatedBlog = await response.json();
+      setBlogs(prev => prev.map(blog => 
+        blog.id === editingBlog.id ? updatedBlog : blog
+      ));
+      setSuccess('Health blog updated successfully');
+      setShowEditModal(false);
+      setEditingBlog(null);
+      setEditData({
+        title: '',
+        content: '',
+        excerpt: '',
+        category: 'Mental Health',
+        tags: '',
+        imageFile: null
+      });
+      fetchBlogs();
+      clearMessages();
+      
+    } catch (error) {
+      console.error('Error updating blog:', error);
+      setError(error.message || 'Failed to update health blog');
+    }
+  }, [editData, editingBlog, fetchBlogs, clearMessages]);
+
   // Filter blogs based on search and filters
   const filteredBlogs = blogs.filter(blog => {
     const matchesSearch = blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -319,6 +403,14 @@ const AdminBlogs = memo(() => {
                 
                 <div className="blog-actions">
                   <button
+                    onClick={() => handleEditBlog(blog)}
+                    className="action-btn edit"
+                    title="Edit Blog"
+                    style={{ marginRight: '8px' }}
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
                     onClick={() => handleDeleteBlog(blog.id, blog.title)}
                     className="action-btn delete"
                     title="Delete Blog"
@@ -437,6 +529,133 @@ const AdminBlogs = memo(() => {
                   disabled={!uploadData.title || !uploadData.content || !uploadData.excerpt}
                 >
                   Create Blog
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && editingBlog && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>Edit Health Blog</h3>
+                <button 
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingBlog(null);
+                    setEditData({
+                      title: '',
+                      content: '',
+                      excerpt: '',
+                      category: 'Mental Health',
+                      tags: '',
+                      imageFile: null
+                    });
+                  }}
+                  className="modal-close"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Title *</label>
+                  <input
+                    type="text"
+                    value={editData.title}
+                    onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Enter blog title"
+                    className="form-input"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Excerpt *</label>
+                  <textarea
+                    value={editData.excerpt}
+                    onChange={(e) => setEditData(prev => ({ ...prev, excerpt: e.target.value }))}
+                    placeholder="Enter blog excerpt (short description)"
+                    className="form-textarea"
+                    rows="2"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Content *</label>
+                  <textarea
+                    value={editData.content}
+                    onChange={(e) => setEditData(prev => ({ ...prev, content: e.target.value }))}
+                    placeholder="Enter blog content"
+                    className="form-textarea"
+                    rows="8"
+                  />
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Category</label>
+                    <select
+                      value={editData.category}
+                      onChange={(e) => setEditData(prev => ({ ...prev, category: e.target.value }))}
+                      className="form-select"
+                    >
+                      <option value="Mental Health">Mental Health</option>
+                      <option value="Nutrition">Nutrition</option>
+                      <option value="Physical-Wellness">Physical Wellness</option>
+                      <option value="Stress-Management">Stress Management</option>
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Tags (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={editData.tags}
+                      onChange={(e) => setEditData(prev => ({ ...prev, tags: e.target.value }))}
+                      placeholder="e.g., health, wellness, tips"
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label>Featured Image (Optional)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'imageFile')}
+                    className="form-file"
+                  />
+                </div>
+              </div>
+              
+              <div className="modal-footer">
+                <button 
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingBlog(null);
+                    setEditData({
+                      title: '',
+                      content: '',
+                      excerpt: '',
+                      category: 'Mental Health',
+                      tags: '',
+                      imageFile: null
+                    });
+                  }}
+                  className="btn-cancel"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleUpdateBlog}
+                  className="btn-upload"
+                  disabled={!editData.title || !editData.content || !editData.excerpt}
+                >
+                  Update Blog
                 </button>
               </div>
             </div>

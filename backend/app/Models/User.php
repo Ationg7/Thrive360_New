@@ -25,6 +25,7 @@ class User extends Authenticatable
         'role',
         'is_active',
         'avatar_url',
+        'profile_cover_url',
     ];
 
     /**

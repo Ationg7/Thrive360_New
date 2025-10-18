@@ -24,7 +24,6 @@ class ChallengeController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'required|string|max:1000',
                 'type' => 'required|in:Daily,Weekly,Monthly',
-                'days_left' => 'nullable|integer|min:0',
                 'theme' => 'nullable|string|max:50',
                 'start_date' => 'nullable|date',
                 'end_date' => 'nullable|date|after:start_date',
@@ -36,7 +35,7 @@ class ChallengeController extends Controller
             }
 
             $challengeData = $request->only([
-                'title', 'description', 'type', 'days_left', 'theme', 'start_date', 'end_date'
+                'title', 'description', 'type',  'theme', 'start_date', 'end_date'
             ]);
             
             $userId = auth()->id();
@@ -87,7 +86,6 @@ class ChallengeController extends Controller
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string|max:1000',
             'type' => 'sometimes|in:Daily,Weekly,Monthly',
-            'days_left' => 'nullable|integer|min:0',
             'theme' => 'nullable|string|max:50',
             'is_active' => 'sometimes|boolean',
         ]);
@@ -97,7 +95,7 @@ class ChallengeController extends Controller
         }
 
         $challenge->update($request->only([
-            'title', 'description', 'type', 'days_left', 'theme', 'is_active'
+            'title', 'description', 'type','theme', 'is_active'
         ]));
 
         return response()->json($challenge);

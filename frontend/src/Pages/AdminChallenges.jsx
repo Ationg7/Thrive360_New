@@ -18,10 +18,18 @@ const AdminChallenges = memo(() => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingChallenge, setEditingChallenge] = useState(null);
   const [uploadData, setUploadData] = useState({
     title: '',
     description: '',
-    duration_days: '',
+    difficulty_level: 'medium',
+    category: 'general',
+    imageFile: null
+  });
+  const [editData, setEditData] = useState({
+    title: '',
+    description: '',
     difficulty_level: 'medium',
     category: 'general',
     imageFile: null
@@ -97,7 +105,6 @@ const AdminChallenges = memo(() => {
       const formData = new FormData();
       formData.append('title', uploadData.title);
       formData.append('description', uploadData.description);
-      formData.append('duration_days', uploadData.duration_days);
       formData.append('difficulty_level', uploadData.difficulty_level);
       formData.append('category', uploadData.category);
       if (uploadData.imageFile) {
@@ -123,7 +130,6 @@ const AdminChallenges = memo(() => {
       setUploadData({
         title: '',
         description: '',
-        duration_days: '',
         difficulty_level: 'medium',
         category: 'general',
         imageFile: null
@@ -167,6 +173,68 @@ const AdminChallenges = memo(() => {
       setError(error.message || 'Failed to delete challenge');
     }
   }, [clearMessages]);
+
+  // Edit challenge
+  const handleEditChallenge = useCallback((challenge) => {
+    setEditingChallenge(challenge);
+    setEditData({
+      title: challenge.title,
+      description: challenge.description,
+      difficulty_level: challenge.difficulty_level || 'medium',
+      category: challenge.category || 'general',
+      imageFile: null
+    });
+    setShowEditModal(true);
+  }, []);
+
+  // Update challenge
+  const handleUpdateChallenge = useCallback(async () => {
+    try {
+      const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+      
+      const formData = new FormData();
+      formData.append('title', editData.title);
+      formData.append('description', editData.description);
+      formData.append('difficulty_level', editData.difficulty_level);
+      formData.append('category', editData.category);
+      if (editData.imageFile) {
+        formData.append('image_file', editData.imageFile);
+      }
+
+      const response = await fetch(`${API_ENDPOINTS.CHALLENGES}/${editingChallenge.id}`, {
+        method: 'PUT',
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const updatedChallenge = await response.json();
+      setChallenges(prev => prev.map(challenge => 
+        challenge.id === editingChallenge.id ? updatedChallenge : challenge
+      ));
+      setSuccess('Challenge updated successfully');
+      setShowEditModal(false);
+      setEditingChallenge(null);
+      setEditData({
+        title: '',
+        description: '',
+        difficulty_level: 'medium',
+        category: 'general',
+        imageFile: null
+      });
+      fetchChallenges();
+      clearMessages();
+      
+    } catch (error) {
+      console.error('Error updating challenge:', error);
+      setError(error.message || 'Failed to update challenge');
+    }
+  }, [editData, editingChallenge, fetchChallenges, clearMessages]);
 
   // Filter challenges based on search and filters
   const filteredChallenges = challenges.filter(challenge => {
@@ -258,7 +326,6 @@ const AdminChallenges = memo(() => {
       <th>Title</th>
       <th>Description</th>
       <th>Participants</th>
-      <th>Duration</th>
       <th>Difficulty</th>
       <th>Category</th>
       <th>Created At</th>
@@ -273,12 +340,18 @@ const AdminChallenges = memo(() => {
         <td>{challenge.title}</td>
         <td>{challenge.description}</td>
         <td>{challenge.user_progress_count || 0}</td>
-        <td>{challenge.duration_days || 'N/A'} days</td>
         <td>{challenge.difficulty_level || 'Medium'}</td>
         <td>{challenge.category || 'General'}</td>
         <td>{new Date(challenge.created_at).toLocaleDateString()}</td>
         <td>{challenge.is_active ? 'Active' : 'Inactive'}</td>
         <td>
+          <button
+            onClick={() => handleEditChallenge(challenge)}
+            className="action-btn edit"
+            style={{ marginRight: '8px' }}
+          >
+            ✏️ Edit
+          </button>
           <button
             onClick={() => handleDeleteChallenge(challenge.id, challenge.title)}
             className="action-btn delete"
@@ -338,17 +411,7 @@ const AdminChallenges = memo(() => {
                 </div>
                 
                 <div className="form-row">
-                  <div className="form-group">
-                    <label>Duration (days) *</label>
-                    <input
-                      type="number"
-                      value={uploadData.duration_days}
-                      onChange={(e) => setUploadData(prev => ({ ...prev, duration_days: e.target.value }))}
-                      placeholder="e.g., 7"
-                      className="form-input"
-                      min="1"
-                    />
-                  </div>
+                  
                   
                   <div className="form-group">
                     <label>Difficulty Level</label>
@@ -401,9 +464,127 @@ const AdminChallenges = memo(() => {
                 <button 
                   onClick={handleUpload}
                   className="btn-upload"
-                  disabled={!uploadData.title || !uploadData.description || !uploadData.duration_days}
+                  disabled={!uploadData.title || !uploadData.description}
                 >
                   Create Challenge
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && editingChallenge && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>Edit Challenge</h3>
+                <button 
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingChallenge(null);
+                    setEditData({
+                      title: '',
+                      description: '',
+                      difficulty_level: 'medium',
+                      category: 'general',
+                      imageFile: null
+                    });
+                  }}
+                  className="modal-close"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Title *</label>
+                  <input
+                    type="text"
+                    value={editData.title}
+                    onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Enter challenge title"
+                    className="form-input"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Description *</label>
+                  <textarea
+                    value={editData.description}
+                    onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Enter challenge description"
+                    className="form-textarea"
+                    rows="4"
+                  />
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Difficulty Level</label>
+                    <select
+                      value={editData.difficulty_level}
+                      onChange={(e) => setEditData(prev => ({ ...prev, difficulty_level: e.target.value }))}
+                      className="form-select"
+                    >
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label>Category</label>
+                  <select
+                    value={editData.category}
+                    onChange={(e) => setEditData(prev => ({ ...prev, category: e.target.value }))}
+                    className="form-select"
+                  >
+                    <option value="general">General</option>
+                    <option value="fitness">Fitness</option>
+                    <option value="wellness">Wellness</option>
+                    <option value="mindfulness">Mindfulness</option>
+                    <option value="nutrition">Nutrition</option>
+                    <option value="lifestyle">Lifestyle</option>
+                  </select>
+                </div>
+                
+                <div className="form-group">
+                  <label>Challenge Image (Optional)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'imageFile')}
+                    className="form-file"
+                  />
+                </div>
+              </div>
+              
+              <div className="modal-footer">
+                <button 
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingChallenge(null);
+                    setEditData({
+                      title: '',
+                      description: '',
+                      difficulty_level: 'medium',
+                      category: 'general',
+                      imageFile: null
+                    });
+                  }}
+                  className="btn-cancel"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleUpdateChallenge}
+                  className="btn-upload"
+                  disabled={!editData.title || !editData.description}
+                >
+                  Update Challenge
                 </button>
               </div>
             </div>

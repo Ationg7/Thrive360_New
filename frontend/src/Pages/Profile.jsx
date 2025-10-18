@@ -365,11 +365,28 @@ const Profile = () => {
       <Row className="gx-3">
         <Col xs={12}>
           <Card className="profile-header position-relative">
-            <Card.Img
-              variant="top"
-              src={toImageUrl(profileCoverUrl) || toImageUrl(user?.profile_cover_url) || "../public/images/k.jpg"}
-              className="profile-cover"
-            />
+            {profileCoverUrl || user?.profile_cover_url ? (
+              <Card.Img
+                variant="top"
+                src={toImageUrl(profileCoverUrl) || toImageUrl(user?.profile_cover_url)}
+                className="profile-cover"
+              />
+            ) : (
+              <div 
+                className="profile-cover d-flex align-items-center justify-content-center"
+                style={{
+                  height: "200px",
+                  backgroundColor: "#f8f9fa",
+                  border: "2px dashed #dee2e6",
+                  borderRadius: "8px 8px 0 0"
+                }}
+              >
+                <div className="text-center text-muted">
+                  <div style={{ fontSize: "24px", marginBottom: "8px" }}>📸</div>
+                  <div style={{ fontSize: "14px", fontWeight: "500" }}>Set up your cover photo now</div>
+                </div>
+              </div>
+            )}
             <Dropdown
               className="position-absolute"
               style={{ bottom: "10px", right: "10px" }}

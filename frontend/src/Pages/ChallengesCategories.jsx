@@ -31,7 +31,6 @@ const ChallengesCategories = () => {
             type: "Monthly",
             title: "Monthly Challenge 2",
             description: "Extra Monthly challenge to match layout width.",
-            daysLeft: 30,
             participants: 50,
           });
         }
@@ -160,9 +159,7 @@ const ChallengesCategories = () => {
                             <Card.Text>{challenge.description}</Card.Text>
 
                             <div className="details d-flex justify-content-between">
-                              <span>
-  📅 {challenge.duration_days ?? 34} days left
-</span>
+                              
 
                               <span>
                                 👥 {challenge.participants ?? 140} participants

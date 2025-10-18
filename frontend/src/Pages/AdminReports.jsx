@@ -35,6 +35,11 @@ const AdminReports = memo(() => {
   const [selectedReport, setSelectedReport] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [showRestrictModal, setShowRestrictModal] = useState(false);
+  const [warningMessage, setWarningMessage] = useState('');
+  const [restrictDays, setRestrictDays] = useState(7);
+  const [restrictMessage, setRestrictMessage] = useState('');
   const navigate = useNavigate();
 
   // Clear messages after timeout
@@ -316,6 +321,79 @@ const AdminReports = memo(() => {
     } catch (error) {
       console.error('Error deleting reported post:', error);
       setError(error.message || 'Failed to delete reported post');
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchReports, clearMessages]);
+
+  // Send warning to user
+  const sendWarningToUser = useCallback(async (reportId, message) => {
+    try {
+      setActionLoading(true);
+      const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+
+      const response = await fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', `/reports/${reportId}/warning`)}`, {
+        method: 'POST',
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setSuccess(data.message);
+      fetchReports(); // Refresh data
+      setShowWarningModal(false);
+      setShowModal(false);
+      setSelectedReport(null);
+      setWarningMessage('');
+      clearMessages();
+      
+    } catch (error) {
+      console.error('Error sending warning:', error);
+      setError(error.message || 'Failed to send warning');
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchReports, clearMessages]);
+
+  // Restrict user
+  const restrictUser = useCallback(async (reportId, days, message) => {
+    try {
+      setActionLoading(true);
+      const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+
+      const response = await fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', `/reports/${reportId}/restrict`)}`, {
+        method: 'POST',
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ days, message })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setSuccess(data.message);
+      fetchReports(); // Refresh data
+      setShowRestrictModal(false);
+      setShowModal(false);
+      setSelectedReport(null);
+      setRestrictDays(7);
+      setRestrictMessage('');
+      clearMessages();
+      
+    } catch (error) {
+      console.error('Error restricting user:', error);
+      setError(error.message || 'Failed to restrict user');
     } finally {
       setActionLoading(false);
     }
@@ -653,6 +731,9 @@ const AdminReports = memo(() => {
                             <div className="post-preview">
                               <p>{report.post.content.substring(0, 100)}...</p>
                               <small>By: {report.post.author}</small>
+                              {report.post.email && (
+                                <small className="d-block text-muted">Email: {report.post.email}</small>
+                              )}
                             </div>
                           ) : (
                             <span className="deleted-post">Post deleted</span>
@@ -723,6 +804,9 @@ const AdminReports = memo(() => {
                       <div className="post-full">
                         <p>{selectedReport.post.content}</p>
                         <small>By: {selectedReport.post.author} on {new Date(selectedReport.post.created_at).toLocaleString()}</small>
+                        {selectedReport.post.email && (
+                          <small className="d-block text-muted">Email: {selectedReport.post.email}</small>
+                        )}
                       </div>
                     ) : (
                       <p className="deleted-post">Post has been deleted</p>
@@ -766,26 +850,209 @@ const AdminReports = memo(() => {
                       {actionLoading ? 'Processing...' : 'Dismiss Report'}
                     </button>
                     {selectedReport.post && (
-                      <button
-                        onClick={() => deleteReportedPost(selectedReport.id)}
-                        disabled={actionLoading}
-                        className="action-btn delete-btn"
-                      >
-                        {actionLoading ? 'Processing...' : 'Delete Post'}
-                      </button>
+                      <>
+                        <button
+                          onClick={() => setShowWarningModal(true)}
+                          disabled={actionLoading}
+                          className="action-btn warning-btn"
+                        >
+                          ⚠️ Warning
+                        </button>
+                        <button
+                          onClick={() => setShowRestrictModal(true)}
+                          disabled={actionLoading}
+                          className="action-btn restrict-btn"
+                        >
+                          🚫 Restrict
+                        </button>
+                        <button
+                          onClick={() => deleteReportedPost(selectedReport.id)}
+                          disabled={actionLoading}
+                          className="action-btn delete-btn"
+                        >
+                          {actionLoading ? 'Processing...' : 'Delete Post'}
+                        </button>
+                      </>
                     )}
                   </>
                 )}
                 
                 {selectedReport.status === 'reviewed' && selectedReport.post && (
-                  <button
-                    onClick={() => deleteReportedPost(selectedReport.id)}
-                    disabled={actionLoading}
-                    className="action-btn delete-btn"
-                  >
-                    {actionLoading ? 'Processing...' : 'Delete Post'}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setShowWarningModal(true)}
+                      disabled={actionLoading}
+                      className="action-btn warning-btn"
+                    >
+                      ⚠️ Warning
+                    </button>
+                    <button
+                      onClick={() => setShowRestrictModal(true)}
+                      disabled={actionLoading}
+                      className="action-btn restrict-btn"
+                    >
+                      🚫 Restrict
+                    </button>
+                    <button
+                      onClick={() => deleteReportedPost(selectedReport.id)}
+                      disabled={actionLoading}
+                      className="action-btn delete-btn"
+                    >
+                      {actionLoading ? 'Processing...' : 'Delete Post'}
+                    </button>
+                  </>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Warning Modal */}
+        {showWarningModal && selectedReport && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>Send Warning to User</h3>
+                <button 
+                  onClick={() => {
+                    setShowWarningModal(false);
+                    setWarningMessage('');
+                  }}
+                  className="close-btn"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="modal-body">
+                <div className="warning-details">
+                  <p><strong>User:</strong> {selectedReport.post?.author}</p>
+                  {selectedReport.post?.email && (
+                    <p><strong>Email:</strong> {selectedReport.post.email}</p>
+                  )}
+                  <p><strong>Reported Post:</strong></p>
+                  <div className="post-preview">
+                    <p>{selectedReport.post?.content}</p>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="warning-message">Warning Message:</label>
+                  <textarea
+                    id="warning-message"
+                    value={warningMessage}
+                    onChange={(e) => setWarningMessage(e.target.value)}
+                    placeholder="Enter warning message for the user..."
+                    rows={4}
+                    className="form-control"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  onClick={() => {
+                    setShowWarningModal(false);
+                    setWarningMessage('');
+                  }}
+                  className="action-btn secondary-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => sendWarningToUser(selectedReport.id, warningMessage)}
+                  disabled={actionLoading || !warningMessage.trim()}
+                  className="action-btn warning-btn"
+                >
+                  {actionLoading ? 'Sending...' : 'Send Warning'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Restrict Modal */}
+        {showRestrictModal && selectedReport && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>Restrict User</h3>
+                <button 
+                  onClick={() => {
+                    setShowRestrictModal(false);
+                    setRestrictDays(7);
+                    setRestrictMessage('');
+                  }}
+                  className="close-btn"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="modal-body">
+                <div className="restrict-details">
+                  <p><strong>User:</strong> {selectedReport.post?.author}</p>
+                  {selectedReport.post?.email && (
+                    <p><strong>Email:</strong> {selectedReport.post.email}</p>
+                  )}
+                  <p><strong>Reported Post:</strong></p>
+                  <div className="post-preview">
+                    <p>{selectedReport.post?.content}</p>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="restrict-days">Restriction Duration (Days):</label>
+                  <select
+                    id="restrict-days"
+                    value={restrictDays}
+                    onChange={(e) => setRestrictDays(parseInt(e.target.value))}
+                    className="form-control"
+                  >
+                    <option value={1}>1 Day</option>
+                    <option value={3}>3 Days</option>
+                    <option value={7}>7 Days</option>
+                    <option value={14}>14 Days</option>
+                    <option value={30}>30 Days</option>
+                    <option value={90}>90 Days</option>
+                    <option value={365}>1 Year</option>
+                    <option value={-1}>Permanent</option>
+                  </select>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="restrict-message">Restriction Message:</label>
+                  <textarea
+                    id="restrict-message"
+                    value={restrictMessage}
+                    onChange={(e) => setRestrictMessage(e.target.value)}
+                    placeholder="Enter restriction message for the user..."
+                    rows={4}
+                    className="form-control"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  onClick={() => {
+                    setShowRestrictModal(false);
+                    setRestrictDays(7);
+                    setRestrictMessage('');
+                  }}
+                  className="action-btn secondary-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => restrictUser(selectedReport.id, restrictDays, restrictMessage)}
+                  disabled={actionLoading || !restrictMessage.trim()}
+                  className="action-btn restrict-btn"
+                >
+                  {actionLoading ? 'Restricting...' : 'Restrict User'}
+                </button>
               </div>
             </div>
           </div>

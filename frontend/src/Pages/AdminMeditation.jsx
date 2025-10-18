@@ -16,7 +16,21 @@ const AdminMeditation = memo(() => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingMeditation, setEditingMeditation] = useState(null);
   const [uploadData, setUploadData] = useState({
+    title: '',
+    description: '',
+    duration: '',
+    category: 'Meditation',
+    imageFile: null,
+    tutorialSteps: [
+      { step: 1, title: '', description: '', imageFile: null },
+      { step: 2, title: '', description: '', imageFile: null },
+      { step: 3, title: '', description: '', imageFile: null }
+    ]
+  });
+  const [editData, setEditData] = useState({
     title: '',
     description: '',
     duration: '',
@@ -116,6 +130,48 @@ const AdminMeditation = memo(() => {
         index === stepIndex ? { ...step, imageFile: file } : step
       )
     }));
+  };
+
+  // Handle edit tutorial step changes
+  const handleEditTutorialStepChange = (stepIndex, field, value) => {
+    setEditData(prev => ({
+      ...prev,
+      tutorialSteps: prev.tutorialSteps.map((step, index) => 
+        index === stepIndex ? { ...step, [field]: value } : step
+      )
+    }));
+  };
+
+  // Handle edit tutorial step image upload
+  const handleEditTutorialStepImageChange = (stepIndex, file) => {
+    setEditData(prev => ({
+      ...prev,
+      tutorialSteps: prev.tutorialSteps.map((step, index) => 
+        index === stepIndex ? { ...step, imageFile: file } : step
+      )
+    }));
+  };
+
+  // Add new edit tutorial step
+  const addEditTutorialStep = () => {
+    setEditData(prev => ({
+      ...prev,
+      tutorialSteps: [
+        ...prev.tutorialSteps,
+        { step: prev.tutorialSteps.length + 1, title: '', description: '', imageFile: null }
+      ]
+    }));
+  };
+
+  // Remove edit tutorial step
+  const removeEditTutorialStep = (stepIndex) => {
+    if (editData.tutorialSteps.length > 1) {
+      setEditData(prev => ({
+        ...prev,
+        tutorialSteps: prev.tutorialSteps.filter((_, index) => index !== stepIndex)
+          .map((step, index) => ({ ...step, step: index + 1 }))
+      }));
+    }
   };
 
   // Add new tutorial step
@@ -248,6 +304,122 @@ const AdminMeditation = memo(() => {
     }
   }, [clearMessages]);
 
+  // Edit meditation
+  const handleEditMeditation = useCallback((meditation) => {
+    setEditingMeditation(meditation);
+    
+    // Parse tutorial steps if they exist
+    let tutorialSteps = [
+      { step: 1, title: '', description: '', imageFile: null },
+      { step: 2, title: '', description: '', imageFile: null },
+      { step: 3, title: '', description: '', imageFile: null }
+    ];
+    
+    if (meditation.tutorial_steps) {
+      try {
+        const parsedSteps = JSON.parse(meditation.tutorial_steps);
+        if (Array.isArray(parsedSteps)) {
+          tutorialSteps = parsedSteps.map((step, index) => ({
+            step: step.step || index + 1,
+            title: step.title || '',
+            description: step.description || '',
+            imageFile: null
+          }));
+        }
+      } catch (e) {
+        console.error('Error parsing tutorial steps:', e);
+      }
+    }
+    
+    setEditData({
+      title: meditation.title,
+      description: meditation.description,
+      duration: meditation.duration || '',
+      category: meditation.category || 'Meditation',
+      imageFile: null,
+      tutorialSteps: tutorialSteps
+    });
+    setShowEditModal(true);
+  }, []);
+
+  // Update meditation
+  const handleUpdateMeditation = useCallback(async () => {
+    try {
+      // Add client-side validation
+      if (!editData.title || !editData.description) {
+        setError('Title and description are required.');
+        return;
+      }
+      if (editData.tutorialSteps.some(step => step.title && !step.description)) {
+        setError('All tutorial steps with titles must have descriptions.');
+        return;
+      }
+
+      const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+
+      const formData = new FormData();
+      formData.append('title', editData.title);
+      formData.append('description', editData.description);
+      formData.append('duration', editData.duration);
+      formData.append('category', editData.category);
+      
+      if (editData.imageFile) {
+        formData.append('image_file', editData.imageFile);
+      }
+
+      // Add tutorial steps
+      formData.append('tutorial_steps', JSON.stringify(
+        editData.tutorialSteps.map(step => ({
+          step: step.step,
+          title: step.title,
+          description: step.description
+        }))
+      ));
+
+      // Add tutorial step images
+      editData.tutorialSteps.forEach((step, index) => {
+        if (step.imageFile) {
+          formData.append(`tutorial_step_${index + 1}_image`, step.imageFile);
+        }
+      });
+
+      const response = await fetch(`${API_ENDPOINTS.MEDITATION}/${editingMeditation.id}`, {
+        method: 'PUT',
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorDetails = await response.text();
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - Details: ${errorDetails}`);
+      }
+
+      setSuccess('Meditation updated successfully');
+      setShowEditModal(false);
+      setEditingMeditation(null);
+      setEditData({
+        title: '',
+        description: '',
+        duration: '',
+        category: 'Meditation',
+        imageFile: null,
+        tutorialSteps: [
+          { step: 1, title: '', description: '', imageFile: null },
+          { step: 2, title: '', description: '', imageFile: null },
+          { step: 3, title: '', description: '', imageFile: null }
+        ]
+      });
+      fetchMeditations();
+      clearMessages();
+
+    } catch (error) {
+      console.error('Error updating meditation:', error);
+      setError(error.message || 'Failed to update meditation');
+    }
+  }, [editData, editingMeditation, fetchMeditations, clearMessages]);
+
   // Filter meditations based on search and filters
   const filteredMeditations = meditations.filter(meditation => {
     const matchesSearch = meditation.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -372,6 +544,14 @@ const AdminMeditation = memo(() => {
                 </div>
                 
                 <div className="meditation-actions">
+                  <button
+                    onClick={() => handleEditMeditation(meditation)}
+                    className="action-btn edit"
+                    title="Edit Meditation"
+                    style={{ marginRight: '8px' }}
+                  >
+                    ✏️ Edit
+                  </button>
                   <button
                     onClick={() => handleDeleteMeditation(meditation.id, meditation.title)}
                     className="action-btn delete"
@@ -552,6 +732,201 @@ const AdminMeditation = memo(() => {
                   disabled={!uploadData.title || !uploadData.description}
                 >
                   Upload Meditation Tutorial
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && editingMeditation && (
+          <div className="modal-overlay">
+            <div className="modal-content tutorial-modal">
+              <div className="modal-header">
+                <h3>Edit Meditation Tutorial</h3>
+                <button 
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingMeditation(null);
+                    setEditData({
+                      title: '',
+                      description: '',
+                      duration: '',
+                      category: 'Meditation',
+                      imageFile: null,
+                      tutorialSteps: [
+                        { step: 1, title: '', description: '', imageFile: null },
+                        { step: 2, title: '', description: '', imageFile: null },
+                        { step: 3, title: '', description: '', imageFile: null }
+                      ]
+                    });
+                  }}
+                  className="modal-close"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="modal-body">
+                {/* Basic Information */}
+                <div className="tutorial-section">
+                  <h4>Basic Information</h4>
+                  <div className="form-group">
+                    <label>Title *</label>
+                    <input
+                      type="text"
+                      value={editData.title}
+                      onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Enter meditation title"
+                      className="form-input"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Description *</label>
+                    <textarea
+                      value={editData.description}
+                      onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Enter meditation description"
+                      className="form-textarea"
+                      rows="3"
+                    />
+                  </div>
+                  
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Duration (minutes)</label>
+                      <input
+                        type="number"
+                        value={editData.duration}
+                        onChange={(e) => setEditData(prev => ({ ...prev, duration: e.target.value }))}
+                        placeholder="e.g., 10"
+                        className="form-input"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Category</label>
+                      <select
+                        value={editData.category}
+                        onChange={(e) => setEditData(prev => ({ ...prev, category: e.target.value }))}
+                        className="form-select"
+                      >
+                        <option value="Meditation">Meditation</option>
+                        <option value="Stretching">Stretching</option>
+                        <option value="Workout">Workout</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Main Image (Optional)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileChange(e, 'imageFile')}
+                      className="form-file"
+                    />
+                  </div>
+                </div>
+
+                {/* Tutorial Steps */}
+                <div className="tutorial-section">
+                  <div className="tutorial-header">
+                    <h4>Step-by-Step Tutorial</h4>
+                    <button 
+                      type="button"
+                      onClick={addEditTutorialStep}
+                      className="btn-add-step"
+                    >
+                      + Add Step
+                    </button>
+                  </div>
+                  
+                  {editData.tutorialSteps.map((step, index) => (
+                    <div key={index} className="tutorial-step">
+                      <div className="step-header">
+                        <h5>Step {step.step}</h5>
+                        {editData.tutorialSteps.length > 1 && (
+                          <button 
+                            type="button"
+                            onClick={() => removeEditTutorialStep(index)}
+                            className="btn-remove-step"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Step Title</label>
+                        <input
+                          type="text"
+                          value={step.title}
+                          onChange={(e) => handleEditTutorialStepChange(index, 'title', e.target.value)}
+                          placeholder={`Enter step ${step.step} title`}
+                          className="form-input"
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Step Description</label>
+                        <textarea
+                          value={step.description}
+                          onChange={(e) => handleEditTutorialStepChange(index, 'description', e.target.value)}
+                          placeholder={`Describe what to do in step ${step.step}`}
+                          className="form-textarea"
+                          rows="2"
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Step Image (Optional)</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleEditTutorialStepImageChange(index, e.target.files[0])}
+                          className="form-file"
+                        />
+                        {step.imageFile && (
+                          <div className="file-preview">
+                            <small>Selected: {step.imageFile.name}</small>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="modal-footer">
+                <button 
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingMeditation(null);
+                    setEditData({
+                      title: '',
+                      description: '',
+                      duration: '',
+                      category: 'Meditation',
+                      imageFile: null,
+                      tutorialSteps: [
+                        { step: 1, title: '', description: '', imageFile: null },
+                        { step: 2, title: '', description: '', imageFile: null },
+                        { step: 3, title: '', description: '', imageFile: null }
+                      ]
+                    });
+                  }}
+                  className="btn-cancel"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleUpdateMeditation}
+                  className="btn-upload"
+                  disabled={!editData.title || !editData.description}
+                >
+                  Update Meditation Tutorial
                 </button>
               </div>
             </div>
