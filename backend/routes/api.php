@@ -102,11 +102,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // Meditation routes
         Route::get('/meditation', [AdminController::class, 'getMeditations']);
         Route::post('/meditation', [AdminController::class, 'storeMeditation']);
+        Route::put('/meditation/{id}', [AdminController::class, 'updateMeditation']);
         Route::delete('/meditation/{id}', [AdminController::class, 'deleteMeditation']);
         
         // Blog routes
         Route::get('/blogs', [AdminController::class, 'getBlogs']);
         Route::post('/blogs', [AdminController::class, 'storeBlog']);
+        Route::put('/blogs/{id}', [AdminController::class, 'updateBlog']);
         Route::delete('/blogs/{id}', [AdminController::class, 'deleteBlog']);
 
         // Report routes
@@ -114,6 +116,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/reports/stats', [AdminController::class, 'getReportsStats']);
         Route::put('/reports/{id}/status', [AdminController::class, 'updateReportStatus']);
         Route::delete('/reports/{id}/post', [AdminController::class, 'deleteReportedPost']);
+        Route::post('/reports/{id}/warning', [AdminController::class, 'sendWarningToUser']);
+        Route::post('/reports/{id}/restrict', [AdminController::class, 'restrictUser']);
 
         // Psychiatrist routes
         Route::get('/psychiatrists', [AdminController::class, 'getPsychiatrists']);
@@ -129,6 +133,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // --- Admin Challenge Routes ---
         Route::get('/challenges', [AdminChallengeController::class, 'index']);
         Route::post('/challenges', [AdminChallengeController::class, 'store']);
+        Route::put('/challenges/{id}', [AdminChallengeController::class, 'update']);
         Route::delete('/challenges/{id}', [AdminChallengeController::class, 'destroy']);
 
         // --- Admin Event Routes ---

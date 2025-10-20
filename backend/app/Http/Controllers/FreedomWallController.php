@@ -31,7 +31,7 @@ class FreedomWallController extends Controller
                 'author' => $post->author,
                 'email' => $post->user ? $post->user->email : null,
                 'image_path' => $post->image_path,
-                'image_url' => $post->image_path ? 'http://127.0.0.1:8000' . Storage::url($post->image_path) : null,
+                'image_url' => $post->image_path ? url(Storage::url($post->image_path)) : null,
                 'created_at' => $post->created_at,
                 'updated_at' => $post->updated_at,
                 'likes' => $reactionCounts['like'],
@@ -48,6 +48,16 @@ class FreedomWallController extends Controller
 
     public function store(Request $request)
     {
+        // Check if user is restricted
+        if (auth()->check() && auth()->user()->isRestricted()) {
+            $restrictionInfo = auth()->user()->getRestrictionInfo();
+            return response()->json([
+                'error' => 'Account Restricted',
+                'message' => 'Your account is currently restricted. You cannot post content.',
+                'restriction_info' => $restrictionInfo
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'content' => 'required|string|max:1000',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5000',
@@ -84,7 +94,7 @@ class FreedomWallController extends Controller
             'author' => $post->author,
             'email' => $post->user ? $post->user->email : null,
             'image_path' => $post->image_path,
-            'image_url' => $post->image_path ? 'http://127.0.0.1:8000' . Storage::url($post->image_path) : null,
+            'image_url' => $post->image_path ? url(Storage::url($post->image_path)) : null,
             'created_at' => $post->created_at,
             'likes' => $reactionCounts['like'],
             'hearts' => $reactionCounts['heart'],
@@ -97,6 +107,16 @@ class FreedomWallController extends Controller
 
     public function react(Request $request, $postId)
 {
+    // Check if user is restricted
+    if (auth()->check() && auth()->user()->isRestricted()) {
+        $restrictionInfo = auth()->user()->getRestrictionInfo();
+        return response()->json([
+            'error' => 'Account Restricted',
+            'message' => 'Your account is currently restricted. You cannot interact with posts.',
+            'restriction_info' => $restrictionInfo
+        ], 403);
+    }
+
     $request->validate([
         'reaction_type' => 'required|string|in:like,heart,sad',
     ]);
@@ -156,6 +176,16 @@ class FreedomWallController extends Controller
 
     public function save(Request $request, FreedomWallPost $post)
     {
+        // Check if user is restricted
+        if (auth()->check() && auth()->user()->isRestricted()) {
+            $restrictionInfo = auth()->user()->getRestrictionInfo();
+            return response()->json([
+                'error' => 'Account Restricted',
+                'message' => 'Your account is currently restricted. You cannot save posts.',
+                'restriction_info' => $restrictionInfo
+            ], 403);
+        }
+
         $userId = auth()->id();
         
         $savedPost = SavedPost::where('user_id', $userId)

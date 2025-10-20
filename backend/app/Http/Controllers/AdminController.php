@@ -300,6 +300,42 @@ foreach ($users as $user) {
         return response()->json($meditation, 201);
     }
 
+    public function updateMeditation(Request $request, $id)
+    {
+        $meditation = Meditation::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string',
+            'duration' => 'nullable|string',
+            'category' => 'sometimes|string',
+            'tutorial_steps' => 'nullable|string',
+            'image_file' => 'nullable|image|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $meditation->update($request->only([
+            'title', 'description', 'duration', 'category', 'tutorial_steps'
+        ]));
+
+        if ($request->hasFile('image_file')) {
+            // Delete old image if exists
+            if ($meditation->image_url) {
+                Storage::disk('public')->delete($meditation->image_url);
+            }
+            $meditation->image_url = $request->file('image_file')->store('meditations', 'public');
+            $meditation->save();
+        }
+
+        // Refresh the meditation to get updated data
+        $meditation = $meditation->fresh();
+
+        return response()->json($meditation);
+    }
+
     public function deleteMeditation($id)
     {
         $meditation = Meditation::findOrFail($id);
@@ -366,6 +402,46 @@ foreach ($users as $user) {
 
 
         return response()->json($blog, 201);
+    }
+
+    public function updateBlog(Request $request, $id)
+    {
+        $blog = Blog::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'sometimes|string|max:255',
+            'content' => 'sometimes|string',
+            'category' => 'sometimes|string',
+            'excerpt' => 'nullable|string',
+            'tags' => 'nullable|string',
+            'image_file' => 'nullable|image|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $blogData = $request->only(['title', 'content', 'category', 'excerpt']);
+
+        if ($request->tags) {
+            $blogData['tags'] = array_map('trim', explode(',', $request->tags));
+        }
+
+        $blog->update($blogData);
+
+        if ($request->hasFile('image_file')) {
+            // Delete old image if exists
+            if ($blog->image_url) {
+                Storage::disk('public')->delete($blog->image_url);
+            }
+            $blog->image_url = $request->file('image_file')->store('blogs/images', 'public');
+            $blog->save();
+        }
+
+        // Refresh the blog to get updated data
+        $blog = $blog->fresh();
+
+        return response()->json($blog);
     }
 
     public function deleteBlog($id)
@@ -436,6 +512,94 @@ foreach ($users as $user) {
         ]);
 
         return response()->json(['message' => 'Reported post deleted successfully']);
+    }
+
+    public function sendWarningToUser(Request $request, $reportId)
+    {
+        $validator = Validator::make($request->all(), [
+            'message' => 'required|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $report = PostReport::findOrFail($reportId);
+        $post = $report->post;
+
+        // Create a notification for the user who posted
+        if ($post && $post->user_id) {
+            \App\Models\Notification::createNotification(
+                $post->user_id,
+                'warning',
+                'Content Warning',
+                $request->message,
+                [
+                    'report_id' => $report->id,
+                    'post_id' => $post->id,
+                    'redirect_url' => url("/freedom-wall")
+                ]
+            );
+        }
+
+        $report->update([
+            'status' => 'resolved',
+            'admin_notes' => 'Warning sent to user: ' . $request->message,
+            'reviewed_at' => now(),
+            'reviewed_by' => auth()->id(),
+        ]);
+
+        return response()->json(['message' => 'Warning sent to user successfully']);
+    }
+
+    public function restrictUser(Request $request, $reportId)
+    {
+        $validator = Validator::make($request->all(), [
+            'days' => 'required|integer|min:1|max:365',
+            'message' => 'required|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $report = PostReport::findOrFail($reportId);
+        $post = $report->post;
+
+        if ($post && $post->user_id) {
+            $user = \App\Models\User::find($post->user_id);
+            
+            // Set restriction end date
+            $restrictionEndDate = now()->addDays($request->days);
+            $user->update([
+                'restricted_until' => $restrictionEndDate,
+                'restriction_reason' => $request->message
+            ]);
+
+            // Create a notification for the user
+            \App\Models\Notification::createNotification(
+                $post->user_id,
+                'restriction',
+                'Account Restriction',
+                "Your account has been restricted for {$request->days} days. Reason: {$request->message}",
+                [
+                    'report_id' => $report->id,
+                    'post_id' => $post->id,
+                    'restriction_days' => $request->days,
+                    'restriction_end' => $restrictionEndDate->toISOString(),
+                    'redirect_url' => url("/profile")
+                ]
+            );
+        }
+
+        $report->update([
+            'status' => 'resolved',
+            'admin_notes' => "User restricted for {$request->days} days: " . $request->message,
+            'reviewed_at' => now(),
+            'reviewed_by' => auth()->id(),
+        ]);
+
+        return response()->json(['message' => 'User restricted successfully']);
     }
 
     public function getReportsStats()

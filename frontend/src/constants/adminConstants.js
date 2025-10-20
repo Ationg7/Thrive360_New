@@ -1,23 +1,11 @@
 // Admin Dashboard Constants
 // Following Clean Code Principle: Extract Magic Numbers and Strings
 
-export const API_ENDPOINTS = {
-  DASHBOARD: 'http://127.0.0.1:8000/api/admin/dashboard',
-  USERS: 'http://127.0.0.1:8000/api/admin/users',
-  POSTS: 'http://127.0.0.1:8000/api/admin/posts',
-  CHALLENGES: 'http://127.0.0.1:8000/api/admin/challenges', // GET all challenges
-  MEDITATION: 'http://127.0.0.1:8000/api/admin/meditation', // GET meditation list
-  BLOGS: 'http://127.0.0.1:8000/api/admin/blogs',
-  ANALYTICS: 'http://127.0.0.1:8000/api/admin/analytics',
-  EVENTS_LIST: 'http://127.0.0.1:8000/api/events',
+// Import API endpoints from centralized config
+import { API_ENDPOINTS } from '../config/api.js';
 
-  // Upload / Create endpoints (POST)
-  UPLOAD_CHALLENGE: 'http://127.0.0.1:8000/api/admin/challenges', // matches Laravel store route
-  UPLOAD_MEDITATION: 'http://127.0.0.1:8000/api/admin/meditation', // matches Laravel storeMeditation
-  UPLOAD_BLOG: 'http://127.0.0.1:8000/api/admin/blogs', // matches your backend
-  UPLOAD_EVENT: 'http://127.0.0.1:8000/api/events',
-  PROFILE_COVERS: 'http://127.0.0.1:8000/api/admin/profile-covers'
-};
+// Re-export for backward compatibility
+export { API_ENDPOINTS };
 
 export const STORAGE_KEYS = {
   ADMIN_TOKEN: 'adminToken',

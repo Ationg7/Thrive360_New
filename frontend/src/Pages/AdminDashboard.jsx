@@ -45,11 +45,62 @@ const AdminDashboard = memo(() => {
     <ErrorBoundary>
       <div className="admin-dashboard">
         {/* Message Display */}
-        <MessageDisplay 
-          error={error} 
-          success={success} 
-          onDismiss={clearMessages} 
-        />
+{(success || error) && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "20px",
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)",
+      borderLeft: `6px solid ${success ? "green" : "red"}`,
+      borderRadius: "0 6px 6px 0",
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      color: "#fff",
+      transition: "all 0.4s ease",
+      opacity: 1,
+      animation: "fadeInOut 5s forwards"
+    }}
+  >
+    <span style={{ fontWeight: 600 }}>{success || error}</span>
+
+    <span
+      onClick={clearMessages}
+      style={{
+        cursor: "pointer",
+        color: "#fff",
+        fontWeight: 600,
+        marginLeft: "12px",
+        fontSize: "18px",
+      }}
+    >
+      ✕
+    </span>
+
+    <style>
+      {`
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translateX(-20px); }
+          10% { opacity: 1; transform: translateX(0); }
+          90% { opacity: 1; transform: translateX(0); }
+          100% { opacity: 0; transform: translateX(-20px); }
+        }
+      `}
+    </style>
+  </div>
+)}
+
+
+
 
       {/* Header */}
         <div className="admin-header">

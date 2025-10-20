@@ -741,43 +741,43 @@ const Profile = () => {
 
          {/* Posts */}
               <div className="post-list mt-3">
-                {posts.map((post) => (
-                  <Card className={`post-card position-relative ${!isLoggedIn ? "blurred-content" : ""}`} key={post.id}>
-                    {!isLoggedIn && (
-                      <div className="post-blur-overlay">
-                        <p>🔒 Join to view posts</p>
-                        <Link to="/signin" className="btn btn-success btn-sm me-2">
-                          Sign In
-                        </Link>
-                        <Link to="/signup" className="btn btn-outline-success btn-sm">
-                          Sign Up
-                        </Link>
-                      </div>
-                    )}
-        
-                    {isLoggedIn && (
-                      <Dropdown className="position-absolute" style={{ top: "10px", right: "10px" }}>
-                        <Dropdown.Toggle variant="light" size="sm" className="p-0 border-0 no-caret">
-                          <FaEllipsisV />
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu align="end">
-                          <Dropdown.Item onClick={() => openReportModal(post.id)}>Report</Dropdown.Item>
-                          <Dropdown.Item onClick={() => handleHide(post.id)}>Hide</Dropdown.Item>
-                        </Dropdown.Menu>
-                      </Dropdown>
-                    )}
-        
-                  <Card.Body className="p-0">
-                                <div className="p-3">
-                                  <div className="post-header">
-                                    <div className="me-2">
-                                     <Avatar 
-                    email={post.email} 
-                    name={post.author} 
-                    className="avatar" 
-                    size={40} 
-                  />
-                  </div>
+                  {posts.map((post) => (
+                    <Card className={`post-card position-relative ${!isLoggedIn ? "blurred-content" : ""}`} key={post.id}>
+                      {!isLoggedIn && (
+                        <div className="post-blur-overlay">
+                          <p>🔒 Join to view posts</p>
+                          <Link to="/signin" className="btn btn-success btn-sm me-2">
+                            Sign In
+                          </Link>
+                          <Link to="/signup" className="btn btn-outline-success btn-sm">
+                            Sign Up
+                          </Link>
+                        </div>
+                      )}
+          
+                      {isLoggedIn && (
+                        <Dropdown className="position-absolute" style={{ top: "10px", right: "10px" }}>
+                          <Dropdown.Toggle variant="light" size="sm" className="p-0 border-0 no-caret">
+                            <FaEllipsisV />
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu align="end">
+                            <Dropdown.Item onClick={() => openReportModal(post.id)}>Report</Dropdown.Item>
+                            <Dropdown.Item onClick={() => handleHide(post.id)}>Hide</Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      )}
+          
+                    <Card.Body className="p-0">
+                                  <div className="p-3">
+                                    <div className="post-header">
+                                      <div className="me-2">
+                                      <Avatar 
+                      email={post.email} 
+                      name={post.author} 
+                      className="avatar" 
+                      size={40} 
+                    />
+                    </div>
                   
                                     <div className="author-info">
                                       <Card.Title className="post-author">{post.author}</Card.Title>

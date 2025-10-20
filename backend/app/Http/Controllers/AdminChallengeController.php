@@ -19,8 +19,7 @@ public function index()
         // Participants count for frontend
         $challenge->user_progress_count = $challenge->participants_list_count;
 
-        // Map existing days_left to duration_days for frontend
-        $challenge->duration_days = $challenge->days_left ?? 0;
+       
 
         return $challenge;
     });
@@ -37,14 +36,13 @@ public function index()
         $request->validate([
             'title' => 'required|string',
             'description' => 'required|string',
-            'duration_days' => 'required|integer|min:1',
             'difficulty_level' => 'required|string',
             'category' => 'required|string',
             'image_file' => 'nullable|image|max:2048',
         ]);
 
         $challenge = new Challenge($request->only([
-            'title', 'description', 'duration_days', 'difficulty_level', 'category'
+            'title', 'description','difficulty_level', 'category'
         ]));
 
         if ($request->hasFile('image_file')) {
@@ -67,6 +65,44 @@ public function index()
                 ]
             );
         }
+
+        return response()->json($challenge);
+    }
+
+    // Update a challenge
+    public function update(Request $request, $id)
+    {
+        $challenge = Challenge::findOrFail($id);
+
+        $request->validate([
+            'title' => 'sometimes|string',
+            'description' => 'sometimes|string',
+            'difficulty_level' => 'sometimes|string',
+            'category' => 'sometimes|string',
+            'image_file' => 'nullable|image|max:2048',
+        ]);
+
+        $challenge->update($request->only([
+            'title', 'description', 'difficulty_level', 'category'
+        ]));
+
+        if ($request->hasFile('image_file')) {
+            // Delete old image if exists
+            if ($challenge->image_url) {
+                Storage::disk('public')->delete($challenge->image_url);
+            }
+            $challenge->image_url = $request->file('image_file')->store('challenges', 'public');
+            $challenge->save();
+        }
+
+        // Return the challenge with the same structure as index method
+        $challenge = $challenge->load('user')
+            ->load('participantsList.user:id,name')
+            ->loadCount('participantsList');
+        
+        // Add the same computed fields as index method
+        $challenge->user_progress_count = $challenge->participants_list_count;
+       
 
         return response()->json($challenge);
     }

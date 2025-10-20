@@ -231,19 +231,19 @@ const ChallengesOverview = () => {
         </div>
       </div>
 
-      {/* + Join More Challenges button */}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px", marginLeft: "1260px" }}>
-        <Button
-          variant="success"
-          size="sm"
-          onClick={() => {
-            if (!isLoggedIn) handleGuestAction("join");
-            else navigate("/challenges/categories");
-          }}
-        >
-          + Join More Challenges
-        </Button>
-      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px", marginLeft: "1130px" , height: "45px" }}>
+  <Button
+    variant="success"
+    size="sm"
+    onClick={() => {
+      if (!isLoggedIn) handleGuestAction("join");
+      else navigate("/challenges/categories");
+    }}
+  >
+    + Join More Challenges
+  </Button>
+</div>
+
 
       {/* Challenge Sections */}
       {challengeTypes.map((type) => {
@@ -311,27 +311,50 @@ const ChallengesOverview = () => {
 
       {/* Floating Popup for Guests */}
       {showPopup && (
-        <div className="guest-popup-overlay">
-          <div className="guest-popup">
-            <div className="guest-popup-line"></div>
-            <p className="guest-popup-message">{popupMessage}</p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
-              <Button variant="secondary" onClick={() => setShowPopup(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="success"
-                onClick={() => {
-                  setShowPopup(false);
-                  navigate("/signin");
-                }}
-              >
-                Sign In
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="guest-popup-overlay">
+    <div className="guest-popup">
+
+      {/* Header with title and close X */}
+      <div
+        className="guest-popup-header"
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}
+      >
+        <span style={{ fontWeight: 600, fontSize: '18px' }}>Notice</span>
+        <span
+          style={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '18px' }}
+          onClick={() => setShowPopup(false)}
+        >
+          ✕
+        </span>
+      </div>
+
+      {/* Line below header */}
+      <div className="guest-popup-line"></div>
+
+      {/* Message content */}
+      <p className="guest-popup-message" style={{ textAlign: 'center', margin: '30px 0' }}>
+        {popupMessage}
+      </p>
+
+      {/* Action buttons */}
+      <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: '40px' }}>
+        <Button variant="secondary" onClick={() => setShowPopup(false)}>
+          Cancel
+        </Button>
+        <Button
+          variant="success"
+          onClick={() => {
+            setShowPopup(false);
+            navigate("/signin");
+          }}
+        >
+          Sign In
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Guest Mode Styles */}
       <style>{`

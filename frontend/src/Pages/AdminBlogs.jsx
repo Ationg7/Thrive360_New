@@ -4,6 +4,7 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, STORAGE_KEYS, ROUTES, MESSAGES } from '../constants/adminConstants';
+import { getStorageUrl } from '../config/api.js';
 import ErrorBoundary from '../components/ErrorBoundary';
 import MessageDisplay from '../components/MessageDisplay';
 import './AdminBlogs.css';
@@ -18,6 +19,9 @@ const AdminBlogs = memo(() => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [blogToDelete, setBlogToDelete] = useState(null);
+
   const [uploadData, setUploadData] = useState({
     title: '',
     content: '',
@@ -101,7 +105,7 @@ const AdminBlogs = memo(() => {
     if (!img) return null;
     if (typeof img !== 'string') return null;
     if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    return `http://127.0.0.1:8000/storage/${img}`;
+    return getStorageUrl(img);
   };
 
   // Upload new blog
@@ -118,7 +122,7 @@ const AdminBlogs = memo(() => {
       if (uploadData.imageFile) {
         formData.append('image_file', uploadData.imageFile);
       }
-
+      
       const response = await fetch(API_ENDPOINTS.UPLOAD_BLOG, {
         method: 'POST',
         headers: {
@@ -163,9 +167,7 @@ const AdminBlogs = memo(() => {
 
   // Delete blog
   const handleDeleteBlog = useCallback(async (blogId, blogTitle) => {
-    if (!window.confirm(`Are you sure you want to delete "${blogTitle}"? This action cannot be undone.`)) {
-      return;
-    }
+    
 
     try {
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
@@ -220,9 +222,9 @@ const AdminBlogs = memo(() => {
       if (editData.imageFile) {
         formData.append('image_file', editData.imageFile);
       }
-
+      formData.append('_method', 'PUT');
       const response = await fetch(`${API_ENDPOINTS.BLOGS}/${editingBlog.id}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           "Authorization": `Bearer ${adminToken}`,
         },
@@ -257,7 +259,6 @@ const AdminBlogs = memo(() => {
         tags: '',
         imageFile: null
       });
-      fetchBlogs();
       clearMessages();
       
     } catch (error) {
@@ -295,11 +296,51 @@ const AdminBlogs = memo(() => {
   return (
     <ErrorBoundary>
       <div className="admin-blogs-page">
-        <MessageDisplay 
-          error={error} 
-          success={success} 
-          onDismiss={clearMessages} 
-        />
+      {(success || error) && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px",
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)",
+      borderLeft: `6px solid ${success ? "green" : "red"}`,
+      borderRadius: "0 6px 6px 0",
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+      color: "#fff",
+      transition: "left 0.4s ease, opacity 0.4s ease",
+    }}
+  >
+    <span style={{ fontWeight: 600 }}>{success || error}</span>
+
+    <span
+      onClick={() => {
+        setError(null);
+        setSuccess(null);
+      }}
+      style={{
+        cursor: "pointer",
+        color: "#fff",
+        fontWeight: 600,
+        marginLeft: "12px",
+        fontSize: "18px",
+      }}
+    >
+      ✕
+    </span>
+  </div>
+)}
+
 
         {/* Header */}
         <div className="admin-page-header">
@@ -343,8 +384,8 @@ const AdminBlogs = memo(() => {
               <option value="all">All Categories</option>
               <option value="Mental Health">Mental Health</option>
               <option value="Nutrition">Nutrition</option>
-              <option value="Physical-Wellness">Physical Wellness</option>
-              <option value="Stress-Management">Stress Management</option>
+              <option value="Physical Wellness">Physical Wellness</option>
+              <option value="Stress Management">Stress Management</option>
             </select>
           </div>
         </div>
@@ -374,32 +415,31 @@ const AdminBlogs = memo(() => {
                     {blog.category}
                   </div>
                 </div>
-                
                 <div className="blog-content">
-                  <h4 className="blog-title">{blog.title}</h4>
-                  <p className="blog-excerpt">{blog.excerpt}</p>
-                  
-                  <div className="blog-meta">
-                    <div className="blog-tags">
-                      {(() => {
-                        const tagList = Array.isArray(blog.tags)
-                          ? blog.tags
-                          : (typeof blog.tags === 'string' && blog.tags.length > 0
-                              ? blog.tags.split(',')
-                              : []);
-                        return tagList.map((tag, index) => (
-                          <span key={index} className="tag">
-                            {String(tag).trim()}
-                          </span>
-                        ));
-                      })()}
-                    </div>
-                    <div className="blog-created">
-                      <span className="meta-icon">📅</span>
-                      <span>{new Date(blog.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </div>
+  <h4 className="blog-title">{blog.title}</h4>
+  
+  <div className="blog-meta">
+    <div className="blog-tags">
+      {(() => {
+        const tagList = Array.isArray(blog.tags)
+          ? blog.tags
+          : (typeof blog.tags === 'string' && blog.tags.length > 0
+              ? blog.tags.split(',')
+              : []);
+        return tagList.map((tag, index) => (
+          <span key={index} className="tag">
+            {String(tag).trim()}
+          </span>
+        ));
+      })()}
+    </div>
+    <div className="blog-created">
+      <span className="meta-icon">📅</span>
+      <span>{new Date(blog.created_at).toLocaleDateString()}</span>
+    </div>
+  </div>
+</div>
+
                 
                 <div className="blog-actions">
                   <button
@@ -411,7 +451,10 @@ const AdminBlogs = memo(() => {
                     ✏️ Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteBlog(blog.id, blog.title)}
+onClick={() => {
+  setBlogToDelete(blog);
+  setShowDeleteConfirm(true);
+}}
                     className="action-btn delete"
                     title="Delete Blog"
                   >
@@ -421,6 +464,98 @@ const AdminBlogs = memo(() => {
               </div>
             ))}
             
+            {showDeleteConfirm && blogToDelete && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      background: "rgba(0,0,0,0.35)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999
+    }}
+  >
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: "12px",
+        padding: "24px",
+        width: "380px",
+        maxWidth: "92%",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+        position: "relative"
+      }}
+    >
+      {/* Close button */}
+      <button
+        onClick={() => setShowDeleteConfirm(false)}
+        style={{
+          position: "absolute",
+          top: "12px",
+          right: "12px",
+          background: "transparent",
+          border: "none",
+          fontSize: "18px",
+          fontWeight: "bold",
+          cursor: "pointer",
+          color: "#555"
+        }}
+      >
+        ×
+      </button>
+
+      <h5 style={{ fontWeight: 600, color: "#212121", marginBottom: "12px" }}>
+        Delete Notice
+      </h5>
+
+      <div style={{ height: "1px", backgroundColor: "#e0e0e0", margin: "12px 0" }} />
+
+      <p style={{ color: "#555", marginBottom: "20px" }}>
+        Are you sure you want to delete this blog?
+        <b> {blogToDelete.title} </b> will be permanently removed.
+      </p>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+        <button
+          onClick={() => setShowDeleteConfirm(false)}
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#e8f5e9",
+            border: "1px solid #c8e6c9",
+            color: "#2e7d32",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={async () => {
+            await handleDeleteBlog(blogToDelete.id, blogToDelete.title);
+            setShowDeleteConfirm(false);
+          }}
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#d32f2f",
+            border: "none",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
             {filteredBlogs.length === 0 && (
               <div className="admin-empty-state">
                 <p>No health blogs found matching your criteria.</p>
@@ -488,8 +623,8 @@ const AdminBlogs = memo(() => {
                       <option value="all">All Categories</option>
               <option value="Mental Health">Mental Health</option>
               <option value="Nutrition">Nutrition</option>
-              <option value="Physical-Wellness">Physical Wellness</option>
-              <option value="Stress-Management">Stress Management</option>
+              <option value="Physical Wellness">Physical Wellness</option>
+              <option value="Stress Management">Stress Management</option>
                     </select>
                   </div>
                   
@@ -604,8 +739,8 @@ const AdminBlogs = memo(() => {
                     >
                       <option value="Mental Health">Mental Health</option>
                       <option value="Nutrition">Nutrition</option>
-                      <option value="Physical-Wellness">Physical Wellness</option>
-                      <option value="Stress-Management">Stress Management</option>
+                      <option value="Physical Wellness">Physical Wellness</option>
+                      <option value="Stress Management">Stress Management</option>
                     </select>
                   </div>
                   

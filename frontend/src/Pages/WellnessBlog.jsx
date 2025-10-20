@@ -175,18 +175,31 @@ const WellnessBlog = () => {
           </Card>
         ))}
       </div>
-{showPopup && (
+      {showPopup && (
   <div className="meditation-notif-overlay">
     <div className="meditation-notif-popup">
 
-      {/* Line at the top */}
+      {/* Header with title and close X */}
+      <div className="notif-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <span style={{ fontWeight: 600, fontSize: '18px' }}>Message</span>
+        <span 
+          style={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '18px' }}
+          onClick={() => setShowPopup(false)}
+        >
+          ✕
+        </span>
+      </div>
+
+      {/* Line below header */}
       <div className="notif-line"></div>
 
-      <p className="notif-message">
+      {/* Message content */}
+      <p className="notif-message"style={{ textAlign: 'center', marginTop: '30px' }}>
         Take your time. When you're ready, log in to explore this feature.
       </p>
 
-      <div className="notif-btn-container">
+      {/* Action button */}
+      <div className="notif-btn-container" style={{ textAlign: 'center', marginTop: '40px' }}>
         <Button
           variant="success"
           onClick={() => setShowPopup(false)}
@@ -197,6 +210,7 @@ const WellnessBlog = () => {
     </div>
   </div>
 )}
+
 
 
 

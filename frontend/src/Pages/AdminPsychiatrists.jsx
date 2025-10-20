@@ -4,6 +4,7 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, STORAGE_KEYS, ROUTES } from '../constants/adminConstants';
+import { getStorageUrl } from '../config/api.js';
 import ErrorBoundary from '../components/ErrorBoundary';
 import MessageDisplay from '../components/MessageDisplay';
 import './AdminPsychiatrists.css';
@@ -15,6 +16,9 @@ const AdminPsychiatrists = memo(() => {
   const [success, setSuccess] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editingPsychiatrist, setEditingPsychiatrist] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [psychiatristToDelete, setPsychiatristToDelete] = useState(null);
+
   const [formData, setFormData] = useState({
     name: '',
     specialization: '',
@@ -50,7 +54,7 @@ const AdminPsychiatrists = memo(() => {
         return;
       }
 
-      const response = await fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', '/psychiatrists')}`, {
+      const response = await fetch(API_ENDPOINTS.ADMIN_PSYCHIATRISTS, {
         headers: {
           "Authorization": `Bearer ${adminToken}`,
           "Content-Type": "application/json"
@@ -164,8 +168,8 @@ const AdminPsychiatrists = memo(() => {
       }
 
       const url = editingPsychiatrist 
-        ? `${API_ENDPOINTS.DASHBOARD.replace('/dashboard', `/psychiatrists/${editingPsychiatrist.id}`)}`
-        : `${API_ENDPOINTS.DASHBOARD.replace('/dashboard', '/psychiatrists')}`;
+        ? `${API_ENDPOINTS.ADMIN_PSYCHIATRISTS}/${editingPsychiatrist.id}`
+        : API_ENDPOINTS.ADMIN_PSYCHIATRISTS;
       
       const method = editingPsychiatrist ? 'PUT' : 'POST';
 
@@ -207,15 +211,13 @@ const AdminPsychiatrists = memo(() => {
 
   // Delete psychiatrist
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this psychiatrist? This action cannot be undone.')) {
-      return;
-    }
+    
 
     try {
       setActionLoading(true);
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
 
-      const response = await fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', `/psychiatrists/${id}`)}`, {
+      const response = await fetch(`${API_ENDPOINTS.ADMIN_PSYCHIATRISTS}/${id}`, {
         method: 'DELETE',
         headers: {
           "Authorization": `Bearer ${adminToken}`,
@@ -259,11 +261,52 @@ const AdminPsychiatrists = memo(() => {
   return (
     <ErrorBoundary>
       <div className="admin-psychiatrists-page">
-        <MessageDisplay 
-          error={error} 
-          success={success} 
-          onDismiss={clearMessages} 
-        />
+      {(success || error) && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px",
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)",
+      borderLeft: `6px solid ${success ? "green" : "red"}`,
+      borderRadius: "0 6px 6px 0",
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+      color: "#fff",
+      transition: "left 0.4s ease, opacity 0.4s ease",
+    }}
+  >
+    <span style={{ fontWeight: 600 }}>{success || error}</span>
+
+    <span
+      onClick={() => {
+        setError(null);
+        setSuccess(null);
+      }}
+      style={{
+        cursor: "pointer",
+        color: "#fff",
+        fontWeight: 600,
+        marginLeft: "12px",
+        fontSize: "18px",
+      }}
+    >
+      ✕
+    </span>
+  </div>
+)}
+
+
 
         {/* Header */}
         <div className="admin-page-header">
@@ -283,7 +326,7 @@ const AdminPsychiatrists = memo(() => {
               <div key={psychiatrist.id} className="psychiatrist-card">
                 <div className="psychiatrist-image">
                   <img 
-                    src={psychiatrist.image_url ? `http://127.0.0.1:8000/storage/${psychiatrist.image_url}` : `https://i.pravatar.cc/150?img=${psychiatrist.id}`}
+                    src={psychiatrist.image_url ? getStorageUrl(psychiatrist.image_url) : `https://i.pravatar.cc/150?img=${psychiatrist.id}`}
                     alt={psychiatrist.name}
                     onError={(e) => {
                       e.target.src = `https://i.pravatar.cc/150?img=${psychiatrist.id}`;
@@ -340,7 +383,10 @@ const AdminPsychiatrists = memo(() => {
                     Edit
                   </button>
                   <button 
-                    onClick={() => handleDelete(psychiatrist.id)}
+onClick={() => {
+  setPsychiatristToDelete(psychiatrist);
+  setShowDeleteConfirm(true);
+}}
                     className="delete-btn"
                     disabled={actionLoading}
                   >
@@ -360,6 +406,95 @@ const AdminPsychiatrists = memo(() => {
             </div>
           )}
         </div>
+        {showDeleteConfirm && psychiatristToDelete && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      background: "rgba(0,0,0,0.35)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999
+    }}
+  >
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: "12px",
+        padding: "24px",
+        width: "380px",
+        maxWidth: "92%",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+        position: "relative"
+      }}
+    >
+      <button
+        onClick={() => setShowDeleteConfirm(false)}
+        style={{
+          position: "absolute",
+          top: "12px",
+          right: "12px",
+          background: "transparent",
+          border: "none",
+          fontSize: "18px",
+          fontWeight: "bold",
+          cursor: "pointer",
+          color: "#555"
+        }}
+      >
+        ×
+      </button>
+
+      <h5 style={{ fontWeight: 600, color: "#212121", marginBottom: "12px" }}>
+        Delete Notice
+      </h5>
+
+      <div style={{ height: "1px", backgroundColor: "#e0e0e0", margin: "12px 0" }} />
+
+      <p style={{ color: "#555", marginBottom: "20px" }}>
+        Are you sure you want to delete <b>{psychiatristToDelete.name}</b>? This action cannot be undone.
+      </p>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+        <button
+          onClick={() => setShowDeleteConfirm(false)}
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#e8f5e9",
+            border: "1px solid #c8e6c9",
+            color: "#2e7d32",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={async () => {
+            await handleDelete(psychiatristToDelete.id, psychiatristToDelete.name);
+            setShowDeleteConfirm(false);
+          }}
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#d32f2f",
+            border: "none",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* Add/Edit Modal */}
         {showModal && (

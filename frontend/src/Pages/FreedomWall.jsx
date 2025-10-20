@@ -7,6 +7,7 @@ import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../AuthContext";
 import Avatar from "../Components/Avatar";
 import { Link } from "react-router-dom";
+import { API_ENDPOINTS, getStorageUrl } from "../config/api.js";
 import "../App.css";
 
 const FreedomWall = () => {
@@ -86,11 +87,11 @@ const FreedomWall = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/freedom-wall/posts");
+        const res = await fetch(API_ENDPOINTS.FREEDOM_WALL_POSTS);
         if (!res.ok) throw new Error("Failed to load posts");
         const data = await res.json();
         const normalized = (Array.isArray(data) ? data : []).map((p) => {
-          const imageUrl = p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
+          const imageUrl = p.image_url || getStorageUrl(p.image_path);
           if (imageUrl) {
             console.log('Post image URL:', imageUrl, 'for post:', p.id);
           }
@@ -131,7 +132,7 @@ const FreedomWall = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://127.0.0.1:8000/api/freedom-wall/posts/${postId}/react`, {
+      const response = await fetch(`${API_ENDPOINTS.FREEDOM_WALL_POSTS}/${postId}/react`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -192,7 +193,7 @@ const FreedomWall = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://127.0.0.1:8000/api/freedom-wall/posts/${id}/save`, {
+      const response = await fetch(`${API_ENDPOINTS.FREEDOM_WALL_POSTS}/${id}/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -239,8 +240,8 @@ const FreedomWall = () => {
     const token = localStorage.getItem("authToken");
     const isAuth = !!token && isLoggedIn;
     const url = isAuth
-      ? "http://127.0.0.1:8000/api/freedom-wall/posts/auth"
-      : "http://127.0.0.1:8000/api/freedom-wall/posts";
+      ? API_ENDPOINTS.FREEDOM_WALL_POSTS_AUTH
+      : API_ENDPOINTS.FREEDOM_WALL_POSTS;
 
     // Only include Authorization if logged in
     const headers = isAuth ? { Authorization: `Bearer ${token}` } : undefined;
@@ -262,7 +263,7 @@ const FreedomWall = () => {
 
     // Handle image URL
     const imageUrl =
-      p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
+      p.image_url || getStorageUrl(p.image_path);
 
     const newEntry = {
       id: p.id,
@@ -312,7 +313,7 @@ const FreedomWall = () => {
     }
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/freedom-wall/posts/${reportPostId}/report`,
+        `${API_ENDPOINTS.FREEDOM_WALL_POSTS}/${reportPostId}/report`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -482,19 +483,41 @@ const FreedomWall = () => {
 
       {/* Guest popup */}
       {showGuestPopup && (
-        <div className="guest-popup-overlay">
-          <div className="guest-popup">
-            <div className="guest-popup-line"></div>
-            <p className="guest-popup-message">
-              You need to sign in to access this feature.
-            </p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
-              <Button variant="secondary" onClick={() => setShowGuestPopup(false)}>Cancel</Button>
-              <Button variant="success" onClick={() => { setShowGuestPopup(false); window.location.href="/signin"; }}>Sign In</Button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="guest-popup-overlay">
+    <div className="guest-popup">
+
+      {/* Header with title and close X */}
+      <div className="guest-popup-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <span style={{ fontWeight: 600, fontSize: '18px' }}>Notice</span>
+        <span 
+          style={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '18px' }}
+          onClick={() => setShowGuestPopup(false)}
+        >
+          ✕
+        </span>
+      </div>
+
+      {/* Line below header */}
+      <div className="guest-popup-line"></div>
+
+      {/* Message content */}
+      <p className="guest-popup-message" style={{ textAlign: 'center', marginTop: '30px' }}>
+        You need to sign in to access this feature.
+      </p>
+
+      {/* Action buttons */}
+      <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginTop: '40px' }}>
+        <Button variant="secondary" onClick={() => setShowGuestPopup(false)} style={{ padding: "0.65rem 1.5rem", fontSize: "1.05rem" }}>
+          Cancel
+        </Button>
+        <Button variant="success" onClick={() => { setShowGuestPopup(false); window.location.href="/signin"; }} style={{ padding: "0.65rem 1.5rem", fontSize: "1.05rem" }}>
+          Sign In
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
          
 
       {/* Guest Info */}

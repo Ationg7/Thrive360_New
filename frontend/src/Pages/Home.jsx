@@ -107,37 +107,73 @@ const WellnessFeatures = () => {
 
       {/* Guest popup (home notification style) */}
       {showPopup && (
-        <div className="guest-popup-overlay">
-          <div className="guest-popup">
-            <div className="guest-popup-line"></div>
-            <p className="guest-popup-message">
-              You need to sign in to access this feature.
-            </p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
-              <Button
-                variant="secondary"
-                onClick={() => setShowPopup(false)}
-                style={{ padding: "0.65rem 1.5rem", fontSize: "1.05rem" }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="success"
-                onClick={() => {
-                  setShowPopup(false);
-                  navigate("/signin");
-                }}
-                style={{ padding: "0.65rem 1.5rem", fontSize: "1.05rem" }}
-              >
-                Sign In
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="guest-popup-overlay">
+    <div className="guest-popup">
+      {/* Header with title and close X */}
+      <div className="guest-popup-header">
+        <span className="guest-popup-title">Notice</span>
+        <span
+          className="guest-popup-close"
+          onClick={() => setShowPopup(false)}
+          style={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '18px' }}
+        >
+          ✕
+        </span>
+      </div>
+
+      {/* Divider line */}
+      <div className="guest-popup-line"></div>
+
+      {/* Message content */}
+      <p className="guest-popup-message"style={{ textAlign: 'center', marginTop: '30px' }}>
+        You need to sign in to access this feature.
+      </p>
+
+      {/* Action buttons */}
+      <div className="guest-popup-btns" style={{ display: 'flex', justifyContent: 'center', gap: '10px',  marginTop: '40px' }}>
+        <Button
+          variant="secondary"
+          onClick={() => setShowPopup(false)}
+          style={{ padding: '0.65rem 1.5rem', fontSize: '1.05rem' }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="success"
+          onClick={() => {
+            setShowPopup(false);
+            navigate("/signin");
+          }}
+          style={{ padding: '0.65rem 1.5rem', fontSize: '1.05rem' }}
+        >
+          Sign In
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Styles for popup */}
       <style>{`
+      
+
+.guest-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.guest-popup-title {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.guest-popup-close:hover {
+  color: red;
+}
+
         .guest-popup-overlay {
           position: fixed;
           top: 0;

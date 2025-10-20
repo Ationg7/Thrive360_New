@@ -20,6 +20,16 @@ class ChallengeController extends Controller
         try {
             \Log::info('Challenge creation request received', $request->all());
             
+            // Check if user is restricted
+            if (auth()->check() && auth()->user()->isRestricted()) {
+                $restrictionInfo = auth()->user()->getRestrictionInfo();
+                return response()->json([
+                    'error' => 'Account Restricted',
+                    'message' => 'Your account is currently restricted. You cannot create challenges.',
+                    'restriction_info' => $restrictionInfo
+                ], 403);
+            }
+            
             $validator = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'description' => 'required|string|max:1000',
@@ -107,6 +117,16 @@ class ChallengeController extends Controller
         
         if (!auth()->check()) {
             return response()->json(['message' => 'Login required to join challenges'], 401);
+        }
+
+        // Check if user is restricted
+        if (auth()->user()->isRestricted()) {
+            $restrictionInfo = auth()->user()->getRestrictionInfo();
+            return response()->json([
+                'error' => 'Account Restricted',
+                'message' => 'Your account is currently restricted. You cannot join challenges.',
+                'restriction_info' => $restrictionInfo
+            ], 403);
         }
 
         $userId = auth()->id();

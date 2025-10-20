@@ -20,6 +20,9 @@ const AdminChallenges = memo(() => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingChallenge, setEditingChallenge] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [challengeToDelete, setChallengeToDelete] = useState(null);
+
   const [uploadData, setUploadData] = useState({
     title: '',
     description: '',
@@ -110,7 +113,7 @@ const AdminChallenges = memo(() => {
       if (uploadData.imageFile) {
         formData.append('image_file', uploadData.imageFile);
       }
-
+      
       const response = await fetch(API_ENDPOINTS.UPLOAD_CHALLENGE, {
         method: 'POST',
         headers: {
@@ -145,9 +148,7 @@ const AdminChallenges = memo(() => {
 
   // Delete challenge
   const handleDeleteChallenge = useCallback(async (challengeId, challengeTitle) => {
-    if (!window.confirm(`Are you sure you want to delete challenge "${challengeTitle}"? This action cannot be undone.`)) {
-      return;
-    }
+    
 
     try {
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
@@ -200,9 +201,9 @@ const AdminChallenges = memo(() => {
       if (editData.imageFile) {
         formData.append('image_file', editData.imageFile);
       }
-
+      formData.append('_method', 'PUT');
       const response = await fetch(`${API_ENDPOINTS.CHALLENGES}/${editingChallenge.id}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           "Authorization": `Bearer ${adminToken}`,
         },
@@ -214,9 +215,12 @@ const AdminChallenges = memo(() => {
       }
 
       const updatedChallenge = await response.json();
+      
+      // Update the challenges list with the updated challenge
       setChallenges(prev => prev.map(challenge => 
         challenge.id === editingChallenge.id ? updatedChallenge : challenge
       ));
+      
       setSuccess('Challenge updated successfully');
       setShowEditModal(false);
       setEditingChallenge(null);
@@ -227,7 +231,6 @@ const AdminChallenges = memo(() => {
         category: 'general',
         imageFile: null
       });
-      fetchChallenges();
       clearMessages();
       
     } catch (error) {
@@ -267,11 +270,52 @@ const AdminChallenges = memo(() => {
   return (
     <ErrorBoundary>
       <div className="admin-challenges-page">
-        <MessageDisplay 
-          error={error} 
-          success={success} 
-          onDismiss={clearMessages} 
-        />
+      {(success || error) && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px",
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)",
+      borderLeft: `6px solid ${success ? "green" : "red"}`,
+      borderRadius: "0 6px 6px 0",
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+      color: "#fff",
+      transition: "left 0.4s ease, opacity 0.4s ease",
+    }}
+  >
+    <span style={{ fontWeight: 600 }}>{success || error}</span>
+
+    <span
+      onClick={() => {
+        setError(null);
+        setSuccess(null);
+      }}
+      style={{
+        cursor: "pointer",
+        color: "#fff",
+        fontWeight: 600,
+        marginLeft: "12px",
+        fontSize: "18px",
+      }}
+    >
+      ✕
+    </span>
+  </div>
+)}
+
+
 
         {/* Header */}
         <div className="admin-page-header">
@@ -319,58 +363,145 @@ const AdminChallenges = memo(() => {
           </div>
         </div>
 
-        <Table striped bordered hover responsive>
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Title</th>
-      <th>Description</th>
-      <th>Participants</th>
-      <th>Difficulty</th>
-      <th>Category</th>
-      <th>Created At</th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {filteredChallenges.map((challenge, index) => (
-      <tr key={challenge.id}>
-        <td>{index + 1}</td>
-        <td>{challenge.title}</td>
-        <td>{challenge.description}</td>
-        <td>{challenge.user_progress_count || 0}</td>
-        <td>{challenge.difficulty_level || 'Medium'}</td>
-        <td>{challenge.category || 'General'}</td>
-        <td>{new Date(challenge.created_at).toLocaleDateString()}</td>
-        <td>{challenge.is_active ? 'Active' : 'Inactive'}</td>
-        <td>
-          <button
-            onClick={() => handleEditChallenge(challenge)}
-            className="action-btn edit"
-            style={{ marginRight: '8px' }}
-          >
-            ✏️ Edit
-          </button>
-          <button
-            onClick={() => handleDeleteChallenge(challenge.id, challenge.title)}
-            className="action-btn delete"
-          >
-            🗑️ Delete
-          </button>
-        </td>
-      </tr>
-    ))}
-    
-    {filteredChallenges.length === 0 && (
-      <tr>
-        <td colSpan="10" style={{ textAlign: 'center' }}>
-          No challenges found matching your criteria.
-        </td>
-      </tr>
-    )}
-  </tbody>
-</Table>
+        <div className="admin-table-container">
+  <div className="admin-table-header">
+    <h3>Challenges List</h3>
+  </div>
+  
+  <div className="admin-table">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Participants</th>
+          <th>Difficulty</th>
+          <th>Category</th>
+          <th>Created At</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {filteredChallenges.map((challenge, index) => (
+          <tr key={challenge.id}>
+            <td>{index + 1}</td>
+            <td>{challenge.title}</td>
+            <td>{challenge.description}</td>
+            <td>{challenge.user_progress_count || 0}</td>
+            <td>{challenge.difficulty_level || 'Medium'}</td>
+            <td>{challenge.category || 'General'}</td>
+            <td>{new Date(challenge.created_at).toLocaleDateString()}</td>
+            <td>
+              <span className={`status-badge ${challenge.is_active ? 'active' : 'inactive'}`}>
+                {challenge.is_active ? 'Active' : 'Inactive'}
+              </span>
+            </td>
+            <td className="action-buttons">
+              <button
+                onClick={() => handleEditChallenge(challenge)}
+                className="action-btn edit"
+              >✏️</button>
+              
+              <button
+  onClick={() => {
+    setChallengeToDelete(challenge);
+    setShowDeleteConfirm(true);
+  }}
+  className="action-btn delete"
+>
+  🗑️
+</button>
+
+            </td>
+          </tr>
+        ))}
+        {showDeleteConfirm && challengeToDelete && (
+  <div
+    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 9999 }}
+  >
+    <div
+      className="rounded-4 shadow-lg p-4"
+      style={{ background: "#fff", width: "380px", maxWidth: "92%" }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h5 className="fw-bold mb-2 text-dark" style={{ margin: 0 }}>
+          Delete Notice
+        </h5>
+        <button
+          onClick={() => setShowDeleteConfirm(false)}
+          style={{
+            fontSize: "20px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: "#555"
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "12px 0" }} />
+
+      <p className="text-muted mb-4">
+        Are you sure you want to delete this challenge? <b>{challengeToDelete.title}</b> will be permanently deleted.
+      </p>
+
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#e8f5e9",
+            border: "1px solid #c8e6c9",
+            color: "#2e7d32",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#d32f2f",
+            border: "none",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+          onClick={async () => {
+            await handleDeleteChallenge(challengeToDelete.id, challengeToDelete.title);
+            setShowDeleteConfirm(false);
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+        
+        {filteredChallenges.length === 0 && (
+          <tr>
+            <td colSpan="9" className="admin-empty-state">
+              No challenges found.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
 
 
         {/* Upload Modal */}

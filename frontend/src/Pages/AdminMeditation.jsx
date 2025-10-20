@@ -18,6 +18,9 @@ const AdminMeditation = memo(() => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingMeditation, setEditingMeditation] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [meditationToDelete, setMeditationToDelete] = useState(null);
+
   const [uploadData, setUploadData] = useState({
     title: '',
     description: '',
@@ -236,7 +239,7 @@ const AdminMeditation = memo(() => {
           formData.append(`tutorial_step_${index + 1}_image`, step.imageFile);
         }
       });
-
+      
       const response = await fetch(API_ENDPOINTS.UPLOAD_MEDITATION, {
         method: 'POST',
         headers: {
@@ -382,9 +385,9 @@ const AdminMeditation = memo(() => {
           formData.append(`tutorial_step_${index + 1}_image`, step.imageFile);
         }
       });
-
+      formData.append('_method', 'PUT');
       const response = await fetch(`${API_ENDPOINTS.MEDITATION}/${editingMeditation.id}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           "Authorization": `Bearer ${adminToken}`,
         },
@@ -395,6 +398,13 @@ const AdminMeditation = memo(() => {
         const errorDetails = await response.text();
         throw new Error(`HTTP ${response.status}: ${response.statusText} - Details: ${errorDetails}`);
       }
+
+      const updatedMeditation = await response.json();
+      
+      // Update the meditations list with the updated meditation
+      setMeditations(prev => prev.map(meditation => 
+        meditation.id === editingMeditation.id ? updatedMeditation : meditation
+      ));
 
       setSuccess('Meditation updated successfully');
       setShowEditModal(false);
@@ -411,7 +421,6 @@ const AdminMeditation = memo(() => {
           { step: 3, title: '', description: '', imageFile: null }
         ]
       });
-      fetchMeditations();
       clearMessages();
 
     } catch (error) {
@@ -448,11 +457,52 @@ const AdminMeditation = memo(() => {
   return (
     <ErrorBoundary>
       <div className="admin-meditation-page">
-        <MessageDisplay 
-          error={error} 
-          success={success} 
-          onDismiss={clearMessages} 
-        />
+       {(success || error) && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px",
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)",
+      borderLeft: `6px solid ${success ? "green" : "red"}`,
+      borderRadius: "0 6px 6px 0",
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+      color: "#fff",
+      transition: "left 0.4s ease, opacity 0.4s ease",
+    }}
+  >
+    <span style={{ fontWeight: 600 }}>{success || error}</span>
+
+    <span
+      onClick={() => {
+        setError(null);
+        setSuccess(null);
+      }}
+      style={{
+        cursor: "pointer",
+        color: "#fff",
+        fontWeight: 600,
+        marginLeft: "12px",
+        fontSize: "18px",
+      }}
+    >
+      ✕
+    </span>
+  </div>
+)}
+
+
 
         {/* Header */}
         <div className="admin-page-header">
@@ -553,7 +603,11 @@ const AdminMeditation = memo(() => {
                     ✏️ Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteMeditation(meditation.id, meditation.title)}
+                   onClick={() => {
+                    setMeditationToDelete(meditation);
+                    setShowDeleteConfirm(true);
+                  }}
+                  
                     className="action-btn delete"
                     title="Delete Meditation"
                   >
@@ -562,6 +616,98 @@ const AdminMeditation = memo(() => {
                 </div>
               </div>
             ))}
+            {showDeleteConfirm && meditationToDelete && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      background: "rgba(0,0,0,0.35)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999
+    }}
+  >
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: "12px",
+        padding: "24px",
+        width: "380px",
+        maxWidth: "92%",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+        position: "relative"
+      }}
+    >
+      {/* Close button */}
+      <button
+        onClick={() => setShowDeleteConfirm(false)}
+        style={{
+          position: "absolute",
+          top: "12px",
+          right: "12px",
+          background: "transparent",
+          border: "none",
+          fontSize: "18px",
+          fontWeight: "bold",
+          cursor: "pointer",
+          color: "#555"
+        }}
+      >
+        ×
+      </button>
+
+      <h5 style={{ fontWeight: 600, color: "#212121", marginBottom: "12px" }}>
+        Delete Notice
+      </h5>
+
+      <div style={{ height: "1px", backgroundColor: "#e0e0e0", margin: "12px 0" }} />
+
+      <p style={{ color: "#555", marginBottom: "20px" }}>
+        Are you sure you want to delete this meditation?
+        <b> {meditationToDelete.title} </b> will be permanently removed.
+      </p>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+        <button
+          onClick={() => setShowDeleteConfirm(false)}
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#e8f5e9",
+            border: "1px solid #c8e6c9",
+            color: "#2e7d32",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={async () => {
+            await handleDeleteMeditation(meditationToDelete.id, meditationToDelete.title);
+            setShowDeleteConfirm(false);
+          }}
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#d32f2f",
+            border: "none",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
             
             {filteredMeditations.length === 0 && (
               <div className="admin-empty-state">

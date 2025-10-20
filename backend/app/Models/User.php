@@ -26,6 +26,8 @@ class User extends Authenticatable
         'is_active',
         'avatar_url',
         'profile_cover_url',
+        'restricted_until',
+        'restriction_reason',
     ];
 
     /**
@@ -49,6 +51,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'restricted_until' => 'datetime',
         ];
     }
 
@@ -61,6 +64,26 @@ class User extends Authenticatable
     public function isUser()
     {
         return $this->role === 'user';
+    }
+
+    // Check if user is currently restricted
+    public function isRestricted()
+    {
+        return $this->restricted_until && $this->restricted_until > now();
+    }
+
+    // Get restriction info
+    public function getRestrictionInfo()
+    {
+        if (!$this->isRestricted()) {
+            return null;
+        }
+
+        return [
+            'restricted_until' => $this->restricted_until,
+            'restriction_reason' => $this->restriction_reason,
+            'days_remaining' => now()->diffInDays($this->restricted_until, false)
+        ];
     }
 
     // New relationships

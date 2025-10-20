@@ -11,6 +11,9 @@ const AdminProfileCovers = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [coverToDelete, setCoverToDelete] = useState(null);
+
   const [success, setSuccess] = useState(null);
   const [activeCover, setActiveCover] = useState(null);
 
@@ -76,7 +79,7 @@ const AdminProfileCovers = () => {
   };
 
   const handleDelete = async (cover) => {
-    if (!window.confirm('Delete this cover?')) return;
+    
     try {
       const token = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
       const res = await fetch(`${API_ENDPOINTS.PROFILE_COVERS}/${cover.id}`, {
@@ -123,9 +126,17 @@ const AdminProfileCovers = () => {
                     <small className="text-truncate" style={{ maxWidth: '70%' }}>
                       {c.url || c.path}
                     </small>
-                    <Button variant="outline-danger" size="sm" onClick={() => handleDelete(c)}>
-                      <Trash2 size={14} />
-                    </Button>
+                    <Button 
+  variant="outline-danger" 
+  size="sm" 
+  onClick={() => {
+    setCoverToDelete(c);
+    setShowDeleteConfirm(true);
+  }}
+>
+  <Trash2 size={14} />
+</Button>
+
                   </Card.Body>
                 </Card>
               </Col>
@@ -137,6 +148,78 @@ const AdminProfileCovers = () => {
           )}
         </Row>
       )}
+{showDeleteConfirm && coverToDelete && (
+  <div
+    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 9999 }}
+  >
+    <div
+      className="rounded-4 shadow-lg p-4"
+      style={{ background: "#fff", width: "380px", maxWidth: "92%" }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h5 className="fw-bold mb-2 text-dark" style={{ margin: 0 }}>
+          Delete Notice
+        </h5>
+        <button
+          onClick={() => setShowDeleteConfirm(false)}
+          style={{
+            fontSize: "20px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: "#555"
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "12px 0" }} />
+
+      <p className="text-muted mb-4">
+      Are you sure you want to delete this cover? It will be permanently removed and cannot be undone.
+      </p>
+
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#e8f5e9",
+            border: "1px solid #c8e6c9",
+            color: "#2e7d32",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#d32f2f",
+            border: "none",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+          onClick={async () => {
+            await handleDelete(coverToDelete);
+            setShowDeleteConfirm(false);
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Upload Modal */}
       <Modal show={showModal} onHide={() => { setShowModal(false); setSelectedFile(null); }}>

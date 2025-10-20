@@ -24,6 +24,16 @@ class EventController extends Controller
 
     public function store(Request $request)
     {
+        // Check if user is restricted
+        if (auth()->check() && auth()->user()->isRestricted()) {
+            $restrictionInfo = auth()->user()->getRestrictionInfo();
+            return response()->json([
+                'error' => 'Account Restricted',
+                'message' => 'Your account is currently restricted. You cannot create events.',
+                'restriction_info' => $restrictionInfo
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -145,6 +155,16 @@ class EventController extends Controller
     public function join($id)
     {
         $event = Event::findOrFail($id);
+
+        // Check if user is restricted
+        if (auth()->check() && auth()->user()->isRestricted()) {
+            $restrictionInfo = auth()->user()->getRestrictionInfo();
+            return response()->json([
+                'error' => 'Account Restricted',
+                'message' => 'Your account is currently restricted. You cannot join events.',
+                'restriction_info' => $restrictionInfo
+            ], 403);
+        }
 
         if (!$event->is_active) {
             return response()->json(['message' => 'Event is not active'], 400);

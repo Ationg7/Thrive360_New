@@ -369,6 +369,15 @@
   background: #f8d7da;
   color: #721c24;
 }
+.action-btn.edit {
+  background: #fff3cd; /* Light yellow (Bootstrap warning-light) */
+  color: #856404;       /* Dark yellow/brown for readability */
+  border: 1px solid #ffeeba; /* Optional: subtle border for contrast */
+}
+
+.action-btn.edit:hover {
+  background: #ffe8a1; /* Slightly darker on hover */
+}
 
 .action-btn.delete:hover {
   background: #f5c6cb;

@@ -52,13 +52,13 @@ const AdminAnalytics = memo(() => {
 
       // Fetch both analytics and dashboard data
       const [analyticsResponse, dashboardResponse] = await Promise.all([
-        fetch(API_ENDPOINTS.ANALYTICS, {
+        fetch(API_ENDPOINTS.ADMIN_ANALYTICS, {
           headers: {
             "Authorization": `Bearer ${adminToken}`,
             "Content-Type": "application/json"
           }
         }),
-        fetch(API_ENDPOINTS.DASHBOARD, {
+        fetch(API_ENDPOINTS.ADMIN_DASHBOARD, {
           headers: {
             "Authorization": `Bearer ${adminToken}`,
             "Content-Type": "application/json"
@@ -242,11 +242,52 @@ const AdminAnalytics = memo(() => {
   return (
     <ErrorBoundary>
       <div className="admin-analytics-page">
-        <MessageDisplay 
-          error={error} 
-          success={success} 
-          onDismiss={clearMessages} 
-        />
+      {(success || error) && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px",
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)",
+      borderLeft: `6px solid ${success ? "green" : "red"}`,
+      borderRadius: "0 6px 6px 0",
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+      color: "#fff",
+      transition: "left 0.4s ease, opacity 0.4s ease",
+    }}
+  >
+    <span style={{ fontWeight: 600 }}>{success || error}</span>
+
+    <span
+      onClick={() => {
+        setError(null);
+        setSuccess(null);
+      }}
+      style={{
+        cursor: "pointer",
+        color: "#fff",
+        fontWeight: 600,
+        marginLeft: "12px",
+        fontSize: "18px",
+      }}
+    >
+      ✕
+    </span>
+  </div>
+)}
+
+
 
         {/* Header */}
         <div className="admin-page-header">

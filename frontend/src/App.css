@@ -1548,12 +1548,12 @@ label {
 
 .profile-cover {
   width: 100%;
-  height: 220px; /* Adjust to match the image size */
+  height: 240px; /* Adjust to match the image size */
   object-fit: cover;
 }
 .profile-info {
   position: absolute;
-  top: 180px; /* adjust based on header height */
+  top: 190px; /* adjust based on header height */
   left: 50%;
   transform: translateX(-50%);
   background-color: #fff;
@@ -1725,7 +1725,7 @@ border: 2px solid green !important; /* Green border */
 
 /* Posts Section */
 /* Post Card */
-.post-card {
+.post-cards {
   border: 1px solid #ddd;
   border-radius: 10px;
   background-color: #ffffff;
@@ -2774,6 +2774,7 @@ button:hover {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  height: auto;
 }
 
 /* Step image styling */

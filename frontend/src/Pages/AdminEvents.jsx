@@ -8,6 +8,9 @@ const AdminEvents = () => {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [eventToDelete, setEventToDelete] = useState(null);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -129,7 +132,7 @@ const saveEvent = async () => {
 
   // Delete event
   const deleteEvent = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
+   
 
     try {
       const adminToken = localStorage.getItem('adminToken');
@@ -329,7 +332,11 @@ const editEvent = (event) => {
                         <Button
                           variant="outline-danger"
                           size="sm"
-                          onClick={() => deleteEvent(event.id)}
+                          onClick={() => {
+                            setEventToDelete(event);
+                            setShowDeleteConfirm(true);
+                          }}
+                          
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -342,6 +349,55 @@ const editEvent = (event) => {
           )}
         </Card.Body>
       </Card>
+      {showDeleteConfirm && eventToDelete && (
+  <div
+    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 9999 }}
+  >
+    <div
+      className="rounded-4 shadow-lg p-4"
+      style={{ background: "#fff", width: "380px", maxWidth: "92%" }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h5 className="fw-bold mb-2 text-dark" style={{ margin: 0 }}>Delete Notice</h5>
+        <button
+          onClick={() => setShowDeleteConfirm(false)}
+          style={{ fontSize: "20px", border: "none", background: "transparent", cursor: "pointer", color: "#555" }}
+        >
+          ×
+        </button>
+      </div>
+
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "12px 0" }} />
+
+      <p className="text-muted mb-4">
+        Are you sure you want to delete this event?
+        <b> {eventToDelete.title}</b> will be permanently deleted.
+      </p>
+
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{ padding: "8px 20px", borderRadius: "24px", background: "#e8f5e9", border: "1px solid #c8e6c9", color: "#2e7d32", fontWeight: 600, cursor: "pointer" }}
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{ padding: "8px 20px", borderRadius: "24px", background: "#d32f2f", border: "none", color: "#fff", fontWeight: 600, cursor: "pointer" }}
+          onClick={async () => {
+            await deleteEvent(eventToDelete.id);
+            setShowDeleteConfirm(false);
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Event Modal */}
       <Modal show={showModal} onHide={() => {

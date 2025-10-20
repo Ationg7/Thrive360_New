@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, STORAGE_KEYS, ROUTES, MESSAGES } from '../constants/adminConstants';
 import ErrorBoundary from '../components/ErrorBoundary';
 import MessageDisplay from '../components/MessageDisplay';
+import { CheckCircle, XCircle, AlertTriangle, Ban, Trash2 } from 'lucide-react';
 import './AdminReports.css';
 
 const AdminReports = memo(() => {
@@ -41,6 +42,9 @@ const AdminReports = memo(() => {
   const [restrictDays, setRestrictDays] = useState(7);
   const [restrictMessage, setRestrictMessage] = useState('');
   const navigate = useNavigate();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+const [reportToDelete, setReportToDelete] = useState(null);
+
 
   // Clear messages after timeout
   const clearMessages = useCallback(() => {
@@ -71,13 +75,13 @@ const AdminReports = memo(() => {
             "Content-Type": "application/json"
           }
         }),
-        fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', '/reports')}`, {
+        fetch(API_ENDPOINTS.ADMIN_REPORTS, {
           headers: {
             "Authorization": `Bearer ${adminToken}`,
             "Content-Type": "application/json"
           }
         }),
-        fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', '/reports/stats')}`, {
+        fetch(API_ENDPOINTS.ADMIN_REPORTS_STATS, {
           headers: {
             "Authorization": `Bearer ${adminToken}`,
             "Content-Type": "application/json"
@@ -262,7 +266,7 @@ const AdminReports = memo(() => {
       setActionLoading(true);
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
 
-      const response = await fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', `/reports/${reportId}/status`)}`, {
+      const response = await fetch(`${API_ENDPOINTS.ADMIN_REPORTS}/${reportId}/status`, {
         method: 'PUT',
         headers: {
           "Authorization": `Bearer ${adminToken}`,
@@ -291,15 +295,13 @@ const AdminReports = memo(() => {
   }, [fetchReports, clearMessages]);
 
   const deleteReportedPost = useCallback(async (reportId) => {
-    if (!window.confirm('Are you sure you want to delete this reported post? This action cannot be undone.')) {
-      return;
-    }
+   
 
     try {
       setActionLoading(true);
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
 
-      const response = await fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', `/reports/${reportId}/post`)}`, {
+      const response = await fetch(`${API_ENDPOINTS.ADMIN_REPORTS}/${reportId}/post`, {
         method: 'DELETE',
         headers: {
           "Authorization": `Bearer ${adminToken}`,
@@ -332,7 +334,7 @@ const AdminReports = memo(() => {
       setActionLoading(true);
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
 
-      const response = await fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', `/reports/${reportId}/warning`)}`, {
+      const response = await fetch(`${API_ENDPOINTS.ADMIN_REPORTS}/${reportId}/warning`, {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${adminToken}`,
@@ -368,7 +370,7 @@ const AdminReports = memo(() => {
       setActionLoading(true);
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
 
-      const response = await fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', `/reports/${reportId}/restrict`)}`, {
+      const response = await fetch(`${API_ENDPOINTS.ADMIN_REPORTS}/${reportId}/restrict`, {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${adminToken}`,
@@ -450,11 +452,52 @@ const AdminReports = memo(() => {
   return (
     <ErrorBoundary>
       <div className="admin-reports-page">
-        <MessageDisplay 
-          error={error} 
-          success={success} 
-          onDismiss={clearMessages} 
-        />
+        {(success || error) && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px",
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)",
+      borderLeft: `6px solid ${success ? "green" : "red"}`,
+      borderRadius: "0 6px 6px 0",
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+      color: "#fff",
+      transition: "left 0.4s ease, opacity 0.4s ease",
+    }}
+  >
+    <span style={{ fontWeight: 600 }}>{success || error}</span>
+
+    <span
+      onClick={() => {
+        setError(null);
+        setSuccess(null);
+      }}
+      style={{
+        cursor: "pointer",
+        color: "#fff",
+        fontWeight: 600,
+        marginLeft: "12px",
+        fontSize: "18px",
+      }}
+    >
+      ✕
+    </span>
+  </div>
+)}
+
+
 
         {/* Header */}
         <div className="admin-page-header">
@@ -833,79 +876,179 @@ const AdminReports = memo(() => {
               </div>
 
               <div className="modal-actions">
-                {selectedReport.status === 'pending' && (
-                  <>
-                    <button
-                      onClick={() => updateReportStatus(selectedReport.id, 'reviewed', 'Report reviewed by admin')}
-                      disabled={actionLoading}
-                      className="action-btn reviewed-btn"
-                    >
-                      {actionLoading ? 'Processing...' : 'Mark as Reviewed'}
-                    </button>
-                    <button
-                      onClick={() => updateReportStatus(selectedReport.id, 'dismissed', 'Report dismissed - no violation found')}
-                      disabled={actionLoading}
-                      className="action-btn dismissed-btn"
-                    >
-                      {actionLoading ? 'Processing...' : 'Dismiss Report'}
-                    </button>
-                    {selectedReport.post && (
-                      <>
-                        <button
-                          onClick={() => setShowWarningModal(true)}
-                          disabled={actionLoading}
-                          className="action-btn warning-btn"
-                        >
-                          ⚠️ Warning
-                        </button>
-                        <button
-                          onClick={() => setShowRestrictModal(true)}
-                          disabled={actionLoading}
-                          className="action-btn restrict-btn"
-                        >
-                          🚫 Restrict
-                        </button>
-                        <button
-                          onClick={() => deleteReportedPost(selectedReport.id)}
-                          disabled={actionLoading}
-                          className="action-btn delete-btn"
-                        >
-                          {actionLoading ? 'Processing...' : 'Delete Post'}
-                        </button>
-                      </>
-                    )}
-                  </>
-                )}
-                
-                {selectedReport.status === 'reviewed' && selectedReport.post && (
-                  <>
-                    <button
-                      onClick={() => setShowWarningModal(true)}
-                      disabled={actionLoading}
-                      className="action-btn warning-btn"
-                    >
-                      ⚠️ Warning
-                    </button>
-                    <button
-                      onClick={() => setShowRestrictModal(true)}
-                      disabled={actionLoading}
-                      className="action-btn restrict-btn"
-                    >
-                      🚫 Restrict
-                    </button>
-                    <button
-                      onClick={() => deleteReportedPost(selectedReport.id)}
-                      disabled={actionLoading}
-                      className="action-btn delete-btn"
-                    >
-                      {actionLoading ? 'Processing...' : 'Delete Post'}
-                    </button>
-                  </>
-                )}
+  {selectedReport.status === 'pending' && (
+    <>
+      <button
+        onClick={() => updateReportStatus(selectedReport.id, 'reviewed', 'Report reviewed by admin')}
+        disabled={actionLoading}
+        className="icon-btn reviewed-btn"
+        title="Mark as Reviewed"
+      >
+        <CheckCircle size={20} />
+        <span className="btn-label">Reviewed</span>
+      </button>
+
+      <button
+        onClick={() => updateReportStatus(selectedReport.id, 'dismissed', 'Report dismissed - no violation found')}
+        disabled={actionLoading}
+        className="icon-btn dismissed-btn"
+        title="Dismiss Report"
+      >
+        <XCircle size={20} />
+        <span className="btn-label">Dismis</span>
+      </button>
+
+      {selectedReport.post && (
+        <>
+          <button
+            onClick={() => setShowWarningModal(true)}
+            disabled={actionLoading}
+            className="icon-btn warning-btn"
+            title="Send Warning"
+          >
+            <AlertTriangle size={20} />
+            <span className="btn-label">Warning</span>
+          </button>
+
+          <button
+            onClick={() => setShowRestrictModal(true)}
+            disabled={actionLoading}
+            className="icon-btn restrict-btn"
+            title="Restrict User"
+          >
+            <Ban size={20} />
+            <span className="btn-label">Restrict</span>
+          </button>
+
+          <button
+  onClick={() => {
+    setReportToDelete(selectedReport);
+    setShowDeleteModal(true);
+  }}
+  disabled={actionLoading}
+  className="icon-btn delete-btn"
+  title="Delete Post"
+>
+  <Trash2 size={20} />
+  <span className="btn-label">Delete Post</span>
+</button>
+
+        </>
+      )}
+    </>
+  )}
+
+  {selectedReport.status === 'reviewed' && selectedReport.post && (
+    <>
+      <button
+        onClick={() => setShowWarningModal(true)}
+        disabled={actionLoading}
+        className="icon-btn warning-btn"
+        title="Send Warning"
+      >
+        <AlertTriangle size={20} />
+        <span className="btn-label">Warning</span>
+      </button>
+
+      <button
+        onClick={() => setShowRestrictModal(true)}
+        disabled={actionLoading}
+        className="icon-btn restrict-btn"
+        title="Restrict User"
+      >
+        <Ban size={20} />
+        <span className="btn-label">Restrict</span>
+      </button>
+
+      <button
+  onClick={() => {
+    setReportToDelete(selectedReport);
+    setShowDeleteModal(true);
+  }}
+  disabled={actionLoading}
+  className="icon-btn delete-btn"
+  title="Delete Post"
+>
+  <Trash2 size={20} />
+  <span className="btn-label">Delete Post</span>
+</button>
+
+    </>
+  )}
+</div>
+
               </div>
             </div>
+          )}
+{/* Delete Confirmation Modal */}
+{showDeleteModal && reportToDelete && (
+  <div className="modal-overlay">
+    <div className="modal-content">
+      {/* Header */}
+      <div className="modal-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h3 style={{ margin: 0, fontWeight: 600, color: "#212121" }}>Delete Notice</h3>
+        <button
+          onClick={() => {
+            setShowDeleteModal(false);
+            setReportToDelete(null);
+          }}
+          style={{
+            fontSize: "20px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: "#555"
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Separator */}
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "12px 0" }} />
+
+      {/* Body */}
+      <div className="modal-body">
+        <p style={{ color: "#555" }}> 
+        <p>Are you sure you want to delete this reported post? This action cannot be undone.</p>
+
+          This action will permanently delete the reported post. This cannot be undone.
+        </p>
+        {reportToDelete.post && (
+          <div className="post-preview" style={{ background: "#f9f9f9", padding: "12px", borderRadius: "8px", marginTop: "12px" }}>
+            <p>{reportToDelete.post.content}</p>
+            <small>By: {reportToDelete.post.author}</small>
           </div>
         )}
+      </div>
+
+      {/* Actions */}
+      <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
+        <button
+          onClick={() => {
+            setShowDeleteModal(false);
+            setReportToDelete(null);
+          }}
+          className="action-btn secondary-btn"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            deleteReportedPost(reportToDelete.id);
+            setShowDeleteModal(false);
+            setReportToDelete(null);
+          }}
+          disabled={actionLoading}
+          className="action-btn delete-btn"
+        >
+          {actionLoading ? 'Deleting...' : 'Delete Post'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
         {/* Warning Modal */}
         {showWarningModal && selectedReport && (

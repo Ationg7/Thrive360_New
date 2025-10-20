@@ -1,5 +1,5 @@
 // API service functions for Thrive360
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+import { API_BASE_URL } from '../config/api.js';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {

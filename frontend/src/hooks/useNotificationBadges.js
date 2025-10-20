@@ -43,7 +43,7 @@ export const useNotificationBadges = () => {
         fetch(API_ENDPOINTS.BLOGS, {
           headers: { "Authorization": `Bearer ${adminToken}` }
         }),
-        fetch(`${API_ENDPOINTS.DASHBOARD.replace('/dashboard', '/reports')}`, {
+        fetch(API_ENDPOINTS.ADMIN_REPORTS, {
           headers: { "Authorization": `Bearer ${adminToken}` }
         })
       ]);

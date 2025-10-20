@@ -27,7 +27,7 @@ const Meditation = () => {
     Meditation: [
       {
         title: "Beginner’s Breath Awareness",
-        category: "Mental Health",
+        category: "Meditation",
         description:
           "A simple guide to start your meditation journey with breath awareness...",
         image:
@@ -35,7 +35,7 @@ const Meditation = () => {
       },
       {
         title: "Managing Anxiety and Stress",
-        category: "Mental Health",
+        category: "Meditation",
         description:
           "Techniques to manage stress and calm your mind during anxious moments...",
         image:
@@ -45,7 +45,7 @@ const Meditation = () => {
     Stretching: [
       {
         title: "Morning Stretch Routine",
-        category: "Physical Health",
+        category: "Stretching",
         description: "Wake up your body with a refreshing stretch routine...",
         image:
           "https://i.pinimg.com/736x/d7/6d/cd/d76dcddcfaadf653d5ab7a83e91f31d8.jpg",
@@ -54,7 +54,7 @@ const Meditation = () => {
     Workout: [
       {
         title: "Full Body Beginner Workout",
-        category: "Fitness",
+        category: "Workout",
         description:
           "A basic workout for beginners to improve strength and flexibility...",
         image:
@@ -78,21 +78,46 @@ const Meditation = () => {
         if (!res.ok) throw new Error("Failed to load meditations");
         const data = await res.json();
 
-        const mapped = (Array.isArray(data) ? data : []).map((m) => ({
-          title: m.title,
-          category: m.category || "Meditation",
-          description: m.description,
-          image: getImageUrl(m.image_url || m.image),
-          steps: m.tutorial_steps ? (Array.isArray(m.tutorial_steps) ? m.tutorial_steps : JSON.parse(m.tutorial_steps || '[]')).map(step => ({
-            step: step.step,
-            title: step.title,
-            img: step.image_url ? getImageUrl(step.image_url) : null
-          })) : []
-        }));
 
-        const meditationData = [...hardcodedGuides.Meditation, ...mapped];
-        const stretchingData = [...hardcodedGuides.Stretching];
-        const workoutData = [...hardcodedGuides.Workout];
+        const mapped = (Array.isArray(data) ? data : []).map((m) => {
+          const normalizedCategory = (m.category || "Meditation").trim();
+          return {
+            title: m.title,
+            category: normalizedCategory,
+            description: m.description,
+            image: getImageUrl(m.image_url || m.image),
+            steps: m.tutorial_steps
+              ? (Array.isArray(m.tutorial_steps)
+                  ? m.tutorial_steps
+                  : JSON.parse(m.tutorial_steps || "[]"))
+                  .map((step) => ({
+                    step: step.step,
+                    title: step.title,
+                    description: step.description,
+                    img: step.image_url ? getImageUrl(step.image_url) : null,
+                  }))
+              : [],
+          };
+        });
+
+        const meditationBackend = [];
+        const stretchingBackend = [];
+        const workoutBackend = [];
+        mapped.forEach((g) => {
+          const cat = (g.category || "Meditation").trim().toLowerCase();
+          if (cat === "stretching") stretchingBackend.push(g);
+          else if (cat === "workout") workoutBackend.push(g);
+          else meditationBackend.push(g);
+        });
+
+
+
+
+        const meditationData = [...hardcodedGuides.Meditation, ...meditationBackend];
+        const stretchingData = [...hardcodedGuides.Stretching, ...stretchingBackend];
+        const workoutData = [...hardcodedGuides.Workout, ...workoutBackend];
+
+
 
         setGuides({
           "All Topics": [...meditationData, ...stretchingData, ...workoutData],
@@ -208,9 +233,26 @@ const Meditation = () => {
       {showPopup && (
   <div className="meditation-notif-overlay">
     <div className="meditation-notif-popup">
+      {/* Header with title and close X */}
+      <div className="notif-header">
+        <span className="notif-title">Message</span>
+        <span
+          className="notif-close"
+          onClick={() => setShowPopup(false)}
+          style={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '18px' }}
+        >
+          ✕
+        </span>
+      </div>
+
+      {/* Divider line */}
       <div className="notif-line"></div>
-      <p className="notif-message">{popupMessage}</p>
-      <div className="notif-btn-container">
+
+      {/* Message content */}
+      <p className="notif-message"style={{ textAlign: 'center', marginTop: '30px' }}>{popupMessage}</p>
+
+      {/* Action button */}
+      <div className="notif-btn-container"style={{ textAlign: 'center', marginTop: '40px' }}>
         <button className="btn btn-success" onClick={() => setShowPopup(false)}>
           OK
         </button>
@@ -221,8 +263,26 @@ const Meditation = () => {
 
 
 
+
       {/* ✅ Styles */}
       <style>{`
+      
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.notif-title {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.notif-close:hover {
+  color: red;
+}
+
      .meditation-notif-overlay {
   position: fixed;
   top: 0;
