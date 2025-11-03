@@ -278,9 +278,7 @@ const [meditationToDelete, setMeditationToDelete] = useState(null);
 
   // Delete meditation
   const handleDeleteMeditation = useCallback(async (meditationId, meditationTitle) => {
-    if (!window.confirm(`Are you sure you want to delete "${meditationTitle}"? This action cannot be undone.`)) {
-      return;
-    }
+    
 
     try {
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
@@ -512,20 +510,10 @@ const [meditationToDelete, setMeditationToDelete] = useState(null);
           </div>
         </div>
 
-        {/* Upload Section */}
-        <div className="upload-section">
-          <div className="upload-header">
-            <h3>Upload New Meditation</h3>
-            <button 
-              onClick={() => setShowUploadModal(true)}
-              className="upload-btn"
-            >
-              ➕ Upload Meditation
-            </button>
-          </div>
-        </div>
+      
 
         {/* Filters and Search */}
+         <div className="admin-users-card">
         <div className="admin-filters">
           <div className="admin-search-box">
             <input
@@ -554,14 +542,24 @@ const [meditationToDelete, setMeditationToDelete] = useState(null);
         {/* Meditations Grid */}
         <div className="meditations-container">
           <div className="meditations-header">
-            <h3>Meditation Content ({filteredMeditations.length})</h3>
-            <button 
-              onClick={fetchMeditations}
-              className="admin-refresh-btn"
-            >
-              Refresh
-            </button>
-          </div>
+  <h3>Meditation Content ({filteredMeditations.length})</h3>
+  
+  <div className="header-actions">
+    <button 
+      onClick={fetchMeditations}
+      className="admin-refresh-btn"
+    >
+      Refresh
+    </button>
+    <button 
+      onClick={() => setShowUploadModal(true)}
+      className="upload-btn"
+    >
+      ➕ Upload Meditation
+    </button>
+  </div>
+</div>
+
           
           <div className="meditations-grid">
             {filteredMeditations.map((meditation) => (
@@ -616,6 +614,7 @@ const [meditationToDelete, setMeditationToDelete] = useState(null);
                 </div>
               </div>
             ))}
+             </div>
             {showDeleteConfirm && meditationToDelete && (
   <div
     style={{

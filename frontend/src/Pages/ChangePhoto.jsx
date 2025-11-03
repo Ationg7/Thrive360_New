@@ -1,249 +1,250 @@
-import React, { useState, useEffect } from "react";
-import { Card, Button, Row, Col } from "react-bootstrap";
-import { X, Check } from "lucide-react";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Container, Card, Button, Modal, Form, Alert, Row, Col } from 'react-bootstrap';
+import { Plus, Trash2 } from 'lucide-react';
+import { API_ENDPOINTS, STORAGE_KEYS } from '../constants/adminConstants';
+import './AdminProfileCovers.css';
 
-const ChangePhoto = ({ closeModal }) => {
-  const [/* user not needed for cover */, /* setUser */] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [showNotification, setShowNotification] = useState(null);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [fadeOut, setFadeOut] = useState(false);
+const AdminProfileCovers = () => {
   const [covers, setCovers] = useState([]);
-  const [selectedCover, setSelectedCover] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [error, setError] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [coverToDelete, setCoverToDelete] = useState(null);
 
-  const toImageUrl = (img) => {
-    if (!img) return null;
-    if (typeof img !== 'string') return null;
-    if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    if (img.startsWith('/storage')) return `http://127.0.0.1:8000${img}`;
-    return `http://127.0.0.1:8000/storage/${img}`;
-  };
+  const [success, setSuccess] = useState(null);
+  const [activeCover, setActiveCover] = useState(null);
 
-  useEffect(() => {
-    // Preselect from saved cover if present
-    const saved = localStorage.getItem('profileCoverUrl');
-    if (saved && !selectedCover) setSelectedCover(saved);
+ const toImageUrl = (img) => {
+  if (!img) return null;
+  if (img.startsWith('http')) return img;            // Full URL already
+  if (img.startsWith('/storage')) return `http://127.0.0.1:8000${img}`; // Prepend domain only
+  return `http://127.0.0.1:8000/storage/${img}`;     // Raw path
+};
 
-    // Load admin profile covers
-    (async () => {
-      try {
-        setUploading(true);
-        const res = await fetch('http://127.0.0.1:8000/api/admin/profile-covers');
-        if (res.ok) {
-          const data = await res.json();
-          setCovers(Array.isArray(data) ? data : []);
-          if (!saved && !selectedCover && Array.isArray(data) && data.length > 0) {
-            const first = toImageUrl(data[0].url || data[0].path);
-            setSelectedCover(first);
-          }
-        } else {
-          setErrorMessage('Failed to load profile covers');
-          setShowNotification('error');
-        }
-      } catch (e) {
-        setErrorMessage('Failed to load profile covers');
-        setShowNotification('error');
-      } finally {
-        setUploading(false);
-      }
-    })();
-  }, [selectedCover]);
 
-  const handleCoverSelect = (coverUrl) => {
-    setSelectedCover(coverUrl);
-  };
-
-  // Avatar actions removed; ChangePhoto now only manages profile cover
-
-  const handleDone = async () => {
-    if (!selectedCover) return;
-    
+  const fetchCovers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setUploading(true);
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        const response = await fetch('http://127.0.0.1:8000/api/user/profile-cover', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ profile_cover_url: selectedCover })
-        });
-        
-        if (response.ok) {
-          // Persist the selected cover locally for immediate UX and reloads
-          localStorage.setItem('profileCoverUrl', selectedCover);
-          const event = new CustomEvent('profile-cover-updated', { detail: { url: selectedCover } });
-          window.dispatchEvent(event);
-          setShowNotification('success');
-        } else {
-          throw new Error('Failed to update profile cover');
-        }
-      } else {
-        // If no token, just save locally
-        localStorage.setItem('profileCoverUrl', selectedCover);
-        const event = new CustomEvent('profile-cover-updated', { detail: { url: selectedCover } });
-        window.dispatchEvent(event);
-        setShowNotification('success');
+      const token = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+      const res = await fetch(API_ENDPOINTS.PROFILE_COVERS, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error('Failed to load covers');
+      const data = await res.json();
+      setCovers(Array.isArray(data) ? data : []);
+      if (data.length && !activeCover) {
+        setActiveCover(toImageUrl(data[0].url || data[0].path));
       }
-    } catch (error) {
-      console.error('Error updating profile cover:', error);
-      setErrorMessage('Failed to update profile cover. Please try again.');
-      setShowNotification('error');
+    } catch (e) {
+      setError(e.message || 'Failed to load covers');
+    } finally {
+      setLoading(false);
+    }
+  }, [activeCover]);
+
+  useEffect(() => { fetchCovers(); }, [fetchCovers]);
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    setUploading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const token = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+      const formData = new FormData();
+      formData.append('cover', selectedFile);
+
+      const res = await fetch(API_ENDPOINTS.PROFILE_COVERS, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message || 'Upload failed');
+      }
+
+      setSuccess('Cover uploaded successfully');
+      setShowModal(false);
+      setSelectedFile(null);
+      fetchCovers();
+    } catch (e) {
+      setError(e.message || 'Upload failed');
     } finally {
       setUploading(false);
-      setTimeout(() => {
-        handleClose();
-      }, 1000);
     }
   };
 
-  const handleClose = () => {
-    setFadeOut(true);
-    setTimeout(() => closeModal(), 300);
+  const handleDelete = async (cover) => {
+    
+    try {
+      const token = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+      const res = await fetch(`${API_ENDPOINTS.PROFILE_COVERS}/${cover.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      setSuccess('Cover deleted');
+      if (activeCover === toImageUrl(cover.url || cover.path)) setActiveCover(null);
+      fetchCovers();
+    } catch (e) {
+      setError(e.message || 'Delete failed');
+    }
   };
 
   return (
-    <>
-      <div
-        className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
-        style={{
-          backgroundColor: "transparent",
-          zIndex: 1050,
-          opacity: fadeOut ? 0 : 1,
-          transition: "opacity 0.3s ease",
-          padding: "10px",
-        }}
-      >
-        <Card
-          className="shadow-sm border-0 p-4"
-          style={{
-            width: "100%",
-            maxWidth: "500px",
-            maxHeight: "90vh",
-            borderRadius: "16px",
-            overflowY: "auto",
-            position: "relative",
-            transform: fadeOut ? "scale(0.95)" : "scale(1)",
-            opacity: fadeOut ? 0 : 1,
-            transition: "all 0.3s ease",
-            fontFamily: "Poppins, sans-serif",
-          }}
-        >
-          {/* Header */}
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5 className="m-0">Change Cover Photo</h5>
-            <Button variant="light" className="rounded-circle p-0" style={{ width: "35px", height: "35px" }} onClick={handleClose}>
-              <X size={20} />
-            </Button>
-          </div>
-
-          {/* Current Avatar removed: this modal is for cover selection only */}
-
-          {/* Admin Profile Covers */}
-          <div className="mb-4 p-3 border rounded-4 bg-light">
-            <h5 className="fw-semibold text-center mb-3">Choose a Profile Cover</h5>
-            {uploading ? (
-              <div className="text-center py-4">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-                <div className="mt-2 text-muted">Loading covers...</div>
-              </div>
-            ) : covers.length === 0 ? (
-              <div className="text-center py-4 text-muted">
-                No profile covers available
-              </div>
-            ) : (
-              <Row className="g-3 justify-content-center">
-                {covers.map((c, idx) => {
-                  const url = toImageUrl(c.url || c.path);
-                  const active = selectedCover === url;
-                  return (
-                    <Col xs={6} sm={4} md={4} key={idx} className="d-flex justify-content-center">
-                      <div
-                        onClick={() => !uploading && handleCoverSelect(url)}
-                        className="d-flex align-items-center justify-content-center"
-                        style={{
-                          cursor: uploading ? "not-allowed" : "pointer",
-                          borderRadius: "8px",
-                          border: active ? "3px solid #28a745" : "1px solid #dee2e6",
-                          position: "relative",
-                          transition: "all 0.2s",
-                          width: "100%",
-                          height: "80px",
-                          overflow: "hidden"
-                        }}
-                      >
-                        <img 
-                          src={url} 
-                          alt="cover" 
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                        <div 
-                          className="d-none align-items-center justify-content-center bg-light"
-                          style={{ width: "100%", height: "100%" }}
-                        >
-                          <span className="text-muted">📷</span>
-                        </div>
-                        {active && (
-                          <div className="position-absolute top-0 end-0 bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: "18px", height: "18px" }}>
-                            <Check size={12} />
-                          </div>
-                        )}
-                      </div>
-                    </Col>
-                  );
-                })}
-              </Row>
-            )}
-          </div>
-
-          {/* Avatar Options removed */}
-
-          {/* Done Button */}
-          <div className="text-end">
-            <Button
-              variant="success"
-              onClick={handleDone}
-              disabled={uploading || !selectedCover}
-              style={{ width: "30%",  height: "20%"}}
-            >
-              {uploading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Saving...
-                </>
-              ) : (
-                'Done'
-              )}
-            </Button>
-          </div>
-
-        </Card>
+    <Container fluid className="my-4">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2>Profile Covers</h2>
+        <Button variant="primary" onClick={() => setShowModal(true)}>
+          <Plus size={18} className="me-1" />
+          Upload Cover
+        </Button>
       </div>
 
-      {/* Notifications */}
-      {showNotification && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "20px",
-            left: "20px",
-            zIndex: 9999,
-            minWidth: "250px",
-            maxWidth: "400px",
-            transition: "opacity 0.3s ease",
-          }}
-          className={`alert ${showNotification === "success" ? "alert-success" : "alert-danger"}`}
-        >
-          {showNotification === "success" ? "Success!" : errorMessage || "Something went wrong."}
-        </div>
+      {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
+      {success && <Alert variant="success" onClose={() => setSuccess(null)} dismissible>{success}</Alert>}
+
+      {loading ? (
+        <div className="text-center py-4">Loading covers…</div>
+      ) : (
+        <Row xs={2} sm={3} md={4} lg={5} className="g-3">
+          {covers.length ? covers.map((c) => {
+            const imgUrl = toImageUrl(c.url || c.path);
+            return (
+              <Col key={c.id}>
+                <Card 
+                  className={`cover-card ${activeCover === imgUrl ? 'border-primary shadow-sm' : ''}`} 
+                  onClick={() => setActiveCover(imgUrl)}
+                  style={{ cursor: 'pointer', overflow: 'hidden' }}
+                >
+                  <Card.Img variant="top" src={imgUrl} style={{ height: '120px', objectFit: 'cover' }} />
+                  <Card.Body className="p-2 d-flex justify-content-between align-items-center">
+                    <small className="text-truncate" style={{ maxWidth: '70%' }}>
+                      {c.url || c.path}
+                    </small>
+                    <Button 
+  variant="outline-danger" 
+  size="sm" 
+  onClick={() => {
+    setCoverToDelete(c);
+    setShowDeleteConfirm(true);
+  }}
+>
+  <Trash2 size={14} />
+</Button>
+
+                  </Card.Body>
+                </Card>
+              </Col>
+            );
+          }) : (
+            <Col>
+              <div className="text-center text-muted">No covers uploaded yet</div>
+            </Col>
+          )}
+        </Row>
       )}
-    </>
+{showDeleteConfirm && coverToDelete && (
+  <div
+    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 9999 }}
+  >
+    <div
+      className="rounded-4 shadow-lg p-4"
+      style={{ background: "#fff", width: "380px", maxWidth: "92%" }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h5 className="fw-bold mb-2 text-dark" style={{ margin: 0 }}>
+          Delete Notice
+        </h5>
+        <button
+          onClick={() => setShowDeleteConfirm(false)}
+          style={{
+            fontSize: "20px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: "#555"
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "12px 0" }} />
+
+      <p className="text-muted mb-4">
+      Are you sure you want to delete this cover? It will be permanently removed and cannot be undone.
+      </p>
+
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#e8f5e9",
+            border: "1px solid #c8e6c9",
+            color: "#2e7d32",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#d32f2f",
+            border: "none",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+          onClick={async () => {
+            await handleDelete(coverToDelete);
+            setShowDeleteConfirm(false);
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+      {/* Upload Modal */}
+      <Modal show={showModal} onHide={() => { setShowModal(false); setSelectedFile(null); }}>
+        <Modal.Header closeButton>
+          <Modal.Title>Upload New Cover</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group>
+            <Form.Label>Cover Image *</Form.Label>
+            <Form.Control 
+              type="file" 
+              accept="image/*" 
+              onChange={e => setSelectedFile(e.target.files[0])} 
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
+          <Button variant="primary" onClick={handleUpload} disabled={uploading || !selectedFile}>
+            {uploading ? 'Uploading…' : 'Upload'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </Container>
   );
 };
 
-export default ChangePhoto;
+export default AdminProfileCovers;

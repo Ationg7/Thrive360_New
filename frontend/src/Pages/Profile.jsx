@@ -42,6 +42,8 @@ const Profile = () => {
   const [selectedReasonCustom, setSelectedReasonCustom] = useState("");
   const [reportingPostId, setReportingPostId] = useState(null);
   const [hiddenPosts, setHiddenPosts] = useState([]);
+  const [showRestrictedModal, setShowRestrictedModal] = useState(false);
+
   const [showUndo, setShowUndo] = useState(false);
   const [showChangePhoto, setShowChangePhoto] = useState(false); // <-- new state
   const [showNoReasonModal, setShowNoReasonModal] = useState(false);
@@ -65,16 +67,7 @@ const Profile = () => {
   ];
 
   // ---------------- Helper Functions ----------------
-  const getUserEmail = () => {
-    if (user?.email) return user.email;
-    try {
-      const stored = localStorage.getItem("user");
-      if (stored) return JSON.parse(stored)?.email || "";
-    } catch {
-      // Ignore JSON parse errors
-    }
-    return localStorage.getItem("userEmail") || "";
-  };
+  
 
   const censorText = (text) => {
     if (!text) return "";
@@ -147,9 +140,10 @@ const Profile = () => {
       await loadPosts(postFilter);
 
     } catch (e) {
-      console.error("Error creating post:", e);
-      alert(`Failed to create post: ${e.message}`);
-    }
+  console.error("Error creating post:", e);
+  setShowRestrictedModal(true); // show modal
+}
+
   };
 
   const handleImageUpload = (e) => {
@@ -492,6 +486,64 @@ const Profile = () => {
     </div>
   </div>
 )}
+{showRestrictedModal && (
+  <div
+    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 9999 }}
+  >
+    <div
+      className="rounded-4 shadow-lg p-4"
+      style={{ background: "#fff", width: "380px", maxWidth: "92%" }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h5 className="fw-bold mb-2 text-dark" style={{ margin: 0 }}>
+          Warning
+        </h5>
+        <button
+          onClick={() => setShowRestrictedModal(false)}
+          style={{
+            fontSize: "20px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: "#555"
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Separator */}
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "12px 0" }} />
+
+      {/* Body */}
+      <p className="text-muted mb-4">
+        Your account is currently restricted. You cannot post content.
+      </p>
+
+      {/* Actions */}
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#d32f2f",
+            border: "none",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+          onClick={() => setShowRestrictedModal(false)}
+        >
+          Ok
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
 {showReportSnackbar && (
   <div

@@ -350,20 +350,9 @@ const [blogToDelete, setBlogToDelete] = useState(null);
           </div>
         </div>
 
-        {/* Upload Section */}
-        <div className="upload-section">
-          <div className="upload-header">
-            <h3>Create New Blog Post</h3>
-            <button 
-              onClick={() => setShowUploadModal(true)}
-              className="upload-btn"
-            >
-              ➕ Create Blog
-            </button>
-          </div>
-        </div>
 
         {/* Filters and Search */}
+          <div className="admin-users-card">
         <div className="admin-filters">
           <div className="admin-search-box">
             <input
@@ -392,19 +381,20 @@ const [blogToDelete, setBlogToDelete] = useState(null);
 
         {/* Blogs Grid */}
         <div className="blogs-container">
-          <div className="blogs-header">
-            <h3>Health Blogs ({filteredBlogs.length})</h3>
-            <button 
-              onClick={fetchBlogs}
-              className="admin-refresh-btn"
-            >
-              Refresh
-            </button>
-          </div>
+  <div className="blogs-header">
+    <h3>Health Blogs ({filteredBlogs.length})</h3>
+    
+    <div className="header-actions">
+      <button onClick={fetchBlogs} className="admin-refresh-btn">Refresh</button>
+      <button onClick={() => setShowUploadModal(true)} className="upload-btn">➕ Create Blog</button>
+    </div>
+  </div>
+
+
           
           <div className="blogs-grid">
             {filteredBlogs.map((blog) => (
-              <div key={blog.id} className="blog-card">
+              <div key={blog.id} className="blog-cards">
                 <div className="blog-image">
                   {toImageUrl(blog.image_url) ? (
                     <img src={toImageUrl(blog.image_url)} alt={blog.title} />
@@ -415,7 +405,7 @@ const [blogToDelete, setBlogToDelete] = useState(null);
                     {blog.category}
                   </div>
                 </div>
-                <div className="blog-content">
+                <div className="blog-contents">
   <h4 className="blog-title">{blog.title}</h4>
   
   <div className="blog-meta">
@@ -463,6 +453,7 @@ onClick={() => {
                 </div>
               </div>
             ))}
+          </div>
             
             {showDeleteConfirm && blogToDelete && (
   <div

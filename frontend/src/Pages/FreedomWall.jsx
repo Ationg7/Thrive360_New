@@ -50,6 +50,7 @@ const FreedomWall = () => {
   const [newPost, setNewPost] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+const [showRestrictedModal, setShowRestrictedModal] = useState(false);
 
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportPostId, setReportPostId] = useState(null);
@@ -286,9 +287,10 @@ const FreedomWall = () => {
     setShowPostModal(false);
 
   } catch (e) {
-    console.error("Error creating post:", e);
-    alert(`Failed to create post: ${e.message}`);
-  }
+  console.error("Error creating post:", e);
+  setShowRestrictedModal(true); // show modal
+}
+
 };
 
   const handleEmojiClick = (emojiObject) => {
@@ -464,20 +466,15 @@ const FreedomWall = () => {
 
 
 
+<Form.Control
+  type="text"
+  placeholder={isLoggedIn ? "What's on your mind?" : "Express yourself anonymously..."}
+  className="post-input-field"
+  readOnly
+  onClick={() => setShowPostModal(true)} // ✅ guests can now open modal too
+/>
 
-          <Form.Control
-            type="text"
-            placeholder={isLoggedIn ? "What's on your mind?" : "Express yourself anonymously..."}
-            className="post-input-field"
-            readOnly
-            onClick={() => {
-              if (isLoggedIn) {
-                setShowPostModal(true);
-              } else {
-                setShowGuestPopup(true); // <-- guest notification here
-              }
-            }}
-          />
+
         </div>
       </Card>
 
@@ -637,17 +634,16 @@ const FreedomWall = () => {
 
                 <p className="post-content ">{censorText(post.content)}</p>
 
-              {post.image && (
-            <div className="post-image-wrapper">
-            <img
-             src={post.image}
-           alt="Post"
+             {post.image && (
+  <div className="post-image-wrapper">
+    <img
+      src={post.image}
+      alt="Post"
       className="post-image-adjusted"
-      onLoad={() => console.log('Image loaded successfully:', post.image)}
-      onError={(e) => console.error('Image failed to load:', post.image, e)}
     />
   </div>
 )}
+
 
 
                 <div className="post-actions d-flex align-items-center mt-3" style={{ justifyContent: "flex-start" }}>
@@ -676,6 +672,63 @@ const FreedomWall = () => {
           </Card>
         ))}
       </div>
+         {showRestrictedModal && (
+  <div
+    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 9999 }}
+  >
+    <div
+      className="rounded-4 shadow-lg p-4"
+      style={{ background: "#fff", width: "380px", maxWidth: "92%" }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h5 className="fw-bold mb-2 text-dark" style={{ margin: 0 }}>
+          Warning
+        </h5>
+        <button
+          onClick={() => setShowRestrictedModal(false)}
+          style={{
+            fontSize: "20px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: "#555"
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Separator */}
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "12px 0" }} />
+
+      {/* Body */}
+      <p className="text-muted mb-4">
+        Your account is currently restricted. You cannot post content.
+      </p>
+
+      {/* Actions */}
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{
+            padding: "8px 20px",
+            borderRadius: "24px",
+            background: "#d32f2f",
+            border: "none",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+          onClick={() => setShowRestrictedModal(false)}
+        >
+          Ok
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Already Reported Modal */}
       <Modal

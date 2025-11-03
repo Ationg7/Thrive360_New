@@ -154,17 +154,15 @@ const ChallengesCategories = () => {
                           </div>
 
                           {/* Card Body */}
-                          <Card.Body className="d-flex flex-column gap-2">
+                          <Card.Body className="d-flex flex-column gap-2 align-items-center">
                             <Card.Title>{challenge.title}</Card.Title>
                             <Card.Text>{challenge.description}</Card.Text>
 
-                            <div className="details d-flex justify-content-between">
-                              
-
-                              <span>
-                                👥 {challenge.participants ?? 140} participants
-                              </span>
-                            </div>
+                           <div className="details w-100 d-flex justify-content-start">
+    <span>
+      👥 {challenge.participants ?? 140} participants
+    </span>
+  </div>  
 
                             <Button
                               className="challenge-button mt-1"

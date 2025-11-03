@@ -5,33 +5,31 @@
   min-height: 100vh;
   background: var(--light-bg);
   padding: 20px;
-}
-
-.admin-page-header {
-  background: var(--white);
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}.admin-page-header {
+  background: var(--white);   /* optional */
+  padding: 30px 20px;         /* top & bottom padding */
+  display: flex;
+  flex-direction: column;
+  align-items: center;        /* center horizontally */
+  text-align: center;
   margin-bottom: 30px;
-}
-
-.admin-page-header-content {
-  max-width: 1400px;
-  margin: 0 auto;
+  border-radius: 0;           /* remove card rounding */
+  box-shadow: none;           /* remove shadow */
+  gap: 10px;                  /* space between title and subtitle */
 }
 
 .admin-page-title {
   color: var(--dark-text);
-  margin: 0 0 10px 0;
   font-size: 2rem;
   font-weight: 600;
+  margin: 0;
 }
 
 .admin-page-subtitle {
   color: var(--gray-text);
-  margin: 0;
   font-size: 1rem;
   font-weight: 400;
+  margin: 0;
 }
 
 .upload-section {
@@ -76,17 +74,6 @@
   box-shadow: 0 4px 12px rgba(156,39,176,0.3);
 }
 
-.admin-filters {
-  background: var(--white);
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  flex-wrap: wrap;
-}
 
 .admin-search-box {
   flex: 1;
@@ -129,10 +116,11 @@
 }
 
 .blogs-container {
-  background: var(--white);
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  overflow: hidden;
+  border: none;           /* remove outer border */
+  box-shadow: none;       /* remove shadow */
+  background: transparent; /* remove background */
+  padding: 0;             /* remove card padding */
+  margin: 0;        
 }
 
 .blogs-header {
@@ -165,14 +153,20 @@
 
 .admin-refresh-btn:hover {
   background: #0056b3;
-}
-.blogs-grid {
+}.blogs-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* exactly 3 columns */
+  grid-template-columns: repeat(4, 1fr); /* 4 columns */
   gap: 25px;
   padding: 30px;
 }
+
 @media (max-width: 1200px) {
+  .blogs-grid {
+    grid-template-columns: repeat(3, 1fr); /* fallback for smaller screens */
+  }
+}
+
+@media (max-width: 992px) {
   .blogs-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -184,13 +178,16 @@
     padding: 20px;
   }
 }
-.blog-card {
+
+.blog-cards {
   background: var(--white);
   border: 1px solid #e9ecef;
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);          /* fixed height similar to meditation card */
+    max-width: 300px; /* sets a limit so card doesn't get too small */
+  
 }
 
 .blog-card:hover {
@@ -212,7 +209,7 @@
   object-fit: cover;
 }
 
-.blog-content {
+.blog-contents {
   padding: 16px 12px;        /* similar padding as meditation card */
   display: flex;
   flex-direction: column;
@@ -305,7 +302,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  padding-top: 15px;
+  padding: 15px 20px; /* added horizontal padding */
   border-top: 1px solid #e9ecef;
 }
 
@@ -319,12 +316,14 @@
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 2px;
 }
+
 
 .action-btn.delete {
   background: #f8d7da;
   color: #721c24;
+  
 }
 
 .action-btn.delete:hover {

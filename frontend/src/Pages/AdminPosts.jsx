@@ -14,6 +14,7 @@ const AdminPosts = memo(() => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
   const [filterType, setFilterType] = useState('all');
   const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -211,6 +212,8 @@ const [postToDelete, setPostToDelete] = useState(null);
           </div>
         </div>
 
+        
+        <div className="admin-users-card">
         <div className="admin-filters">
           <div className="admin-search-box">
             <input
@@ -245,8 +248,8 @@ const [postToDelete, setPostToDelete] = useState(null);
 
           <div className="posts-grid">
             {filteredPosts.map((post) => (
-              <div key={post.id} className="post-card">
-                <div className="post-header">
+              <div key={post.id} className="post-cards">
+                <div className="post-headers">
                   <div className="post-author">
                    <div className="post-author-avatar">
   {post.user.email
@@ -329,6 +332,7 @@ const [postToDelete, setPostToDelete] = useState(null);
               </div>
               </div>
             ))}
+            </div>
          
          {showDeleteConfirm && postToDelete && (
   <div

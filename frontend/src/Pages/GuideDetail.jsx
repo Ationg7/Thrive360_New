@@ -15,7 +15,6 @@ const GuideDetails = () => {
       {/* Top card */}
       <div className="top-card">
         <div className="top-text">
-           
           <h2 className="guide-title">{guide.title}</h2>
           <span className="category">{guide.category}</span>
           <p className="guide-description">{guide.description}</p>
@@ -59,5 +58,3 @@ const GuideDetails = () => {
 };
 
 export default GuideDetails;
-
-

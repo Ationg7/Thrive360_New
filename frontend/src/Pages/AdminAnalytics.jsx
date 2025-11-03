@@ -5,6 +5,26 @@ import React, { memo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, STORAGE_KEYS, ROUTES, MESSAGES } from '../constants/adminConstants';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 import MessageDisplay from '../components/MessageDisplay';
 import './AdminAnalytics.css';
 
@@ -361,101 +381,123 @@ const AdminAnalytics = memo(() => {
           </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="analytics-charts">
-          {/* Posts Chart */}
-          <div className="chart-container">
-            <div className="chart-header">
-              <h3>Posts Activity</h3>
-              <p>Posts created per day</p>
-            </div>
-            <div className="chart-content">
-              {analytics.posts_per_day.length > 0 ? (
-                <div className="bar-chart">
-                  {analytics.posts_per_day.map((item, index) => {
-                    const maxValue = getMaxValue(analytics.posts_per_day);
-                    const height = (item.count / maxValue) * 100;
-                    return (
-                      <div key={index} className="bar-item">
-                        <div 
-                          className="bar" 
-                          style={{ height: `${height}%` }}
-                          title={`${item.date}: ${item.count} posts`}
-                        ></div>
-                        <div className="bar-label">{new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                        <div className="bar-value">{item.count}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="no-data">No posts data available</div>
-              )}
-            </div>
-          </div>
+      <div className="analytics-charts">
 
-          {/* Challenges Chart */}
-          <div className="chart-container">
-            <div className="chart-header">
-              <h3>Challenges Activity</h3>
-              <p>Challenges created per day</p>
-            </div>
-            <div className="chart-content">
-              {analytics.challenges_per_day.length > 0 ? (
-                <div className="bar-chart">
-                  {analytics.challenges_per_day.map((item, index) => {
-                    const maxValue = getMaxValue(analytics.challenges_per_day);
-                    const height = (item.count / maxValue) * 100;
-                    return (
-                      <div key={index} className="bar-item">
-                        <div 
-                          className="bar" 
-                          style={{ height: `${height}%` }}
-                          title={`${item.date}: ${item.count} challenges`}
-                        ></div>
-                        <div className="bar-label">{new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                        <div className="bar-value">{item.count}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="no-data">No challenges data available</div>
-              )}
-            </div>
-          </div>
+  {/* Posts Chart */}
+  <div className="chart-container">
+    <div className="chart-header">
+      <h3>Posts Activity</h3>
+      <p>Posts created per day</p>
+    </div>
+    <div className="chart-content">
+      {analytics.posts_per_day.length > 0 ? (
+        <Bar
+          data={{
+            labels: analytics.posts_per_day.map(item => new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+            datasets: [
+              {
+                label: 'Posts',
+                data: analytics.posts_per_day.map(item => item.count),
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderRadius: 6
+              }
+            ]
+          }}
+          options={{
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true }
+            }
+          }}
+        />
+      ) : (
+        <div className="no-data">No posts data available</div>
+      )}
+    </div>
+  </div>
 
-          {/* User Registrations Chart */}
-          <div className="chart-container">
-            <div className="chart-header">
-              <h3>User Registrations</h3>
-              <p>New users registered per day</p>
-            </div>
-            <div className="chart-content">
-              {analytics.user_registrations.length > 0 ? (
-                <div className="bar-chart">
-                  {analytics.user_registrations.map((item, index) => {
-                    const maxValue = getMaxValue(analytics.user_registrations);
-                    const height = (item.count / maxValue) * 100;
-                    return (
-                      <div key={index} className="bar-item">
-                        <div 
-                          className="bar" 
-                          style={{ height: `${height}%` }}
-                          title={`${item.date}: ${item.count} users`}
-                        ></div>
-                        <div className="bar-label">{new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                        <div className="bar-value">{item.count}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="no-data">No user registration data available</div>
-              )}
-            </div>
-          </div>
-        </div>
+  {/* Challenges Chart */}
+  <div className="chart-container">
+    <div className="chart-header">
+      <h3>Challenges Activity</h3>
+      <p>Challenges created per day</p>
+    </div>
+    <div className="chart-content">
+      {analytics.challenges_per_day.length > 0 ? (
+        <Bar
+          data={{
+            labels: analytics.challenges_per_day.map(item => new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+            datasets: [
+              {
+                label: 'Challenges',
+                data: analytics.challenges_per_day.map(item => item.count),
+                backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                borderRadius: 6
+              }
+            ]
+          }}
+          options={{
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true }
+            }
+          }}
+        />
+      ) : (
+        <div className="no-data">No challenges data available</div>
+      )}
+    </div>
+  </div>
+
+  {/* User Registrations Chart */}
+  <div className="chart-container">
+    <div className="chart-header">
+      <h3>User Registrations</h3>
+      <p>New users registered per day</p>
+    </div>
+    <div className="chart-content">
+      {analytics.user_registrations.length > 0 ? (
+        <Bar
+          data={{
+            labels: analytics.user_registrations.map(item => new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+            datasets: [
+              {
+                label: 'Users',
+                data: analytics.user_registrations.map(item => item.count),
+                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                borderRadius: 6
+              }
+            ]
+          }}
+          options={{
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true }
+            }
+          }}
+        />
+      ) : (
+        <div className="no-data">No user registration data available</div>
+      )}
+    </div>
+  </div>
+
+</div>
 
         {/* Detailed Reports Section */}
         <div className="reports-sections">

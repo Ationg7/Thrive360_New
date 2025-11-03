@@ -223,7 +223,7 @@ const editEvent = (event) => {
 
   return (
     <Container fluid className="admin-events">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-4 mt-4">
         <h2>Event Management</h2>
         <Button
           variant="primary"

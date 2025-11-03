@@ -185,170 +185,34 @@ const SignIn = () => {
 
         @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
-        
-      `}</style>
-   <style>{`
-  /* Make sure html and body take full height */
-  html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
+        @media (max-width: 768px) {
+         .snackbar {
+    top: auto !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: 90% !important;
+    max-width: 320px !important;
+    font-size: 0.8rem;
+    padding: 12px 18px;
   }
+}
 
-  /* ---------- Mobile & tablet responsive adjustments ---------- */
-  @media (max-width: 768px) {
-    .signup-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh; /* full viewport height to center */
-      padding: 10px;
-      box-sizing: border-box;
-    }
-
-    .signup-card {
-      width: 90%;
-      padding: 20px 15px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 0; /* remove extra margin */
-    }
-
-    .form-logo {
-      width: 55px;
-      margin-bottom: 12px;
-    }
-
-    .title {
-      font-size: 1.5rem;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      font-size: 0.95rem;
-      margin-bottom: 14px;
-    }
-
-    .input-field {
-      font-size: 0.9rem;
-      padding: 8px 10px;
-      margin-bottom: 12px;
-    }
-
-    .forgot-password {
-      font-size: 0.85rem;
-      margin-top: 4px;
-      margin-bottom: 10px;
-      align-self: flex-end;
-    }
-
-    .register-btn {
-      width: 100%;
-      font-size: 0.9rem;
-      padding: 8px;
-      margin-bottom: 12px;
-    }
-
-    .signup-text {
-      font-size: 0.85rem;
-      text-align: center;
-      width: 100%;
-      margin-top: 0;
-    }
-
-    .tooltip-error-inline {
-      font-size: 0.75rem;
-      max-width: 120px;
-    }
-
-    .eye-icon {
-      font-size: 0.9rem;
-      right: 8px;
-    }
-
-    .img-hero {
-      display: none; /* hide hero on tablet */
-    }
+/* Animations */
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-
-  @media (max-width: 480px) {
-    .signup-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh; /* full viewport height */
-      width: 100%;
-      padding: 8px;
-      box-sizing: border-box;
-    }
-
-    .signup-card {
-      width: 90%;
-      padding: 15px 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 0; /* remove extra margin */
-    }
-
-    .form-logo {
-      width: 50px;
-      margin-bottom: 10px;
-    }
-
-    .title {
-      font-size: 1.3rem;
-      margin-bottom: 6px;
-    }
-
-    .subtitle {
-      font-size: 0.85rem;
-      margin-bottom: 12px;
-    }
-
-    .input-field {
-      font-size: 0.8rem;
-      padding: 7px 9px;
-      margin-bottom: 2px;
-    }
-
-    .forgot-password {
-      font-size: 0.75rem;
-      margin-top: 2px;
-      margin-bottom: 8px;
-    }
-
-    .register-btn {
-      width: 100%;
-      font-size: 0.8rem;
-      padding: 7px;
-      margin-bottom: 10px;
-    }
-
-    .signup-text {
-      font-size: 0.75rem;
-      margin-top: 0;
-      width: 100%;
-      text-align: center;
-    }
-
-    .tooltip-error-inline {
-      font-size: 0.7rem;
-      max-width: 100px;
-    }
-
-    .eye-icon {
-      font-size: 0.8rem;
-      right: 6px;
-    }
-
-    .img-hero {
-      display: none; /* hide hero on mobile */
-    }
+}
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
   }
+}
+
 `}</style>
 
 

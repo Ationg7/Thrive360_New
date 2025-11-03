@@ -6,9 +6,7 @@ import '../styles/AdminDashboard.css';
 import { useAdminDashboard } from '../hooks/useAdminDashboard';
 import { STATS_LABELS, NAVIGATION_BUTTONS, MESSAGES } from '../constants/adminConstants';
 import ErrorBoundary from '../components/ErrorBoundary';
-import StatCard from '../components/StatCard';
-import NavigationButton from '../components/NavigationButton';
-import MessageDisplay from '../components/MessageDisplay';
+
 
 const AdminDashboard = memo(() => {
   const {
@@ -16,8 +14,7 @@ const AdminDashboard = memo(() => {
     loading,
     error,
     success,
-    handleLogout,
-    handleNavigation,
+   
     clearMessages
   } = useAdminDashboard();
 

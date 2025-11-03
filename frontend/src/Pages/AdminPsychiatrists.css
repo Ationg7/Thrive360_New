@@ -5,17 +5,33 @@
   max-width: 1400px;
   margin: 0 auto;
 }
-
 .admin-page-header {
+  background: var(--white);   /* optional */
+  padding: 30px 20px;         /* top & bottom padding */
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: center;        /* center horizontally */
+  text-align: center;
   margin-bottom: 30px;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 0;           /* remove card rounding */
+  box-shadow: none;           /* remove shadow */
+  gap: 10px;                  /* space between title and subtitle */
 }
+
+.admin-page-title {
+  color: var(--dark-text);
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.admin-page-subtitle {
+  color: var(--gray-text);
+  font-size: 1rem;
+  font-weight: 400;
+  margin: 0;
+}
+
 
 .admin-page-header-content h1 {
   font-size: 2.5rem;

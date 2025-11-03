@@ -6,33 +6,65 @@
   background: var(--light-bg);
   padding: 20px;
 }
-
 .admin-page-header {
-  background: var(--white);
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background: var(--white);   /* optional */
+  padding: 30px 20px;         /* top & bottom padding */
+  display: flex;
+  flex-direction: column;
+  align-items: center;        /* center horizontally */
+  text-align: center;
   margin-bottom: 30px;
-}
-
-.admin-page-header-content {
-  max-width: 1400px;
-  margin: 0 auto;
+  border-radius: 0;           /* remove card rounding */
+  box-shadow: none;           /* remove shadow */
+  gap: 10px;                  /* space between title and subtitle */
 }
 
 .admin-page-title {
   color: var(--dark-text);
-  margin: 0 0 10px 0;
   font-size: 2rem;
   font-weight: 600;
+  margin: 0;
 }
 
 .admin-page-subtitle {
   color: var(--gray-text);
-  margin: 0;
   font-size: 1rem;
   font-weight: 400;
+  margin: 0;
 }
+.meditations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ccc; /* the separator line */
+  margin-bottom: 16px;           /* space between header and grid */
+}
+
+
+.header-actions {
+  display: flex;
+  gap: 10px; /* Small gap between buttons */
+}
+
+.admin-refresh-btn,
+.upload-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.admin-refresh-btn {
+  background-color: #1976d2;
+  color: #fff;
+}
+
+.upload-btn {
+  background-color: #43a047;
+  color: #fff;
+}
+
 
 .upload-section {
   background: var(--white);
@@ -76,17 +108,6 @@
   box-shadow: 0 4px 12px rgba(233,30,99,0.3);
 }
 
-.admin-filters {
-  background: var(--white);
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  flex-wrap: wrap;
-}
 
 .admin-search-box {
   flex: 1;
@@ -129,11 +150,14 @@
 }
 
 .meditations-container {
-  background: var(--white);
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  overflow: hidden;
+  border: none;           /* remove outer border */
+  box-shadow: none;       /* remove shadow */
+  background: transparent; /* remove background */
+  padding: 0;             /* remove card padding */
+  margin: 0;              /* optional */
+  width: auto;
 }
+
 
 .meditations-header {
   display: flex;
@@ -165,22 +189,30 @@
 
 .admin-refresh-btn:hover {
   background: #0056b3;
-}
-
-.meditations-grid {
+}.meditations-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(4, 1fr); /* fixed 4 columns */
+  grid-auto-rows: 1fr; /* equal height rows */
   gap: 25px;
   padding: 30px;
 }
 
 .meditation-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* keeps actions at bottom */
+  height: 100%; /* allow grid to make all cards same height */
   background: var(--white);
   border: 1px solid #e9ecef;
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.meditation-content {
+  flex-grow: 1; /* fills the remaining space */
+  margin: 10px;
 }
 
 .meditation-card:hover {
@@ -225,10 +257,6 @@
   letter-spacing: 0.5px;
 }
 
-.meditation-content {
-  padding: 20px;
-}
-
 .meditation-title {
   margin: 0 0 10px 0;
   color: var(--dark-text);
@@ -251,7 +279,7 @@
 .meditation-meta {
   display: flex;
   gap: 20px;
-  margin-bottom: 15px;
+ 
   padding: 10px 0;
   border-top: 1px solid #f8f9fa;
 }
@@ -271,12 +299,11 @@
 
 .meditation-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 15px;
-  border-top: 1px solid #e9ecef;
+  justify-content: flex-end; /* align buttons to the right */
+  gap: 10px;                 /* space between buttons */
+  padding: 10px 12px;        /* space from bottom and sides */
+  border-top: 1px solid #f8f9fa;
 }
-
 .action-btn {
   padding: 8px 16px;
   border: none;

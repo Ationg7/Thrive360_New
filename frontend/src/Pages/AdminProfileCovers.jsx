@@ -14,6 +14,7 @@ const AdminProfileCovers = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 const [coverToDelete, setCoverToDelete] = useState(null);
 
+
   const [success, setSuccess] = useState(null);
   const [activeCover, setActiveCover] = useState(null);
 
@@ -111,6 +112,7 @@ const [coverToDelete, setCoverToDelete] = useState(null);
       {loading ? (
         <div className="text-center py-4">Loading covers…</div>
       ) : (
+         <div className="covers-scroll-container">
         <Row xs={2} sm={3} md={4} lg={5} className="g-3">
           {covers.length ? covers.map((c) => {
             const imgUrl = toImageUrl(c.url || c.path);
@@ -147,6 +149,7 @@ const [coverToDelete, setCoverToDelete] = useState(null);
             </Col>
           )}
         </Row>
+        </div>
       )}
 {showDeleteConfirm && coverToDelete && (
   <div

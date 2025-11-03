@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ListGroup, Badge, Button } from 'react-bootstrap';
+import { ListGroup, Button } from 'react-bootstrap';
 import { Bell, CheckCircle, Heart, Bookmark, Calendar } from 'lucide-react';
 
 const Notifications = ({ onUnreadUpdate }) => {
@@ -79,13 +79,12 @@ const Notifications = ({ onUnreadUpdate }) => {
       <div className="d-flex justify-content-start align-items-center mb-2" style={{ padding: '0 5px' }}>
         <Bell className="me-2 text-primary" />
         <strong>Notifications</strong>
-       
         {unreadCount > 0 && (
           <Button
             variant="link"
             size="sm"
             className="p-0 ms-4"
-            style={{ fontSize: '0.7rem', textDecoration: 'underline'  }}
+            style={{ fontSize: '0.7rem', textDecoration: 'underline' }}
             onClick={markAllAsRead}
           >
             Mark all read
@@ -109,17 +108,29 @@ const Notifications = ({ onUnreadUpdate }) => {
             notifications.map(n => (
               <ListGroup.Item
                 key={n.id}
-                className={`d-flex align-items-start ${!n.is_read ? 'bg-light' : ''}`}
-                style={{ cursor: 'pointer', border: 'none', padding: '8px 5px' }}
+                className={`d-flex ${!n.is_read ? 'bg-light' : ''}`}
+                style={{ cursor: 'pointer', border: 'none', padding: '8px 10px', alignItems: 'flex-start' }} // top-align
                 onClick={() => !n.is_read && markAsRead(n.id)}
               >
-                <div className="me-2">{getIcon(n.type)}</div>
-                <div className="flex-grow-1">
-                  <strong className="small">{n.title}</strong>
+                {/* Icon */}
+                <div className="me-2 d-flex align-items-start mt-1">
+                  {getIcon(n.type)}
+                </div>
+
+                {/* Message */}
+                <div className="flex-grow-1 text-start">
+                  <strong className="small d-block">{n.title}</strong>
                   <div className="small text-muted">{n.message}</div>
                   <div className="small text-muted">{new Date(n.created_at).toLocaleString()}</div>
                 </div>
-                {!n.is_read && <div className="bg-primary rounded-circle" style={{ width: '8px', height: '8px', alignSelf: 'center' }} />}
+
+                {/* Unread Dot */}
+                {!n.is_read && (
+                  <div
+                    className="bg-primary rounded-circle ms-2 mt-1"
+                    style={{ width: '10px', height: '10px', flexShrink: 0 }}
+                  />
+                )}
               </ListGroup.Item>
             ))
           )}
@@ -130,5 +141,3 @@ const Notifications = ({ onUnreadUpdate }) => {
 };
 
 export default Notifications;
-
-

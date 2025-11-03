@@ -21,13 +21,7 @@ const Settings = () => {
     confirmPassword: ''
   });
 
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
-    eventReminders: true,
-    challengeUpdates: true,
-    postReactions: true
-  });
+  
 
   useEffect(() => {
     if (user) {
@@ -197,42 +191,7 @@ const Settings = () => {
         </Form>
       </Card>
 
-      {/* Notifications */}
-      <Card className="settings-card mt-4">
-        <h5>Notifications</h5>
-        <div className="settings-grid">
-          {Object.keys(notificationSettings).map(key => (
-            <div className="setting-item setting-toggle" key={key}>
-              <label className="fw-semibold">
-                {key
-                  .replace(/([A-Z])/g, ' $1')
-                  .replace(/^./, str => str.toUpperCase())}
-              </label>
-
-              <div className="toggle-switch">
-                <input
-                  type="checkbox"
-                  id={key}
-                  checked={notificationSettings[key]}
-                  onChange={e =>
-                    setNotificationSettings(prev => ({
-                      ...prev,
-                      [key]: e.target.checked
-                    }))
-                  }
-                />
-                <label htmlFor={key} className="toggle-label"></label>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <Button className="btn-save mt-3">
-          <Save size={18} className="me-2" />
-          Save Notifications
-        </Button>
-      </Card>
-
+      
       {/* ✅ Modal Section */}
       {showModal && (
         <div

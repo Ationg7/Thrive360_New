@@ -42,3 +42,22 @@
     height: 100px;
   }
 }
+.covers-scroll-container {
+  max-height: 70vh;       /* adjust as needed */
+  overflow-y: auto;       /* vertical scrolling */
+  padding-right: 10px;    /* optional, for scrollbar spacing */
+  scrollbar-width: thin;  /* Firefox */
+}
+
+.covers-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.covers-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
+
+.covers-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}

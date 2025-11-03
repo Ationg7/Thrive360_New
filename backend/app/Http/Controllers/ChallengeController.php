@@ -211,6 +211,7 @@ class ChallengeController extends Controller
                     'id' => $progress->id,
                     'challenge_id' => $progress->challenge_id,
                     'challenge_title' => optional($progress->challenge)->title,
+                    'challenge_description' => optional($progress->challenge)->description,
                     'challenge_type' => optional($progress->challenge)->type,
                     'status' => $progress->status,
                     'progress_percentage' => $progress->progress_percentage,

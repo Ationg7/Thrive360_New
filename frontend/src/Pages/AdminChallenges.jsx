@@ -324,8 +324,9 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
             <p className="admin-page-subtitle">Manage all challenges in the system</p>
           </div>
         </div>
-
+       
         {/* Filters and Search */}
+        <div className="admin-users-card">
         <div className="admin-filters">
           <div className="admin-search-box">
             <input
@@ -350,22 +351,17 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
           </div>
         </div>
 
-        {/* Upload Section */}
-        <div className="upload-section">
-          <div className="upload-header">
-            <h3>Create New Challenge</h3>
-            <button 
+     
+
+        <div className="admin-table-container">
+  <div className="admin-table-header">
+    <h3>Challenges List</h3>
+     <button 
               onClick={() => setShowUploadModal(true)}
               className="upload-btn"
             >
               ➕ Create Challenge
             </button>
-          </div>
-        </div>
-
-        <div className="admin-table-container">
-  <div className="admin-table-header">
-    <h3>Challenges List</h3>
   </div>
   
   <div className="admin-table">
@@ -417,6 +413,9 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
             </td>
           </tr>
         ))}
+
+
+        
         {showDeleteConfirm && challengeToDelete && (
   <div
     className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
@@ -502,6 +501,8 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
     </table>
   </div>
 </div>
+</div>
+
 
 
         {/* Upload Modal */}

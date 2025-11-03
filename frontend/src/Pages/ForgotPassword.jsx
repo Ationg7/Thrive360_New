@@ -9,6 +9,8 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [showResendNotif, setShowResendNotif] = useState(false);
+
 
   // Reset password states
   const [password, setPassword] = useState("");
@@ -343,7 +345,17 @@ const ForgotPassword = () => {
 
 <div className="otp-actions">
   <div className="otp-left">
-    <p className="resend-link" onClick={() => alert("Code resent!")}>Resend Code</p>
+  <p
+  className="resend-link"
+  onClick={() => {
+    setShowResendNotif(true);
+   
+  }}
+>
+  Resend Code
+</p>
+
+
   </div>
   <button className="otp-done-btn" onClick={handleOtpSubmit}>Done</button>
 </div>
@@ -356,6 +368,20 @@ const ForgotPassword = () => {
       {showSnackbar && (
         <div className="snackbar">{successMessage}</div>
       )}
+      {showResendNotif && (
+  <div className="resend-popup-overlay">
+    <div className="resend-popup">
+      <button className="resend-close" onClick={() => setShowResendNotif(false)}>×</button>
+      <h4>Code Resent</h4>
+      <p>A new verification code has been sent to your email.</p>
+      <div className="resend-actions">
+        <button className="resend-ok" onClick={() => setShowResendNotif(false)}>OK</button>
+        <button className="resend-cancel" onClick={() => setShowResendNotif(false)}>Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       <style>{`
       /* Centered OTP error */
@@ -366,6 +392,103 @@ const ForgotPassword = () => {
   margin-bottom: 10px;
   text-align: center; /* center the text */
   width: 100%;
+}
+/* Resend notification popup */
+.resend-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+.resend-popup {
+  background: #fff;
+  border-radius: 14px;
+  padding: 25px 35px;
+  width: 90%;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  position: relative;
+  animation: scaleUp 0.3s ease;
+  font-family: "Poppins", sans-serif;
+}
+
+.resend-popup h4 {
+  margin-bottom: 8px;
+  color: #28a745;
+  font-weight: 600;
+}
+
+.resend-popup p {
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.resend-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.resend-close:hover {
+  color: #000;
+}
+
+.resend-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.resend-ok,
+.resend-cancel {
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.resend-ok {
+  background: linear-gradient(135deg,#28a745,#34ce57);
+  color: white;
+}
+
+.resend-cancel {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.resend-ok:hover {
+  background: linear-gradient(135deg,#34ce57,#28a745);
+}
+
+.resend-cancel:hover {
+  background: #d6d6d6;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; } 
+  to { opacity: 1; }
+}
+@keyframes scaleUp {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 
@@ -419,6 +542,34 @@ const ForgotPassword = () => {
   cursor:pointer;
   justify-content: flex-end;
 }
+   @media (max-width: 768px) {
+ .snackbar {
+    top: auto !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: 90% !important;
+    max-width: 320px !important;
+    font-size: 0.8rem;
+    padding: 12px 18px;
+  }
+}
+
+/* Animations */
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
       `}</style>
     </div>
   );

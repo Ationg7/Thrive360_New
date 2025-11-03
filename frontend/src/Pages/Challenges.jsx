@@ -32,7 +32,7 @@ export const ChallengesProvider = ({ children }) => {
           .map((h) => ({
             id: h.challenge_id,
             title: h.challenge_title,
-            description: h.challenge_type,
+            description: h.challenge_description,
             type: h.challenge_type,
             status: h.status === "Completed" ? "Completed" : "In Progress",
             progress: h.progress_percentage,
@@ -43,7 +43,7 @@ export const ChallengesProvider = ({ children }) => {
           .map((h) => ({
             id: h.challenge_id,
             title: h.challenge_title,
-            description: h.challenge_type,
+            description: h.challenge_description,
             type: h.challenge_type,
             status: "Completed",
             progress: h.progress_percentage,
@@ -79,7 +79,7 @@ export const ChallengesProvider = ({ children }) => {
         joined.map((h) => ({
           id: h.challenge_id,
           title: h.challenge_title,
-          description: h.challenge_type,
+          description: h.challenge_description,
           type: h.challenge_type,
           status: h.status,
           progress: h.progress_percentage,
@@ -89,7 +89,7 @@ export const ChallengesProvider = ({ children }) => {
         completed.map((h) => ({
           id: h.challenge_id,
           title: h.challenge_title,
-          description: h.challenge_type,
+          description: h.challenge_description,
           type: h.challenge_type,
           status: "Completed",
           progress: h.progress_percentage,
@@ -122,7 +122,7 @@ export const ChallengesProvider = ({ children }) => {
         joined.map((h) => ({
           id: h.challenge_id,
           title: h.challenge_title,
-          description: h.challenge_type,
+          description: h.challenge_description,
           type: h.challenge_type,
           status: h.status,
           progress: h.progress_percentage,
@@ -132,7 +132,7 @@ export const ChallengesProvider = ({ children }) => {
         completed.map((h) => ({
           id: h.challenge_id,
           title: h.challenge_title,
-          description: h.challenge_type,
+          description: h.challenge_description,
           type: h.challenge_type,
           status: "Completed",
           progress: h.progress_percentage,
@@ -231,7 +231,7 @@ const ChallengesOverview = () => {
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px", marginLeft: "1130px" , height: "45px" }}>
+      <div className="join-challenges-btn">
   <Button
     variant="success"
     size="sm"
@@ -278,11 +278,11 @@ const ChallengesOverview = () => {
                       <span style={getStatusStyle(challenge.status)}>{challenge.status}</span>
                     </div>
 
-                    <Card.Body className="d-flex flex-column gap-2">
+                    <Card.Body className="d-flex flex-column gap-2 align-items-center">
                       <Card.Title>{challenge.title}</Card.Title>
                       <Card.Text>{challenge.description}</Card.Text>
 
-                      <div className="details d-flex justify-content-between">
+                      <div className="details w-100 d-flex justify-content-start">
                         
                         <span>👥 {allChallenges.find(c => c.id === challenge.id)?.participants ?? 0} participants</span>
                       </div>
@@ -432,6 +432,31 @@ const ChallengesOverview = () => {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+       .join-challenges-btn {
+  display: flex;
+  justify-content: flex-end; /* desktop: right-aligned */
+  margin-bottom: 20px;
+  height: 45px;
+  width: 100%;
+}
+
+.join-challenges-btn button {
+  min-width: 150px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .join-challenges-btn {
+    justify-content: center;  /* center on mobile */
+  }
+
+  .join-challenges-btn button {
+    width: 50%;       /* almost full width */
+    max-width: 300px; /* optional cap */
+  }
+}
+
+
       `}</style>
     </Container>
   );

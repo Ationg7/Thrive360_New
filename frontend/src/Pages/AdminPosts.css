@@ -34,17 +34,6 @@
   font-weight: 400;
 }
 
-.admin-filters {
-  background: var(--white);
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  flex-wrap: wrap;
-}
 
 .admin-search-box {
   flex: 1;
@@ -68,7 +57,7 @@
 
 .admin-filter-group {
   display: flex;
-  gap: 15px;
+  gap: 1px;
 }
 
 .admin-filter-select {
@@ -124,74 +113,126 @@
 .admin-refresh-btn:hover {
   background: #0056b3;
 }
-
 .posts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 20px;
-  padding: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* center all cards horizontally */
+  gap: 20px; /* space between cards */
+  padding: 20px;
 }
 
-/* Ensure all post cards have the same height */
-.post-card {
+.post-cards {
+  width: 100%;
+  max-width: 400px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  height: 500px; /* fixed card height */
-  overflow: hidden;
+  height: 500px;
+   border: 2px solid #28a745;
 }
 
-
-/* Content wrapper inside card */
-.post-card .post-content-wrapper {
-  flex: 1; /* takes remaining space, helps stretch cards */
+.post-cards:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
-.post-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  transform: translateY(-2px);
-}
-
-.post-header {
+.post-headers {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 15px;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .post-author {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .post-author-avatar {
   width: 40px;
   height: 40px;
-  background: var(--primary-color);
-  color: var(--white);
-  border-radius: 50%;
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .post-author-info {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .post-author-name {
   font-weight: 600;
-  color: var(--dark-text);
-  font-size: 14px;
-  margin-bottom: 2px;
+  color: #212121;
 }
 
 .post-author-email {
-  color: var(--gray-text);
   font-size: 12px;
+  color: #666;
 }
+
+.post-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.post-type-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.post-type-badge.guest {
+  background-color: #ffc107;
+}
+
+.post-type-badge.user {
+  background-color: #28a745;
+}
+
+.post-date {
+  color: #999;
+}
+
+.post-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.post-image img {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
+  max-height: 300px;
+}
+
+.post-content p {
+  margin: 0;
+  color: #333;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
 
 .post-meta {
   display: flex;
@@ -224,7 +265,7 @@
   font-size: 12px;
 }
 
-.post-content {
+.post-contents {
   margin-bottom: 15px;
   line-height: 1.6;
 }
@@ -248,6 +289,7 @@
   padding: 10px 0;
   border-top: 0px solid #f8f9fa;
   border-bottom: 1px solid #f8f9fa;
+  margin-left: 10px;
   
 }
 
@@ -259,7 +301,7 @@
 .post-actions {
   margin-top: auto; /* sticks to bottom */
   display: flex;
-  justify-content: flex-end; /* right align */
+  
 
 }
 
@@ -356,8 +398,8 @@
   }
   
   .post-header {
-    flex-direction: column;
-    align-items: flex-start;
+    
+    
     gap: 10px;
   }
   
@@ -386,20 +428,26 @@
 /* Fix for post images */
 .post-image {
   width: 100%;
-  max-height: 300px; /* Limit height */
+  max-height: 300px; /* maximum height */
   overflow: hidden;
   border-radius: 10px;
   margin-bottom: 15px;
   position: relative;
+  display: flex;
+  justify-content: center; /* center image horizontally */
+  align-items: center;     /* center image vertically if smaller */
 }
 
 .post-image img {
-  width: 100%;
-  height: auto; /* Maintain aspect ratio */
-  object-fit: cover; /* Crop if needed to fit container */
+  width: auto;        /* maintain original width proportionally */
+  max-width: 100%;    /* prevent overflow horizontally */
+  height: auto;       /* maintain aspect ratio */
+  max-height: 190px;  /* shrink to fit height limit */
+  object-fit: contain; /* ensure entire image is visible, no crop */
   display: block;
   border-radius: 10px;
 }
+
 .post-content p {
   display: -webkit-box;
   -webkit-line-clamp: 6; /* show only 6 lines */

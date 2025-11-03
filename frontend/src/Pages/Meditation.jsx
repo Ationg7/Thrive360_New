@@ -205,27 +205,27 @@ const Meditation = () => {
 <div className="guide-grid">
   {filteredGuides.length > 0 ? (
     filteredGuides.map((guide, index) => (
-      <Card
-        key={index}
-        className={`meditation-card guide-card ${!isLoggedIn ? "meditation-card-guest" : ""}`}
-        onClick={() => handleCardClick(guide)}
-      >
+      <div key={index} className="guide-card meditation-card" onClick={() => handleCardClick(guide)}>
         <img src={guide.image} alt={guide.title} className="card-image" />
-        <Card.Body>
+
+        <div className="blog-card-body">
           <span className="guide-categories">{guide.category}</span>
-          <Card.Title className="card-title">{guide.title}</Card.Title>
-        </Card.Body>
+          <h3 className="card-title">{guide.title}</h3>
+          
+        </div>
+
         {!isLoggedIn && (
           <div className="meditation-card-overlay">
             Login to view this guide
           </div>
         )}
-      </Card>
+      </div>
     ))
   ) : (
     <p className="text-center">No guides found.</p>
   )}
 </div>
+
 
       </Container>
 
@@ -284,17 +284,21 @@ const Meditation = () => {
 }
 
      .meditation-notif-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  backdrop-filter: blur(3px);
-  background: rgba(0,0,0,0.2); /* subtle dark overlay like WellnessBlog */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
+    position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #2e7d32;
+          font-weight: 600;
+          font-size: 1rem;
+          text-align: center;
+         background: rgba(255,255,255,0.25);
+          border-radius: 8px;
+          pointer-events: none;
 }
 
 .meditation-notif-popup {
@@ -332,23 +336,6 @@ const Meditation = () => {
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
-}
-.meditation-card-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #2e7d32; /* same green */
-  font-weight: 600;
-  font-size: 1rem;
-  text-align: center;
-  background: rgba(255,255,255,0.25); /* matches Challenges overlay */
-  border-radius: 8px;
-  pointer-events: none;
 }
   
 

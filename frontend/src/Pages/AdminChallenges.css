@@ -5,33 +5,31 @@
   min-height: 100vh;
   background: var(--light-bg);
   padding: 20px;
-}
-
-.admin-page-header {
-  background: var(--white);
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}.admin-page-header {
+  background: var(--white);   /* optional */
+  padding: 30px 20px;         /* top & bottom padding */
+  display: flex;
+  flex-direction: column;
+  align-items: center;        /* center horizontally */
+  text-align: center;
   margin-bottom: 30px;
-}
-
-.admin-page-header-content {
-  max-width: 1400px;
-  margin: 0 auto;
+  border-radius: 0;           /* remove card rounding */
+  box-shadow: none;           /* remove shadow */
+  gap: 10px;                  /* space between title and subtitle */
 }
 
 .admin-page-title {
   color: var(--dark-text);
-  margin: 0 0 10px 0;
   font-size: 2rem;
   font-weight: 600;
+  margin: 0;
 }
 
 .admin-page-subtitle {
   color: var(--gray-text);
-  margin: 0;
   font-size: 1rem;
   font-weight: 400;
+  margin: 0;
 }
 
 .upload-section {
@@ -74,18 +72,6 @@
   background: #e0a800;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(255,193,7,0.3);
-}
-
-.admin-filters {
-  background: var(--white);
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  flex-wrap: wrap;
 }
 
 .admin-search-box {
@@ -133,12 +119,20 @@
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   overflow: hidden;
+    padding: 0; /* remove any padding that prevents full-width */
+  margin: 0;
+
 }
 
 .admin-challenges-header {
-  display: flex;
+   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 12px 16px; /* adjust horizontal padding if you want */
+  border-bottom: 1px solid #ccc; /* separator line */
+  width: 100%; /* ensures full width */
+  box-sizing: border-box; /* include padding in width */
+  margin: 0; /* remove margin */
   padding: 20px 30px;
   border-bottom: 1px solid #e9ecef;
   background: #f8f9fa;

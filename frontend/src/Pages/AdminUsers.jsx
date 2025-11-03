@@ -218,116 +218,120 @@ const [userToDelete, setUserToDelete] = useState(null);
           </div>
         </div>
 
-        {/* Filters and Search */}
-        <div className="admin-filters">
-          <div className="admin-search-box">
-            <input
-              type="text"
-              placeholder="Search users by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="admin-search-input"
-            />
-          </div>
-          
-          <div className="admin-filter-group">
-            <select
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
-              className="admin-filter-select"
-            >
-              <option value="all">All Roles</option>
-              <option value="user">Users</option>
-              <option value="admin">Admins</option>
-            </select>
-            
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="admin-filter-select"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
 
-        {/* Users Table */}
-        <div className="admin-table-container">
-          <div className="admin-table-header">
-            <h3>Users ({filteredUsers.length})</h3>
-            <button 
-              onClick={fetchUsers}
-              className="admin-refresh-btn"
-            >
-              Refresh
-            </button>
-          </div>
-          
-          <div className="admin-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id}>
-                    <td>{user.id}</td>
-                    <td>
-                      <div className="user-name-cell">
-                        <div className="user-avatar">
-                          {getInitial(user.name)}
-                        </div>
-                        {user.name}
-                      </div>
-                    </td>
-                    <td>{user.email}</td>
-                    <td>
-                      <span className={`role-badge role-${user.role}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
-                        {user.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <div className="action-buttons">
-                        <button
-                          onClick={() => handleToggleStatus(user.id, user.is_active)}
-                          className={`action-btn ${user.is_active ? 'deactivate' : 'activate'}`}
-                          title={user.is_active ? 'Deactivate User' : 'Activate User'}
-                        >
-                          {user.is_active ? '⏸️' : '▶️'}
-                        </button>
-                        <button
-  onClick={() => {
-    setUserToDelete(user);
-    setShowDeleteConfirm(true);
-  }}
-  className="action-btn delete"
-  title="Delete User"
->
-  🗑️ 
-</button>
+        <div className="admin-users-card">
+        {/* Users Table Card */}
+<div className="admin-table-card">
+  {/* Filters and Search */}
+  <div className="admin-filters">
+    <div className="admin-search-box">
+      <input
+        type="text"
+        placeholder="Search users by name or email..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="admin-search-input"
+      />
+    </div>
+    
+    <div className="admin-filter-group">
+      <select
+        value={filterRole}
+        onChange={(e) => setFilterRole(e.target.value)}
+        className="admin-filter-select"
+      >
+        <option value="all">All Roles</option>
+        <option value="user">Users</option>
+        <option value="admin">Admins</option>
+      </select>
+      
+      <select
+        value={filterStatus}
+        onChange={(e) => setFilterStatus(e.target.value)}
+        className="admin-filter-select"
+      >
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+  </div>
 
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+  {/* Table Header */}
+  <div className="admin-table-header">
+    <h3>Users ({filteredUsers.length})</h3>
+    <button 
+      onClick={fetchUsers}
+      className="admin-refresh-btn"
+    >
+      Refresh
+    </button>
+  </div>
+  
+  {/* Table */}
+  <div className="admin-table">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {filteredUsers.map((user) => (
+          <tr key={user.id}>
+            <td>{user.id}</td>
+            <td>
+              <div className="user-name-cell">
+                <div className="user-avatar">{getInitial(user.name)}</div>
+                {user.name}
+              </div>
+            </td>
+            <td>{user.email}</td>
+            <td>
+              <span className={`role-badge role-${user.role}`}>
+                {user.role}
+              </span>
+            </td>
+            <td>
+              <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
+                {user.is_active ? 'Active' : 'Inactive'}
+              </span>
+            </td>
+            <td>{new Date(user.created_at).toLocaleDateString()}</td>
+            <td>
+              <div className="action-buttons">
+                <button
+                  onClick={() => handleToggleStatus(user.id, user.is_active)}
+                  className={`action-btn ${user.is_active ? 'deactivate' : 'activate'}`}
+                  title={user.is_active ? 'Deactivate User' : 'Activate User'}
+                >
+                  {user.is_active ? '⏸️' : '▶️'}
+                </button>
+                <button
+                  onClick={() => {
+                    setUserToDelete(user);
+                    setShowDeleteConfirm(true);
+                  }}
+                  className="action-btn delete"
+                  title="Delete User"
+                >
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+
             {showDeleteConfirm && userToDelete && (
   <div
     style={{
