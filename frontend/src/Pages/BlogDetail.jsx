@@ -112,6 +112,22 @@ const BlogDetail = () => {
               />
             </div>
 
+            {/* Excerpt */}
+  {blog.excerpt && (
+    <p
+      className="blog-excerpt"
+      style={{
+        fontStyle: "italic",
+        fontSize: "1.05rem",
+        color: "#555",
+        margin: "15px 0",
+        lineHeight: "1.7",
+      }}
+    >
+      {blog.excerpt}
+    </p>
+  )}
+
             <div className="blog-content">
               {paragraphs.map((para, index) => (
                 <p key={index}>{para}</p>

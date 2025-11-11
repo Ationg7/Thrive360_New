@@ -12,7 +12,7 @@ class Challenge extends Model
     protected $fillable = [
         'title',
         'description',
-        'type',
+        'category',
         'status',
         'participants',
         'progress_percentage',
@@ -47,9 +47,9 @@ class Challenge extends Model
         return $query->where('is_active', true);
     }
 
-    public function scopeByType($query, $type)
+    public function scopeByCategory($query, $category)
     {
-        return $query->where('type', $type);
+        return $query->where('category', $category);
     }
 
     public function incrementParticipants()

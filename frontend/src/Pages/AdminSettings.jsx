@@ -11,12 +11,9 @@ const AdminSettings = memo(() => {
     siteDescription: 'Your wellness companion for a healthier lifestyle',
     maintenanceMode: false,
     allowRegistrations: true,
-    maxFileSize: 10, // MB
     emailNotifications: true,
     autoBackup: true,
     theme: 'light',
-    timezone: 'UTC',
-    language: 'en'
   });
   
   const [loading, setLoading] = useState(false);
@@ -98,12 +95,9 @@ const AdminSettings = memo(() => {
         siteDescription: 'Your wellness companion for a healthier lifestyle',
         maintenanceMode: false,
         allowRegistrations: true,
-        maxFileSize: 10,
         emailNotifications: true,
         autoBackup: true,
         theme: 'light',
-        timezone: 'UTC',
-        language: 'en'
       });
       setSuccess('Settings reset to default values');
       setTimeout(() => setSuccess(''), 3000);
@@ -217,20 +211,8 @@ const AdminSettings = memo(() => {
                   <option value="auto">Auto</option>
                 </select>
               </div>
-              
-              <div className="setting-item">
-                <label>Language</label>
-                <select
-                  value={settings.language}
-                  onChange={(e) => handleInputChange('language', e.target.value)}
-                  className="setting-select"
-                >
-                  <option value="en">English</option>
-                  <option value="es">Spanish</option>
-                  <option value="fr">French</option>
-                  <option value="de">German</option>
-                </select>
-              </div>
+           
+
             </div>
           </div>
 
@@ -265,35 +247,7 @@ const AdminSettings = memo(() => {
                 </div>
                 <small>Allow new users to register</small>
               </div>
-              
-              <div className="setting-item">
-                <label>Max File Upload Size (MB)</label>
-                <input
-                  type="number"
-                  value={settings.maxFileSize}
-                  onChange={(e) => handleInputChange('maxFileSize', parseInt(e.target.value))}
-                  className="setting-input"
-                  min="1"
-                  max="100"
-                />
-              </div>
-              
-              <div className="setting-item">
-                <label>Timezone</label>
-                <select
-                  value={settings.timezone}
-                  onChange={(e) => handleInputChange('timezone', e.target.value)}
-                  className="setting-select"
-                >
-                  <option value="UTC">UTC</option>
-                  <option value="America/New_York">Eastern Time</option>
-                  <option value="America/Chicago">Central Time</option>
-                  <option value="America/Denver">Mountain Time</option>
-                  <option value="America/Los_Angeles">Pacific Time</option>
-                  <option value="Europe/London">London</option>
-                  <option value="Asia/Tokyo">Tokyo</option>
-                </select>
-              </div>
+             
             </div>
           </div>
 

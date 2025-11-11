@@ -38,16 +38,12 @@ public function index()
             'description' => 'required|string',
             'difficulty_level' => 'required|string',
             'category' => 'required|string',
-            'image_file' => 'nullable|image|max:2048',
         ]);
 
         $challenge = new Challenge($request->only([
             'title', 'description','difficulty_level', 'category'
         ]));
 
-        if ($request->hasFile('image_file')) {
-            $challenge->image_url = $request->file('image_file')->store('challenges', 'public');
-        }
 
         $challenge->save();
 
@@ -79,21 +75,12 @@ public function index()
             'description' => 'sometimes|string',
             'difficulty_level' => 'sometimes|string',
             'category' => 'sometimes|string',
-            'image_file' => 'nullable|image|max:2048',
         ]);
 
         $challenge->update($request->only([
             'title', 'description', 'difficulty_level', 'category'
         ]));
 
-        if ($request->hasFile('image_file')) {
-            // Delete old image if exists
-            if ($challenge->image_url) {
-                Storage::disk('public')->delete($challenge->image_url);
-            }
-            $challenge->image_url = $request->file('image_file')->store('challenges', 'public');
-            $challenge->save();
-        }
 
         // Return the challenge with the same structure as index method
         $challenge = $challenge->load('user')

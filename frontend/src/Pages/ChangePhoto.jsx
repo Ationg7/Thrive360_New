@@ -99,10 +99,6 @@ const [coverToDelete, setCoverToDelete] = useState(null);
     <Container fluid className="my-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Profile Covers</h2>
-        <Button variant="primary" onClick={() => setShowModal(true)}>
-          <Plus size={18} className="me-1" />
-          Upload Cover
-        </Button>
       </div>
 
       {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}

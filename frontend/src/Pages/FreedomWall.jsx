@@ -550,40 +550,80 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
           />
 
           {selectedImage && (
-            <div className="mt-2">
-              <img src={URL.createObjectURL(selectedImage)} alt="Selected" className="img-fluid post-image-preview" />
-            </div>
-          )}
+  <div className="mt-2" style={{ position: "relative", display: "inline-block" }}>
+    <img
+      src={URL.createObjectURL(selectedImage)}
+      alt="Selected"
+      className="img-fluid post-image-preview"
+      style={{ borderRadius: "8px" }}
+    />
+    <span
+      onClick={() => setSelectedImage(null)}
+      style={{
+        position: "absolute",
+        top: "5px",
+        right: "5px",
+        backgroundColor: "rgba(0, 0, 0, 0.6)",
+        color: "white",
+        borderRadius: "50%",
+        width: "22px",
+        height: "22px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        cursor: "pointer",
+        fontWeight: "bold",
+        fontSize: "14px",
+      }}
+    >
+      ✕
+    </span>
+  </div>
+)}
 
-          <div
-            className="add-post-container mt-2 d-flex align-items-center"
-            style={{ border: "1px solid green", borderRadius: "8px", padding: "6px", gap: "10px" }}
-          >
-            <label htmlFor="image-upload" style={{ cursor: "pointer" }} title="Add image">
-              <Image size={20} className="post-icon" />
-            </label>
-            <input type="file" id="image-upload" accept="image/*" style={{ display: "none" }} onChange={handleImageUpload} />
-            <Smile size={20} className="post-icon" onClick={() => setShowEmojiPicker((s) => !s)} style={{ cursor: "pointer" }} />
-          </div>
+<div
+  className="add-post-container mt-2 d-flex align-items-center"
+  style={{
+    border: "1px solid green",
+    borderRadius: "8px",
+    padding: "6px",
+    gap: "10px",
+  }}
+>
+  <label htmlFor="image-upload" style={{ cursor: "pointer" }} title="Add image">
+    <Image size={20} className="post-icon" />
+  </label>
+  <input
+    type="file"
+    id="image-upload"
+    accept="image/*"
+    style={{ display: "none" }}
+    onChange={handleImageUpload}
+  />
+  <Smile
+    size={20}
+    className="post-icon"
+    onClick={() => setShowEmojiPicker((s) => !s)}
+    style={{ cursor: "pointer" }}
+  />
+</div>
 
           {showEmojiPicker && <EmojiPicker onEmojiClick={handleEmojiClick} />}
         </Modal.Body>
-        <Modal.Footer style={{ backgroundColor: "#e6f4ea" }}>
-          <Button variant="secondary" onClick={() => setShowPostModal(false)}>Cancel</Button>
-          <Button
-            variant="success"
-            onClick={() => {
-              if (isLoggedIn) {
-                handlePost();
-              } else {
-                setShowGuestPopup(true); // <-- guest notification here too
-                setShowPostModal(false);
-              }
-            }}
-          >
-            {isLoggedIn ? "Post" : "Share Anonymously"}
-          </Button>
-        </Modal.Footer>
+       <Modal.Footer style={{ backgroundColor: "#e6f4ea" }}>
+  <Button variant="secondary" onClick={() => setShowPostModal(false)}>Cancel</Button>
+  <Button
+    variant="success"
+    onClick={() => {
+      // Both logged-in and guest users can post
+      handlePost(); // handlePost already sends requests differently based on auth
+      setShowPostModal(false); // close modal after posting
+    }}
+  >
+    {isLoggedIn ? "Post" : "Share Anonymously"}
+  </Button>
+</Modal.Footer>
+
       </Modal>
 
       {/* Posts */}

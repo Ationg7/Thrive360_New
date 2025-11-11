@@ -451,6 +451,7 @@
 .post-content p {
   display: -webkit-box;
   -webkit-line-clamp: 6; /* show only 6 lines */
+  line-clamp: 6;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;

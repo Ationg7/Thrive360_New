@@ -46,6 +46,10 @@ const Profile = () => {
 
   const [showUndo, setShowUndo] = useState(false);
   const [showChangePhoto, setShowChangePhoto] = useState(false); // <-- new state
+  const [showEventsModal, setShowEventsModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showTodoModal, setShowTodoModal] = useState(false);
+
   const [showNoReasonModal, setShowNoReasonModal] = useState(false);
   const [profileCoverUrl, setProfileCoverUrl] = useState(() => localStorage.getItem('profileCoverUrl') || null);
 
@@ -394,10 +398,20 @@ const Profile = () => {
                 <ThreeDotsVertical />
               </Dropdown.Toggle>
               <Dropdown.Menu>
-                <Dropdown.Item onClick={() => setShowChangePhoto(true)}>
-                  Change Photo
-                </Dropdown.Item>
-              </Dropdown.Menu>
+  <Dropdown.Item onClick={() => setShowChangePhoto(true)}>
+    Change Photo
+  </Dropdown.Item>
+  <Dropdown.Item onClick={() => setShowEventsModal(true)}>
+    Upcoming Events
+  </Dropdown.Item>
+  <Dropdown.Item onClick={() => setShowHistoryModal(true)}>
+  Challenge's History
+</Dropdown.Item>
+  <Dropdown.Item onClick={() => setShowTodoModal(true)}>
+    To-Do List
+  </Dropdown.Item>
+</Dropdown.Menu>
+
             </Dropdown>
 
             <Card.Body>
@@ -431,6 +445,90 @@ const Profile = () => {
           </div>
         )}
 
+        {/* Events Modal */}
+{showEventsModal && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      backgroundColor: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+    onClick={() => setShowEventsModal(false)}
+  >
+    <div onClick={(e) => e.stopPropagation()} className="p-3 bg-white rounded shadow" style={{ maxWidth: "500px", width: "90%" }}>
+      <h4>Upcoming Events</h4>
+      <button onClick={() => setShowEventsModal(false)} style={{ position: "absolute", top: "10px", right: "10px", border: "none", background: "transparent", fontSize: "20px", cursor: "pointer" }}>×</button>
+      <Events hideCardHeader /> {/* reuse your Events component */}
+    </div>
+  </div>
+)}
+
+{showHistoryModal && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      backgroundColor: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+    onClick={() => setShowHistoryModal(false)}
+  >
+    <div onClick={(e) => e.stopPropagation()} 
+         className="p-3 bg-white rounded shadow" 
+         style={{ maxWidth: "500px", width: "90%", maxHeight: "80vh", overflowY: "auto" }}>
+      <h4>Challenge History</h4>
+      <button onClick={() => setShowHistoryModal(false)} 
+              style={{ position: "absolute", top: "10px", right: "10px", border: "none", background: "transparent", fontSize: "20px", cursor: "pointer" }}>
+        ×
+      </button>
+
+      {/* Reuse your existing Challenge History card */}
+      <Card className="mb-3 events-card shadow-sm border-0">
+        {/* ...existing card JSX and ListGroup rendering completed challenges... */}
+      </Card>
+
+    </div>
+  </div>
+)}
+
+
+{/* To-Do List Modal */}
+{showTodoModal && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      backgroundColor: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+    onClick={() => setShowTodoModal(false)}
+  >
+    <div onClick={(e) => e.stopPropagation()} className="p-3 bg-white rounded shadow" style={{ maxWidth: "500px", width: "90%" }}>
+      <h4>To-Do List</h4>
+      <button onClick={() => setShowTodoModal(false)} style={{ position: "absolute", top: "10px", right: "10px", border: "none", background: "transparent", fontSize: "20px", cursor: "pointer" }}>×</button>
+      <TodoList /> {/* reuse your TodoList component */}
+    </div>
+  </div>
+)}
 
 
         {/* Left Side */}

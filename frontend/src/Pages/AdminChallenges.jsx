@@ -27,14 +27,14 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
     title: '',
     description: '',
     difficulty_level: 'medium',
-    category: 'general',
+    category: 'Daily',
     imageFile: null
   });
   const [editData, setEditData] = useState({
     title: '',
     description: '',
     difficulty_level: 'medium',
-    category: 'general',
+    category: 'Daily',
     imageFile: null
   });
   const navigate = useNavigate();
@@ -134,7 +134,7 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
         title: '',
         description: '',
         difficulty_level: 'medium',
-        category: 'general',
+        category: 'Daily',
         imageFile: null
       });
       fetchChallenges();
@@ -182,7 +182,7 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
       title: challenge.title,
       description: challenge.description,
       difficulty_level: challenge.difficulty_level || 'medium',
-      category: challenge.category || 'general',
+      category: challenge.category || 'daily',
       imageFile: null
     });
     setShowEditModal(true);
@@ -228,7 +228,7 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
         title: '',
         description: '',
         difficulty_level: 'medium',
-        category: 'general',
+        category: 'Daily',
         imageFile: null
       });
       clearMessages();
@@ -387,7 +387,7 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
             <td>{challenge.description}</td>
             <td>{challenge.user_progress_count || 0}</td>
             <td>{challenge.difficulty_level || 'Medium'}</td>
-            <td>{challenge.category || 'General'}</td>
+            <td>{challenge.category || 'Daily'}</td>
             <td>{new Date(challenge.created_at).toLocaleDateString()}</td>
             <td>
               <span className={`status-badge ${challenge.is_active ? 'active' : 'inactive'}`}>
@@ -542,48 +542,43 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
                   />
                 </div>
                 
-                <div className="form-row">
-                  
-                  
-                  <div className="form-group">
-                    <label>Difficulty Level</label>
-                    <select
-                      value={uploadData.difficulty_level}
-                      onChange={(e) => setUploadData(prev => ({ ...prev, difficulty_level: e.target.value }))}
-                      className="form-select"
-                    >
-                      <option value="easy">Easy</option>
-                      <option value="medium">Medium</option>
-                      <option value="hard">Hard</option>
-                    </select>
-                  </div>
-                </div>
+                <div className="row g-3">
+  <div className="col-md-6">
+    <div className="form-group">
+      <label>Difficulty Level</label>
+      <select
+        value={uploadData.difficulty_level}
+        onChange={(e) =>
+          setUploadData(prev => ({ ...prev, difficulty_level: e.target.value }))
+        }
+        className="form-select"
+      >
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+    </div>
+  </div>
+
+  <div className="col-md-6">
+    <div className="form-group">
+      <label>Category</label>
+      <select
+        value={uploadData.category}
+        onChange={(e) =>
+          setUploadData(prev => ({ ...prev, category: e.target.value }))
+        }
+        className="form-select"
+      >
+        <option value="Daily">Daily</option>
+        <option value="Weekly">Weekly</option>
+        <option value="Monthly">Monthly</option>
+      </select>
+    </div>
+  </div>
+</div>
+
                 
-                <div className="form-group">
-                  <label>Category</label>
-                  <select
-                    value={uploadData.category}
-                    onChange={(e) => setUploadData(prev => ({ ...prev, category: e.target.value }))}
-                    className="form-select"
-                  >
-                    <option value="general">General</option>
-                    <option value="fitness">Fitness</option>
-                    <option value="wellness">Wellness</option>
-                    <option value="mindfulness">Mindfulness</option>
-                    <option value="nutrition">Nutrition</option>
-                    <option value="lifestyle">Lifestyle</option>
-                  </select>
-                </div>
-                
-                <div className="form-group">
-                  <label>Challenge Image (Optional)</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, 'imageFile')}
-                    className="form-file"
-                  />
-                </div>
               </div>
               
               <div className="modal-footer">
@@ -619,7 +614,7 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
                       title: '',
                       description: '',
                       difficulty_level: 'medium',
-                      category: 'general',
+                      category: 'Daily',
                       imageFile: null
                     });
                   }}
@@ -674,24 +669,13 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
                     onChange={(e) => setEditData(prev => ({ ...prev, category: e.target.value }))}
                     className="form-select"
                   >
-                    <option value="general">General</option>
-                    <option value="fitness">Fitness</option>
-                    <option value="wellness">Wellness</option>
-                    <option value="mindfulness">Mindfulness</option>
-                    <option value="nutrition">Nutrition</option>
-                    <option value="lifestyle">Lifestyle</option>
+                     <option value="Daily">Daily</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
                   </select>
                 </div>
                 
-                <div className="form-group">
-                  <label>Challenge Image (Optional)</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, 'imageFile')}
-                    className="form-file"
-                  />
-                </div>
+        
               </div>
               
               <div className="modal-footer">
@@ -703,7 +687,7 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
                       title: '',
                       description: '',
                       difficulty_level: 'medium',
-                      category: 'general',
+                      category: 'Daily',
                       imageFile: null
                     });
                   }}

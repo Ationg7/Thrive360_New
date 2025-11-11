@@ -18,8 +18,7 @@ return new class extends Migration
         $table->text('description');
         $table->integer('duration_days');
         $table->string('difficulty_level')->default('medium');
-        $table->string('category')->default('general');
-        $table->string('image_url')->nullable();
+       $table->string('category', ['Daily', 'Weekly', 'Monthly']);
         $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
         $table->boolean('is_active')->default(true);
         $table->timestamps();

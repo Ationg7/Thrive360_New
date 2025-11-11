@@ -32,6 +32,7 @@ const ChallengesCategories = () => {
             title: "Monthly Challenge 2",
             description: "Extra Monthly challenge to match layout width.",
             participants: 50,
+            difficulty: "Medium",
           });
         }
 
@@ -162,6 +163,17 @@ const ChallengesCategories = () => {
     <span>
       👥 {challenge.participants ?? 140} participants
     </span>
+    <span
+    className="px-2 py-1 rounded-pill"
+    style={{
+      border: '1px solid #6c757d',
+      color: '#6c757d',
+      fontSize: '0.75rem',
+      fontWeight: 500,
+    }}
+  >
+    {challenge.difficulty ?? "Medium"}
+  </span>
   </div>  
 
                             <Button

@@ -33,7 +33,7 @@ class ChallengeController extends Controller
             $validator = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'description' => 'required|string|max:1000',
-                'type' => 'required|in:Daily,Weekly,Monthly',
+                'category' => 'required|in:Daily,Weekly,Monthly',
                 'theme' => 'nullable|string|max:50',
                 'start_date' => 'nullable|date',
                 'end_date' => 'nullable|date|after:start_date',
@@ -45,7 +45,7 @@ class ChallengeController extends Controller
             }
 
             $challengeData = $request->only([
-                'title', 'description', 'type',  'theme', 'start_date', 'end_date'
+                'title', 'description', 'category',  'theme', 'start_date', 'end_date'
             ]);
             
             $userId = auth()->id();
@@ -95,7 +95,7 @@ class ChallengeController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string|max:1000',
-            'type' => 'sometimes|in:Daily,Weekly,Monthly',
+            'category' => 'sometimes|in:Daily,Weekly,Monthly',
             'theme' => 'nullable|string|max:50',
             'is_active' => 'sometimes|boolean',
         ]);
@@ -105,7 +105,7 @@ class ChallengeController extends Controller
         }
 
         $challenge->update($request->only([
-            'title', 'description', 'type','theme', 'is_active'
+            'title', 'description', 'category','theme', 'is_active'
         ]));
 
         return response()->json($challenge);
@@ -212,7 +212,7 @@ class ChallengeController extends Controller
                     'challenge_id' => $progress->challenge_id,
                     'challenge_title' => optional($progress->challenge)->title,
                     'challenge_description' => optional($progress->challenge)->description,
-                    'challenge_type' => optional($progress->challenge)->type,
+                    'challenge_category' => optional($progress->challenge)->category,
                     'status' => $progress->status,
                     'progress_percentage' => $progress->progress_percentage,
                     'joined_at' => $progress->created_at,
