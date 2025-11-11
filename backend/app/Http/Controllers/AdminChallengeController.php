@@ -37,7 +37,7 @@ public function index()
             'title' => 'required|string',
             'description' => 'required|string',
             'difficulty_level' => 'required|string',
-            'category' => 'required|string',
+            'category' => 'required|in:Daily,Weekly,Monthly',
         ]);
 
         $challenge = new Challenge($request->only([
@@ -99,9 +99,6 @@ public function index()
     {
         $challenge = Challenge::findOrFail($id);
 
-        if ($challenge->image_url) {
-            Storage::disk('public')->delete($challenge->image_url);
-        }
 
         $challenge->delete();
 

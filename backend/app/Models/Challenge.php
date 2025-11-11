@@ -17,7 +17,7 @@ class Challenge extends Model
         'participants',
         'progress_percentage',
         'start_date',
-        'end_date',
+        'end_date', 
         'theme',
         'is_active',
         'user_id'

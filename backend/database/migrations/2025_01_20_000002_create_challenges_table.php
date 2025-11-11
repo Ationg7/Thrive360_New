@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description');
-            $table->string('category', ['Daily', 'Weekly', 'Monthly']);
+            $table->enum('category', ['Daily', 'Weekly', 'Monthly']);
             $table->enum('status', ['Not Started', 'Progress', 'Completed'])->default('Not Started');
             $table->integer('days_left')->nullable();
             $table->integer('participants')->default(0);

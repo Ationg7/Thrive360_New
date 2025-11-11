@@ -28,14 +28,13 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
     description: '',
     difficulty_level: 'medium',
     category: 'Daily',
-    imageFile: null
   });
   const [editData, setEditData] = useState({
     title: '',
     description: '',
     difficulty_level: 'medium',
     category: 'Daily',
-    imageFile: null
+    
   });
   const navigate = useNavigate();
 
@@ -110,9 +109,7 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
       formData.append('description', uploadData.description);
       formData.append('difficulty_level', uploadData.difficulty_level);
       formData.append('category', uploadData.category);
-      if (uploadData.imageFile) {
-        formData.append('image_file', uploadData.imageFile);
-      }
+      
       
       const response = await fetch(API_ENDPOINTS.UPLOAD_CHALLENGE, {
         method: 'POST',
@@ -135,7 +132,6 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
         description: '',
         difficulty_level: 'medium',
         category: 'Daily',
-        imageFile: null
       });
       fetchChallenges();
       clearMessages();
@@ -183,7 +179,6 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
       description: challenge.description,
       difficulty_level: challenge.difficulty_level || 'medium',
       category: challenge.category || 'daily',
-      imageFile: null
     });
     setShowEditModal(true);
   }, []);
@@ -198,9 +193,7 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
       formData.append('description', editData.description);
       formData.append('difficulty_level', editData.difficulty_level);
       formData.append('category', editData.category);
-      if (editData.imageFile) {
-        formData.append('image_file', editData.imageFile);
-      }
+      
       formData.append('_method', 'PUT');
       const response = await fetch(`${API_ENDPOINTS.CHALLENGES}/${editingChallenge.id}`, {
         method: 'POST',
@@ -229,7 +222,6 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
         description: '',
         difficulty_level: 'medium',
         category: 'Daily',
-        imageFile: null
       });
       clearMessages();
       
@@ -615,7 +607,6 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
                       description: '',
                       difficulty_level: 'medium',
                       category: 'Daily',
-                      imageFile: null
                     });
                   }}
                   className="modal-close"
@@ -688,7 +679,6 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
                       description: '',
                       difficulty_level: 'medium',
                       category: 'Daily',
-                      imageFile: null
                     });
                   }}
                   className="btn-cancel"

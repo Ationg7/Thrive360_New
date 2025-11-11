@@ -33,7 +33,7 @@ class ChallengeController extends Controller
             $validator = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'description' => 'required|string|max:1000',
-                'category' => 'required|in:Daily,Weekly,Monthly',
+                'category' => 'required|enum:Daily,Weekly,Monthly',
                 'theme' => 'nullable|string|max:50',
                 'start_date' => 'nullable|date',
                 'end_date' => 'nullable|date|after:start_date',
@@ -95,7 +95,7 @@ class ChallengeController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string|max:1000',
-            'category' => 'sometimes|in:Daily,Weekly,Monthly',
+            'category' => 'required|enum:Daily,Weekly,Monthly',
             'theme' => 'nullable|string|max:50',
             'is_active' => 'sometimes|boolean',
         ]);
