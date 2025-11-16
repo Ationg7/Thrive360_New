@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -15,6 +16,14 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         try {
+            // Check if registration is allowed
+            $allowRegistration = Setting::getValue('allow_registration', 'true');
+            if (filter_var($allowRegistration, FILTER_VALIDATE_BOOLEAN) === false) {
+                return response()->json([
+                    'message' => 'New registrations are currently disabled by the administrator.'
+                ], 403);
+            }
+
             // Validate input
             $validator = Validator::make($request->all(), [
                 'email'    => 'required|string|email|max:255|unique:users',

@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect, useCallback } from 'react';
+import React, { memo, useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, STORAGE_KEYS, ROUTES } from '../constants/adminConstants';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -8,7 +8,7 @@ import './AdminSettings.css';
 const AdminSettings = memo(() => {
   const [settings, setSettings] = useState({
     siteName: 'Thrive360',
-    siteDescription: 'Your wellness companion for a healthier lifestyle',
+    siteDescription: 'Thrive every day with Thrive360—your journey to wellness, growth, and balance…',
     maintenanceMode: false,
     allowRegistrations: true,
     emailNotifications: true,
@@ -16,20 +16,53 @@ const AdminSettings = memo(() => {
     theme: 'light',
   });
   
+  // Use ref to always access latest settings state
+  const settingsRef = useRef(settings);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+  
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const navigate = useNavigate();
+
+  // Apply theme to document
+  const applyTheme = useCallback((theme) => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark-theme');
+      root.classList.remove('light-theme');
+    } else {
+      root.classList.add('light-theme');
+      root.classList.remove('dark-theme');
+    }
+    // Store theme preference
+    localStorage.setItem('admin-theme', theme);
+  }, []);
 
   // Load settings on component mount
   useEffect(() => {
     loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Apply theme when it changes
+  useEffect(() => {
+    if (settings.theme) {
+      applyTheme(settings.theme);
+    }
+  }, [settings.theme, applyTheme]);
 
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
       
       if (!adminToken) {
@@ -37,9 +70,61 @@ const AdminSettings = memo(() => {
         return;
       }
 
-      // For now, we'll use default settings since we don't have a backend endpoint
-      // In a real app, you would fetch from API_ENDPOINTS.SETTINGS
-      console.log('Loading settings...');
+      const response = await fetch(API_ENDPOINTS.ADMIN_SETTINGS, {
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
+          localStorage.removeItem(STORAGE_KEYS.ADMIN_USER);
+          navigate(ROUTES.ADMIN_LOGIN);
+          return;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Loaded settings from server:', data);
+      
+      // Helper function to parse boolean values correctly
+      const parseBoolean = (value) => {
+        // Handle actual boolean values
+        if (typeof value === 'boolean') {
+          return value;
+        }
+        // Handle string values
+        if (typeof value === 'string') {
+          const normalized = value.toLowerCase().trim();
+          return normalized === 'true' || normalized === '1';
+        }
+        // Handle numeric values
+        if (typeof value === 'number') {
+          return value === 1;
+        }
+        // Default to false for null, undefined, etc.
+        return false;
+      };
+      
+      // Properly convert boolean values - handle both boolean true/false and string 'true'/'false'
+      const newSettings = {
+        siteName: data.site_name || 'Thrive360',
+        siteDescription: data.site_description || 'Your wellness companion for a healthier lifestyle',
+        maintenanceMode: parseBoolean(data.maintenance_mode),
+        allowRegistrations: parseBoolean(data.allow_registration),
+        emailNotifications: parseBoolean(data.email_notifications),
+        autoBackup: parseBoolean(data.auto_backup),
+        theme: data.theme || 'light',
+      };
+      
+      console.log('Parsed settings:', newSettings);
+      console.log('Raw maintenance_mode from server:', data.maintenance_mode, 'Type:', typeof data.maintenance_mode, 'Parsed:', newSettings.maintenanceMode);
+      setSettings(newSettings);
+      // Immediately update ref when settings are loaded
+      settingsRef.current = newSettings;
       
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -50,15 +135,22 @@ const AdminSettings = memo(() => {
   }, [navigate]);
 
   const handleInputChange = useCallback((field, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    console.log(`Updating ${field} to:`, value, typeof value);
+    setSettings(prev => {
+      const updated = {
+        ...prev,
+        [field]: value
+      };
+      console.log('Updated settings:', updated);
+      // Immediately update ref to ensure it's always current
+      settingsRef.current = updated;
+      return updated;
+    });
   }, []);
 
   const handleSaveSettings = useCallback(async () => {
     try {
-      setLoading(true);
+      setSaving(true);
       setError('');
       setSuccess('');
 
@@ -69,40 +161,167 @@ const AdminSettings = memo(() => {
         return;
       }
 
-      // In a real app, you would save to API_ENDPOINTS.SETTINGS
-      console.log('Saving settings:', settings);
+      // Use ref to get latest settings state
+      const currentSettings = settingsRef.current;
+
+      const payload = {
+        site_name: currentSettings.siteName,
+        site_description: currentSettings.siteDescription,
+        theme: currentSettings.theme,
+        maintenance_mode: Boolean(currentSettings.maintenanceMode),
+        allow_registration: Boolean(currentSettings.allowRegistrations),
+        email_notifications: Boolean(currentSettings.emailNotifications),
+        auto_backup: Boolean(currentSettings.autoBackup),
+      };
+
+      console.log('Saving settings:', payload);
+      console.log('Current settings ref:', settingsRef.current);
+      console.log('Maintenance mode being sent:', payload.maintenance_mode, 'Type:', typeof payload.maintenance_mode);
+
+      const response = await fetch(API_ENDPOINTS.ADMIN_SETTINGS, {
+        method: 'PUT',
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      console.log('Save response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
+          localStorage.removeItem(STORAGE_KEYS.ADMIN_USER);
+          navigate(ROUTES.ADMIN_LOGIN);
+          return;
+        }
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Save failed:', errorData);
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Settings saved, full response:', data);
+      console.log('Response settings object:', data.settings);
+      console.log('Maintenance mode in response:', data.settings?.maintenance_mode, 'Type:', typeof data.settings?.maintenance_mode);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Helper function to parse boolean values correctly
+      const parseBoolean = (value) => {
+        // Handle actual boolean values
+        if (typeof value === 'boolean') {
+          return value;
+        }
+        // Handle string values
+        if (typeof value === 'string') {
+          const normalized = value.toLowerCase().trim();
+          return normalized === 'true' || normalized === '1';
+        }
+        // Handle numeric values
+        if (typeof value === 'number') {
+          return value === 1;
+        }
+        // Default to false for null, undefined, etc.
+        return false;
+      };
       
-      setSuccess('Settings saved successfully!');
+      // Update settings from response
+      if (data.settings) {
+        const updatedSettings = {
+          siteName: data.settings.site_name || settingsRef.current.siteName,
+          siteDescription: data.settings.site_description || settingsRef.current.siteDescription,
+          maintenanceMode: parseBoolean(data.settings.maintenance_mode),
+          allowRegistrations: parseBoolean(data.settings.allow_registration),
+          emailNotifications: parseBoolean(data.settings.email_notifications),
+          autoBackup: parseBoolean(data.settings.auto_backup),
+          theme: data.settings.theme || settingsRef.current.theme,
+        };
+        console.log('Updating settings from response:', updatedSettings);
+        console.log('Raw maintenance_mode value:', data.settings.maintenance_mode, 'Type:', typeof data.settings.maintenance_mode);
+        setSettings(updatedSettings);
+        // Immediately update ref
+        settingsRef.current = updatedSettings;
+      } else {
+        console.error('No settings in response:', data);
+      }
       
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(''), 3000);
+      setSuccess('✅ Settings saved successfully.');
+      setTimeout(() => setSuccess(''), 5000);
+      setSaving(false);
       
     } catch (error) {
       console.error('Error saving settings:', error);
-      setError('Failed to save settings');
-    } finally {
-      setLoading(false);
+      setError(error.message || 'Failed to save settings');
+      setTimeout(() => setError(''), 5000);
+      setSaving(false);
     }
-  }, [settings, navigate]);
+  }, [navigate]);
 
-  const handleResetSettings = useCallback(() => {
-    if (window.confirm('Are you sure you want to reset all settings to default values?')) {
-      setSettings({
-        siteName: 'Thrive360',
-        siteDescription: 'Your wellness companion for a healthier lifestyle',
-        maintenanceMode: false,
-        allowRegistrations: true,
-        emailNotifications: true,
-        autoBackup: true,
-        theme: 'light',
-      });
-      setSuccess('Settings reset to default values');
-      setTimeout(() => setSuccess(''), 3000);
-    }
+  const handleResetSettings = useCallback(async () => {
+    setShowResetConfirm(true);
   }, []);
+
+  const confirmResetSettings = useCallback(async () => {
+    try {
+      setSaving(true);
+      setError('');
+      setSuccess('');
+      setShowResetConfirm(false);
+
+      const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+      
+      if (!adminToken) {
+        navigate(ROUTES.ADMIN_LOGIN);
+        return;
+      }
+
+      const response = await fetch(API_ENDPOINTS.ADMIN_SETTINGS_RESET, {
+        method: 'POST',
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
+          localStorage.removeItem(STORAGE_KEYS.ADMIN_USER);
+          navigate(ROUTES.ADMIN_LOGIN);
+          return;
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Update settings with response data
+      if (data.settings) {
+        setSettings({
+          siteName: data.settings.site_name || 'Thrive360',
+          siteDescription: data.settings.site_description || 'Your wellness companion for a healthier lifestyle',
+          maintenanceMode: data.settings.maintenance_mode === true || data.settings.maintenance_mode === 'true',
+          allowRegistrations: data.settings.allow_registration === true || data.settings.allow_registration === 'true',
+          emailNotifications: data.settings.email_notifications === true || data.settings.email_notifications === 'true',
+          autoBackup: data.settings.auto_backup === true || data.settings.auto_backup === 'true',
+          theme: data.settings.theme || 'light',
+        });
+      }
+      
+      setSuccess('✅ Settings have been reset to default.');
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccess(''), 5000);
+      
+    } catch (error) {
+      console.error('Error resetting settings:', error);
+      setError(error.message || 'Failed to reset settings');
+      setTimeout(() => setError(''), 5000);
+    } finally {
+      setSaving(false);
+    }
+  }, [navigate]);
 
   const clearMessages = useCallback(() => {
     setError('');
@@ -111,10 +330,10 @@ const AdminSettings = memo(() => {
 
   if (loading && !settings.siteName) {
     return (
-      <div className="loading-container">
-        <div className="loading-content">
-          <div className="loading-spinner"></div>
-          <h3 className="loading-text">Loading Settings...</h3>
+      <div className="admin-loading-container">
+        <div className="admin-loading-content">
+          <div className="admin-loading-spinner"></div>
+          <h3 className="admin-loading-text">Loading Settings...</h3>
         </div>
       </div>
     );
@@ -129,7 +348,7 @@ const AdminSettings = memo(() => {
       position: "fixed",
       bottom: "20px",
       left: "0px",
-      zIndex: 9999,
+      zIndex: 10000,
       backgroundColor: "rgb(32,31,36)",
       borderLeft: `6px solid ${success ? "green" : "red"}`,
       borderRadius: "0 6px 6px 0",
@@ -208,7 +427,6 @@ const AdminSettings = memo(() => {
                 >
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
-                  <option value="auto">Auto</option>
                 </select>
               </div>
            
@@ -225,8 +443,12 @@ const AdminSettings = memo(() => {
                 <div className="toggle-switch">
                   <input
                     type="checkbox"
-                    checked={settings.maintenanceMode}
-                    onChange={(e) => handleInputChange('maintenanceMode', e.target.checked)}
+                    checked={!!settings.maintenanceMode}
+                    onChange={(e) => {
+                      const newValue = e.target.checked;
+                      console.log('Toggle clicked, new value:', newValue);
+                      handleInputChange('maintenanceMode', newValue);
+                    }}
                     id="maintenanceMode"
                   />
                   <label htmlFor="maintenanceMode" className="toggle-label"></label>
@@ -239,8 +461,12 @@ const AdminSettings = memo(() => {
                 <div className="toggle-switch">
                   <input
                     type="checkbox"
-                    checked={settings.allowRegistrations}
-                    onChange={(e) => handleInputChange('allowRegistrations', e.target.checked)}
+                    checked={!!settings.allowRegistrations}
+                    onChange={(e) => {
+                      const newValue = e.target.checked;
+                      console.log('Allow Registrations toggle clicked, new value:', newValue);
+                      handleInputChange('allowRegistrations', newValue);
+                    }}
                     id="allowRegistrations"
                   />
                   <label htmlFor="allowRegistrations" className="toggle-label"></label>
@@ -260,8 +486,12 @@ const AdminSettings = memo(() => {
                 <div className="toggle-switch">
                   <input
                     type="checkbox"
-                    checked={settings.emailNotifications}
-                    onChange={(e) => handleInputChange('emailNotifications', e.target.checked)}
+                    checked={!!settings.emailNotifications}
+                    onChange={(e) => {
+                      const newValue = e.target.checked;
+                      console.log('Email Notifications toggle clicked, new value:', newValue);
+                      handleInputChange('emailNotifications', newValue);
+                    }}
                     id="emailNotifications"
                   />
                   <label htmlFor="emailNotifications" className="toggle-label"></label>
@@ -274,8 +504,12 @@ const AdminSettings = memo(() => {
                 <div className="toggle-switch">
                   <input
                     type="checkbox"
-                    checked={settings.autoBackup}
-                    onChange={(e) => handleInputChange('autoBackup', e.target.checked)}
+                    checked={!!settings.autoBackup}
+                    onChange={(e) => {
+                      const newValue = e.target.checked;
+                      console.log('Auto Backup toggle clicked, new value:', newValue);
+                      handleInputChange('autoBackup', newValue);
+                    }}
                     id="autoBackup"
                   />
                   <label htmlFor="autoBackup" className="toggle-label"></label>
@@ -290,19 +524,114 @@ const AdminSettings = memo(() => {
             <button 
               onClick={handleResetSettings}
               className="btn-reset"
-              disabled={loading}
+              disabled={saving || loading}
             >
               Reset to Default
             </button>
             <button 
               onClick={handleSaveSettings}
               className="btn-save"
-              disabled={loading}
+              disabled={saving || loading}
             >
-              {loading ? 'Saving...' : 'Save Settings'}
+              {saving ? (
+                <>
+                  <span className="spinner" style={{ display: 'inline-block', marginRight: '8px', width: '14px', height: '14px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }}></span>
+                  Saving...
+                </>
+              ) : 'Save Settings'}
             </button>
           </div>
         </div>
+
+        {/* Reset Confirmation Modal */}
+        {showResetConfirm && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              background: "rgba(0,0,0,0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10050
+            }}
+          >
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: "12px",
+                padding: "24px",
+                width: "400px",
+                maxWidth: "92%",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                position: "relative"
+              }}
+            >
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                style={{
+                  position: "absolute",
+                  top: "12px",
+                  right: "12px",
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  color: "#555"
+                }}
+              >
+                ×
+              </button>
+
+              <h5 style={{ fontWeight: 600, color: "#212121", marginBottom: "12px" }}>
+                Reset Settings
+              </h5>
+
+              <div style={{ height: "1px", backgroundColor: "#e0e0e0", margin: "12px 0" }} />
+
+              <p style={{ color: "#555", marginBottom: "20px" }}>
+                Are you sure you want to reset all settings to default values? This action cannot be undone.
+              </p>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  style={{
+                    padding: "8px 20px",
+                    borderRadius: "24px",
+                    background: "#e8f5e9",
+                    border: "1px solid #c8e6c9",
+                    color: "#2e7d32",
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmResetSettings}
+                  disabled={saving}
+                  style={{
+                    padding: "8px 20px",
+                    borderRadius: "24px",
+                    background: "#ff9800",
+                    border: "none",
+                    color: "#fff",
+                    fontWeight: 600,
+                    cursor: saving ? "not-allowed" : "pointer",
+                    opacity: saving ? 0.6 : 1
+                  }}
+                >
+                  {saving ? 'Resetting...' : 'Reset'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

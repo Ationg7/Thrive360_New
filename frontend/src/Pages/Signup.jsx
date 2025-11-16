@@ -1,7 +1,8 @@
 import logo from '../assets/Images/logo.png';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
+import { API_ENDPOINTS } from '../config/api';
 
 
 const SignUp = () => {
@@ -12,7 +13,28 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState({});
   const [success, setSuccess] = useState(false);
+  const [registrationDisabled, setRegistrationDisabled] = useState(false);
   const navigate = useNavigate();
+
+  // Check if registration is allowed
+  useEffect(() => {
+    const checkRegistrationStatus = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.ADMIN_SETTINGS);
+        if (response.ok) {
+          const data = await response.json();
+          // Handle both boolean and string values
+          const isRegistrationDisabled = data.allow_registration === false || data.allow_registration === 'false';
+          if (isRegistrationDisabled) {
+            setRegistrationDisabled(true);
+          }
+        }
+      } catch (err) {
+        console.error('Error checking registration status:', err);
+      }
+    };
+    checkRegistrationStatus();
+  }, []);
   
 
   const handleSubmit = async (e) => {
@@ -35,7 +57,6 @@ const SignUp = () => {
       const data = await response.json();
 
       if (response.ok) {
-        
         setSuccess(true);
         setTimeout(() => navigate("/SignIn"), 2000);
       } else {
@@ -47,6 +68,10 @@ const SignUp = () => {
           setError(errs);
         } else {
           setError({ general: data.message || "Something went wrong" });
+          // If registration is disabled, update state
+          if (data.message && data.message.includes('disabled')) {
+            setRegistrationDisabled(true);
+          }
         }
       }
     } catch (err) {
@@ -65,6 +90,23 @@ const SignUp = () => {
           </div>
 
           <h2 className="titles">Create an account</h2>
+
+          {registrationDisabled && (
+            <div style={{
+              padding: '16px',
+              marginBottom: '20px',
+              backgroundColor: '#fff3cd',
+              border: '1px solid #ffc107',
+              borderRadius: '8px',
+              color: '#856404',
+              textAlign: 'center'
+            }}>
+              <strong>⚠️ Registration Disabled</strong>
+              <p style={{ margin: '8px 0 0 0', fontSize: '0.9rem' }}>
+                New registrations are currently disabled by the administrator.
+              </p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             {/* Email Field */}
@@ -148,7 +190,12 @@ const SignUp = () => {
             </div>
 
             {/* Register Button */}
-            <button className="register-btn" type="submit" style={{ marginTop: "20px" }}>
+            <button 
+              className="register-btn" 
+              type="submit" 
+              style={{ marginTop: "20px" }}
+              disabled={registrationDisabled}
+            >
               Register
             </button>
           </form>

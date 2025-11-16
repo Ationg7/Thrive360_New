@@ -16,6 +16,8 @@ const AdminLogin = () => {
     setError("");
     setLoading(true);
 
+    console.log("🔐 Admin login attempt for:", email);
+
     try {
       const response = await fetch("http://127.0.0.1:8000/api/admin/login", {
         method: "POST",
@@ -23,17 +25,33 @@ const AdminLogin = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      console.log("📡 Login response status:", response.status);
 
-      if (response.ok && data.user.role === "admin") {
-        localStorage.setItem("adminToken", data.token);
-        localStorage.setItem("adminUser", JSON.stringify(data.user));
-        setShowSuccess(true); // Show success modal
+      const data = await response.json();
+      console.log("📦 Login response data:", data);
+
+      if (response.ok) {
+        // Check if user exists and is admin
+        if (data.user && data.user.role === "admin") {
+          localStorage.setItem("adminToken", data.token);
+          localStorage.setItem("adminUser", JSON.stringify(data.user));
+          setShowSuccess(true); // Show success modal
+        } else {
+          setError(data.message || "Access denied. Admin privileges required.");
+        }
       } else {
-        setError(data.message || "Login failed");
+        // Handle different error cases
+        if (response.status === 401) {
+          setError(data.message || "Invalid email or password");
+        } else if (response.status === 403) {
+          setError(data.message || "Admin access required. This account does not have admin privileges.");
+        } else {
+          setError(data.message || data.error || `Login failed (${response.status})`);
+        }
       }
     } catch (err) {
-      setError("Network error: " + err.message);
+      console.error("Admin login error:", err);
+      setError("Network error: " + (err.message || "Unable to connect to server. Please check if the backend is running."));
     } finally {
       setLoading(false);
     }

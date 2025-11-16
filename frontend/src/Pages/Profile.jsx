@@ -23,8 +23,72 @@ import Events from "../Components/Events";
 import ChangePhoto from "./ChangePhoto"; // <-- import your component
 import './Profile.css'
 
+// Challenge History Component
+const ChallengeHistoryList = () => {
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) { setItems([]); return; }
+        const res = await fetch('http://127.0.0.1:8000/api/challenges/history', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          setItems(data.filter((x) => x.is_completed));
+        }
+      } catch (e) { /* ignore */ }
+    };
+    load();
+  }, []);
+
+  const renderBadge = (status) => {
+    const style = status === 'In Progress'
+      ? { borderColor: '#FFC107', color: '#FFC107' }
+      : { borderColor: '#198754', color: '#198754' };
+    return (
+      <span className="px-2 py-1 rounded-pill" style={{ border: `1px solid ${style.borderColor}`, color: style.color, backgroundColor: 'transparent', fontSize: '10px', fontWeight: 500, fontFamily: 'Poppins, sans-serif' }}>
+        {status}
+      </span>
+    );
+  };
+
+  if (items.length === 0) {
+    return (
+      <ListGroup.Item className="text-center text-muted py-3 small">
+        <div style={{ padding: '20px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '10px' }}>🎯</div>
+          <div>No Completed Challenges yet.</div>
+          <div style={{ fontSize: '12px', marginTop: '8px', color: '#888' }}>
+            Keep pushing forward! Every journey begins with a single step.
+          </div>
+        </div>
+      </ListGroup.Item>
+    );
+  }
+
+  return (
+    <>
+      {items.map((entry, idx) => (
+        <ListGroup.Item key={`completed-${idx}`} className="px-3 py-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 className="mb-0">{entry.challenge_title}</h6>
+              <small className="text-muted" style={{ fontSize: '11px', fontStyle: 'italic' }}>
+                {idx === 0 && items.length > 0 ? '🌟 Amazing work! You\'re doing great!' : 
+                 '✨ Well done! Keep up the excellent progress!'}
+              </small>
+            </div>
+            {renderBadge('Completed')}
+          </div>
+        </ListGroup.Item>
+      ))}
+    </>
+  );
+};
+
 const Profile = () => {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, updateUser } = useAuth();
 
   // States
   const [posts, setPosts] = useState([]);
@@ -33,6 +97,7 @@ const Profile = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [postFilter, setPostFilter] = useState("my");
+  const [displayFilter, setDisplayFilter] = useState("all"); // For client-side filtering: "all", "date", "most_reacted", "images"
   const [setEvents] = useState([]);
   const [setShowGuestPopup] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -331,6 +396,39 @@ const Profile = () => {
     }
   };
 
+  // Apply display filters to posts
+  const getFilteredAndSortedPosts = () => {
+    let filtered = [...posts];
+
+    // Apply display filter
+    switch (displayFilter) {
+      case "images":
+        filtered = filtered.filter((post) => post.image || (post.images && post.images.length > 0));
+        break;
+      case "most_reacted":
+        // Sort by total reactions (likes + hearts + sad)
+        filtered = filtered.sort((a, b) => {
+          const totalA = (a.likes || 0) + (a.hearts || 0) + (a.sad || 0);
+          const totalB = (b.likes || 0) + (b.hearts || 0) + (b.sad || 0);
+          return totalB - totalA; // Descending order
+        });
+        break;
+      case "date":
+        // Sort by date (newest first)
+        filtered = filtered.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at) : (a.date ? new Date(a.date) : new Date(0));
+          const dateB = b.created_at ? new Date(b.created_at) : (b.date ? new Date(b.date) : new Date(0));
+          return dateB - dateA; // Descending order (newest first)
+        });
+        break;
+      default:
+        // "all" - no filtering, keep original order
+        break;
+    }
+
+    return filtered;
+  };
+
   const loadEvents = async () => {
     try {
       const token = localStorage.getItem("authToken");
@@ -346,7 +444,16 @@ const Profile = () => {
   };
 
   useEffect(() => { loadPosts(postFilter); }, [postFilter]);
-  useEffect(() => { if (user?.email) localStorage.setItem("userEmail", user.email); }, [user]);
+  useEffect(() => { 
+    if (user?.email) {
+      localStorage.setItem("userEmail", user.email);
+      // Force immediate update of email display
+      setTimeout(() => {
+        const event = new CustomEvent('user-updated', { detail: user });
+        window.dispatchEvent(event);
+      }, 100);
+    }
+  }, [user]);
   useEffect(() => { loadEvents(); }, []);
 
   useEffect(() => {
@@ -495,9 +602,13 @@ const Profile = () => {
         ×
       </button>
 
-      {/* Reuse your existing Challenge History card */}
-      <Card className="mb-3 events-card shadow-sm border-0">
-        {/* ...existing card JSX and ListGroup rendering completed challenges... */}
+      {/* Challenge History Content */}
+      <Card className="mb-3 events-card shadow-sm border-0" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="events-scroll-wrapper" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+          <ListGroup variant="flush">
+            <ChallengeHistoryList />
+          </ListGroup>
+        </div>
       </Card>
 
     </div>
@@ -718,51 +829,7 @@ const Profile = () => {
   {/* Scrollable List */}
   <div className="events-scroll-wrapper" style={{ maxHeight: '300px', overflowY: 'auto' }}>
     <ListGroup variant="flush">
-      {(() => {
-        const [items, setItems] = React.useState([]);
-        React.useEffect(() => {
-          const load = async () => {
-            try {
-              const token = localStorage.getItem('authToken');
-              if (!token) { setItems([]); return; }
-              const res = await fetch('http://127.0.0.1:8000/api/challenges/history', { headers: { Authorization: `Bearer ${token}` } });
-              if (res.ok) {
-                const data = await res.json();
-                setItems(data.filter((x) => x.is_completed));
-              }
-            } catch (e) { /* ignore */ }
-          };
-          load();
-        }, []);
-
-        if (items.length === 0) {
-          return (
-            <ListGroup.Item className="text-center text-muted py-3 small">
-              No Completed Challenges yet.
-            </ListGroup.Item>
-          );
-        }
-
-        const renderBadge = (status) => {
-          const style = status === 'In Progress'
-            ? { borderColor: '#FFC107', color: '#FFC107' }
-            : { borderColor: '#198754', color: '#198754' };
-          return (
-            <span className="px-2 py-1 rounded-pill" style={{ border: `1px solid ${style.borderColor}`, color: style.color, backgroundColor: 'transparent', fontSize: '10px', fontWeight: 500, fontFamily: 'Poppins, sans-serif' }}>
-              {status}
-            </span>
-          );
-        };
-
-        return items.map((entry, idx) => (
-          <ListGroup.Item key={`completed-${idx}`} className="px-3 py-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            <div className="d-flex justify-content-between align-items-center">
-              <h6 className="mb-0">{entry.challenge_title}</h6>
-              {renderBadge('Completed')}
-            </div>
-          </ListGroup.Item>
-        ));
-      })()}
+      <ChallengeHistoryList />
     </ListGroup>
   </div>
 
@@ -792,13 +859,28 @@ const Profile = () => {
             <div>
               <Dropdown className="d-inline me-2">
                 <Dropdown.Toggle variant="light" className="filter-btn">
-                  <BsFilter /> Filters
+                  <BsFilter /> Filters {displayFilter !== "all" && `(${displayFilter === "date" ? "Date" : displayFilter === "most_reacted" ? "Most Reacted" : "Images"})`}
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
-                  <Dropdown.Item onClick={() => setPostFilter("date")}>By Date</Dropdown.Item>
-                  <Dropdown.Item onClick={() => setPostFilter("likes")}>Most Liked</Dropdown.Item>
-                  <Dropdown.Item onClick={() => setPostFilter("hearts")}>Most Hearted</Dropdown.Item>
-                  <Dropdown.Item onClick={() => setPostFilter("images")}>With Images</Dropdown.Item>
+                  <Dropdown.Item 
+                    onClick={() => setDisplayFilter("date")}
+                    active={displayFilter === "date"}
+                  >
+                    By Date
+                  </Dropdown.Item>
+                  <Dropdown.Item 
+                    onClick={() => setDisplayFilter("most_reacted")}
+                    active={displayFilter === "most_reacted"}
+                  >
+                    Most Reacted
+                  </Dropdown.Item>
+                  <Dropdown.Item 
+                    onClick={() => setDisplayFilter("images")}
+                    active={displayFilter === "images"}
+                  >
+                    With Images
+                  </Dropdown.Item>
+                  
                 </Dropdown.Menu>
               </Dropdown>
 
@@ -807,8 +889,14 @@ const Profile = () => {
                   <BsGear /> Manage posts
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
-                  <Dropdown.Item onClick={() => setPostFilter("my")}>My Posts</Dropdown.Item>
-                  <Dropdown.Item onClick={() => setPostFilter("saved")}>Saved Posts</Dropdown.Item>
+                  <Dropdown.Item onClick={() => {
+                    setPostFilter("my");
+                    setDisplayFilter("all"); // Reset display filter when changing post source
+                  }}>My Posts</Dropdown.Item>
+                  <Dropdown.Item onClick={() => {
+                    setPostFilter("saved");
+                    setDisplayFilter("all"); // Reset display filter when changing post source
+                  }}>Saved Posts</Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
             </div>
@@ -891,7 +979,7 @@ const Profile = () => {
 
          {/* Posts */}
               <div className="post-list mt-3">
-                  {posts.map((post) => (
+                  {getFilteredAndSortedPosts().map((post) => (
                     <Card className={`post-card position-relative ${!isLoggedIn ? "blurred-content" : ""}`} key={post.id}>
                       {!isLoggedIn && (
                         <div className="post-blur-overlay">

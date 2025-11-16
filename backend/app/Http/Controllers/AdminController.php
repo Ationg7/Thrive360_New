@@ -11,7 +11,8 @@ use App\Models\PostReport;
 use App\Models\Psychiatrist;
 use App\Models\Notification;
 use App\Models\PasswordResetCode;
-use App\Models\ProfileCover;    
+use App\Models\ProfileCover;
+use App\Models\Setting;    
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -1114,6 +1115,197 @@ foreach ($users as $user) {
             'has_pending_request' => $hasRequest,
             'code' => $latestCode ? $latestCode->code : null,
             'expires_at' => $latestCode ? $latestCode->expires_at : null
+        ]);
+    }
+
+    // Settings Management
+    public function getSettings()
+    {
+        // This endpoint can be accessed publicly for maintenance mode checks
+        // Setting::getAll() already returns booleans for boolean keys
+        $settings = Setting::getAll();
+        
+        \Log::info('getSettings - Raw settings from database:', $settings);
+        \Log::info('getSettings - Maintenance mode:', [
+            'exists' => isset($settings['maintenance_mode']),
+            'value' => $settings['maintenance_mode'] ?? 'NOT SET',
+            'type' => isset($settings['maintenance_mode']) ? gettype($settings['maintenance_mode']) : 'NOT SET'
+        ]);
+        
+        // Setting::getAll() already returns booleans, so we can use them directly
+        $formattedSettings = [
+            'site_name' => $settings['site_name'] ?? 'Thrive360',
+            'site_description' => $settings['site_description'] ?? 'Your wellness companion for a healthier lifestyle',
+            'theme' => $settings['theme'] ?? 'light',
+            'maintenance_mode' => isset($settings['maintenance_mode']) ? (bool)$settings['maintenance_mode'] : false,
+            'allow_registration' => isset($settings['allow_registration']) ? (bool)$settings['allow_registration'] : true,
+            'email_notifications' => isset($settings['email_notifications']) ? (bool)$settings['email_notifications'] : false,
+            'auto_backup' => isset($settings['auto_backup']) ? (bool)$settings['auto_backup'] : false,
+        ];
+        
+        \Log::info('getSettings - Formatted settings:', $formattedSettings);
+        
+        return response()->json($formattedSettings);
+    }
+
+    /**
+     * Convert string/boolean to boolean
+     */
+    private function convertToBoolean($value)
+    {
+        // Setting model already returns booleans for boolean keys
+        if (is_bool($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            $normalized = strtolower(trim($value));
+            return in_array($normalized, ['true', '1', 'on', 'yes']);
+        }
+        if (is_numeric($value)) {
+            return (int)$value === 1;
+        }
+        return (bool)$value;
+    }
+
+    public function updateSettings(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'site_name' => 'sometimes|string|max:255',
+            'site_description' => 'sometimes|string',
+            'theme' => 'sometimes|in:light,dark',
+            'maintenance_mode' => 'sometimes|boolean',
+            'allow_registration' => 'sometimes|boolean',
+            'email_notifications' => 'sometimes|boolean',
+            'auto_backup' => 'sometimes|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Get all settings from request - check if key exists in request data
+        // This ensures we capture boolean false values correctly (has() returns false for boolean false)
+        $requestData = $request->all();
+        $settingsToUpdate = [];
+        
+        \Log::info('updateSettings - Request data:', $requestData);
+        \Log::info('updateSettings - Maintenance mode in request:', [
+            'exists' => array_key_exists('maintenance_mode', $requestData),
+            'value' => $request->input('maintenance_mode'),
+            'type' => gettype($request->input('maintenance_mode'))
+        ]);
+        
+        if (array_key_exists('site_name', $requestData)) {
+            $settingsToUpdate['site_name'] = $request->input('site_name');
+        }
+        if (array_key_exists('site_description', $requestData)) {
+            $settingsToUpdate['site_description'] = $request->input('site_description');
+        }
+        if (array_key_exists('theme', $requestData)) {
+            $settingsToUpdate['theme'] = $request->input('theme');
+        }
+        if (array_key_exists('maintenance_mode', $requestData)) {
+            $maintenanceModeValue = $request->input('maintenance_mode');
+            // Ensure we get the actual boolean value, not a string
+            if (is_string($maintenanceModeValue)) {
+                $maintenanceModeValue = strtolower(trim($maintenanceModeValue)) === 'true' || $maintenanceModeValue === '1';
+            }
+            $settingsToUpdate['maintenance_mode'] = (bool)$maintenanceModeValue;
+            \Log::info('updateSettings - Processed maintenance_mode:', [
+                'original' => $request->input('maintenance_mode'),
+                'processed' => $settingsToUpdate['maintenance_mode'],
+                'type' => gettype($settingsToUpdate['maintenance_mode'])
+            ]);
+        }
+        if (array_key_exists('allow_registration', $requestData)) {
+            $settingsToUpdate['allow_registration'] = $request->input('allow_registration');
+        }
+        if (array_key_exists('email_notifications', $requestData)) {
+            $settingsToUpdate['email_notifications'] = $request->input('email_notifications');
+        }
+        if (array_key_exists('auto_backup', $requestData)) {
+            $settingsToUpdate['auto_backup'] = $request->input('auto_backup');
+        }
+
+        // Log for debugging
+        \Log::info('Updating settings', ['settings' => $settingsToUpdate]);
+
+        // Save each setting - Setting model will handle boolean conversion automatically
+        foreach ($settingsToUpdate as $key => $value) {
+            // Skip null values (not provided in request)
+            if ($value === null) {
+                \Log::info("Skipping {$key} - value is null");
+                continue;
+            }
+            
+            \Log::info("Setting {$key}: original value = " . var_export($value, true) . " (type: " . gettype($value) . ")");
+            // Setting::setValue will handle boolean conversion automatically
+            $result = Setting::setValue($key, $value);
+            \Log::info("Setting {$key}: saved result = " . var_export($result->value, true) . " (stored in DB)");
+        }
+
+        // Return updated settings - fetch fresh from database
+        // Setting::getAll() already returns booleans for boolean keys
+        $settings = Setting::getAll();
+        
+        \Log::info('Settings after update:', $settings);
+        \Log::info('Maintenance mode value:', [
+            'raw' => $settings['maintenance_mode'] ?? 'NOT SET',
+            'type' => isset($settings['maintenance_mode']) ? gettype($settings['maintenance_mode']) : 'NOT SET',
+            'is_bool' => isset($settings['maintenance_mode']) ? is_bool($settings['maintenance_mode']) : 'NOT SET'
+        ]);
+        
+        // Setting::getAll() already returns booleans, so we can use them directly
+        $formattedSettings = [
+            'site_name' => $settings['site_name'] ?? 'Thrive360',
+            'site_description' => $settings['site_description'] ?? 'Your wellness companion for a healthier lifestyle',
+            'theme' => $settings['theme'] ?? 'light',
+            'maintenance_mode' => isset($settings['maintenance_mode']) ? (bool)$settings['maintenance_mode'] : false,
+            'allow_registration' => isset($settings['allow_registration']) ? (bool)$settings['allow_registration'] : true,
+            'email_notifications' => isset($settings['email_notifications']) ? (bool)$settings['email_notifications'] : false,
+            'auto_backup' => isset($settings['auto_backup']) ? (bool)$settings['auto_backup'] : false,
+        ];
+
+        \Log::info('Formatted settings:', $formattedSettings);
+
+        return response()->json([
+            'message' => 'Settings saved successfully',
+            'settings' => $formattedSettings
+        ]);
+    }
+
+    public function resetSettings()
+    {
+        // Set default values - Setting model will handle boolean conversion
+        $defaults = [
+            'site_name' => 'Thrive360',
+            'site_description' => 'Your wellness companion for a healthier lifestyle',
+            'theme' => 'light',
+            'maintenance_mode' => false,
+            'allow_registration' => true,
+            'email_notifications' => false,
+            'auto_backup' => false,
+        ];
+
+        foreach ($defaults as $key => $value) {
+            Setting::setValue($key, $value);
+        }
+
+        // Return updated settings - Setting::getAll() already returns booleans for boolean keys
+        $settings = Setting::getAll();
+        $formattedSettings = [
+            'site_name' => $settings['site_name'] ?? 'Thrive360',
+            'site_description' => $settings['site_description'] ?? 'Your wellness companion for a healthier lifestyle',
+            'theme' => $settings['theme'] ?? 'light',
+            'maintenance_mode' => $this->convertToBoolean($settings['maintenance_mode'] ?? false),
+            'allow_registration' => $this->convertToBoolean($settings['allow_registration'] ?? true),
+            'email_notifications' => $this->convertToBoolean($settings['email_notifications'] ?? false),
+            'auto_backup' => $this->convertToBoolean($settings['auto_backup'] ?? false),
+        ];
+
+        return response()->json([
+            'message' => 'Settings have been reset to default',
+            'settings' => $formattedSettings
         ]);
     }
 }

@@ -10,7 +10,7 @@ import { Modal, Button } from "react-bootstrap";
 function NavigationBar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [setShowSuccess] = useState(false);
@@ -24,9 +24,15 @@ function NavigationBar() {
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     setIsLoggedIn(!!token);
-    const email = localStorage.getItem("userEmail");
-    setUserEmail(email || "");
-  }, [location]);
+    // Update email from user object immediately when it changes
+    if (user?.email) {
+      setUserEmail(user.email);
+      localStorage.setItem("userEmail", user.email);
+    } else {
+      const email = localStorage.getItem("userEmail");
+      setUserEmail(email || "");
+    }
+  }, [location, user]);
 
   // Fetch unread notifications
   useEffect(() => {
@@ -69,13 +75,29 @@ function NavigationBar() {
     setIsProfileOpen(false);
   };
 
-  const performLogout = () => {
-    localStorage.removeItem("authToken");
-    setIsLoggedIn(false);
-    setShowConfirm(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
-    navigate("/signin");
+  const performLogout = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        // Call backend logout endpoint
+        await fetch("http://127.0.0.1:8000/api/logout", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => {}); // Ignore errors
+      }
+    } catch (e) {
+      // Ignore errors
+    } finally {
+      // Clear local state and storage
+      logout();
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      localStorage.removeItem("userEmail");
+      setIsLoggedIn(false);
+      setShowConfirm(false);
+      // Force immediate page refresh
+      window.location.href = "/signin";
+    }
   };
 
   return (

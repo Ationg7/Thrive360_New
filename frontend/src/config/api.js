@@ -81,6 +81,8 @@ export const API_ENDPOINTS = {
   ADMIN_PROFILE_COVERS: `${API_BASE_URL}/admin/profile-covers`,
   ADMIN_REPORTS: `${API_BASE_URL}/admin/reports`,
   ADMIN_REPORTS_STATS: `${API_BASE_URL}/admin/reports/stats`,
+  ADMIN_SETTINGS: `${API_BASE_URL}/admin/settings`,
+  ADMIN_SETTINGS_RESET: `${API_BASE_URL}/admin/settings/reset`,
   
   // Backward compatibility aliases
   DASHBOARD: `${API_BASE_URL}/admin/dashboard`,

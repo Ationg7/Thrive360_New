@@ -146,6 +146,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/profile-covers', [AdminController::class, 'uploadProfileCover']);
         Route::get('/profile-covers', [AdminController::class, 'getProfileCovers']);
         Route::delete('/profile-covers/{id}', [AdminController::class, 'deleteProfileCover']);
+
+        // --- Admin Settings ---
+        Route::get('/settings', [AdminController::class, 'getSettings']);
+        Route::put('/settings', [AdminController::class, 'updateSettings']);
+        Route::post('/settings/reset', [AdminController::class, 'resetSettings']);
     });
 });
 
@@ -158,7 +163,9 @@ Route::prefix('admin')->group(function () {
     Route::get('/blogs', [AdminController::class, 'getBlogs']);
     Route::get('/meditation', [AdminController::class, 'getMeditations']);
     Route::get('/psychiatrists/active', [AdminController::class, 'getActivePsychiatrists']);
-        Route::get('/profile-covers', [AdminController::class, 'getProfileCovers']);
+    Route::get('/profile-covers', [AdminController::class, 'getProfileCovers']);
+    // Public settings endpoint for maintenance mode check
+    Route::get('/settings', [AdminController::class, 'getSettings']);
 });
 
 // Public password reset routes

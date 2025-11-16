@@ -90,12 +90,21 @@ const AdminNavbar = memo(() => {
                 </div>
               </div>
               <div className="admin-profile-divider"></div>
-              <button className="admin-dropdown-item" onClick={handleSettings}>
+              <button 
+                className="admin-dropdown-item" 
+                onClick={() => {
+                  handleSettings();
+                  setIsDropdownOpen(false);
+                }}
+              >
                 ⚙️ Settings
               </button>
               <button
                 className="admin-dropdown-item admin-dropdown-logout"
-                onClick={() => setShowLogoutConfirm(true)}
+                onClick={() => {
+                  setShowLogoutConfirm(true);
+                  setIsDropdownOpen(false);
+                }}
               >
                 🚪 Logout
               </button>

@@ -268,7 +268,7 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
       position: "fixed",
       bottom: "20px",
       left: "0px",
-      zIndex: 9999,
+      zIndex: 10000,
       backgroundColor: "rgb(32,31,36)",
       borderLeft: `6px solid ${success ? "green" : "red"}`,
       borderRadius: "0 6px 6px 0",
@@ -411,7 +411,7 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
         {showDeleteConfirm && challengeToDelete && (
   <div
     className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-    style={{ background: "rgba(0,0,0,0.35)", zIndex: 9999 }}
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 10050 }}
   >
     <div
       className="rounded-4 shadow-lg p-4"

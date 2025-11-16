@@ -6,6 +6,7 @@ import {
   Outlet,
   useLocation,
 } from "react-router-dom";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 import Navbar from "./Components/Navbar";
@@ -44,13 +45,18 @@ import AdminPasswordReset from "./Pages/AdminPasswordReset";
 import AdminProfileCovers from "./Pages/AdminProfileCovers";
 import Settings from "./Pages/Settings";
 import ChangePhoto from "./Pages/ChangePhoto";
+import MaintenancePage from "./Pages/MaintenancePage";
 
 
 import { AuthProvider, useAuth } from "./AuthContext";
 import { ChallengesProvider } from "./Pages/Challenges";
+import { API_ENDPOINTS } from "./config/api";
+
 function Layout() {
   const location = useLocation();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [checkingMaintenance, setCheckingMaintenance] = useState(true);
 
   const publicRoutes = ["/", "/signin", "/signup", "/forgotpassword"];
   const adminRoutes = [
@@ -88,11 +94,12 @@ function Layout() {
     "/admin/profile-covers",
   ];
 
-  const pathname = location.pathname.toLowerCase();
+  // Normalize pathname - remove trailing slashes and convert to lowercase
+  const pathname = location.pathname.toLowerCase().replace(/\/$/, '') || '/';
   const isPublicPage = publicRoutes.includes(pathname);
-  const isAdminPage = adminRoutes.includes(pathname);
   const isNoNavbarPage = noNavbarRoutes.includes(pathname);
   const isNoFooterPage = noFooterRoutes.includes(pathname);
+  const isAdminPage = adminRoutes.includes(pathname);
 
   const floatingAllowedRoutes = [
     "/home",
@@ -103,8 +110,127 @@ function Layout() {
     "/freedomwall",
   ];
 
+  // Check maintenance mode
+  useEffect(() => {
+    const checkMaintenanceMode = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.ADMIN_SETTINGS);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('🔧 Maintenance mode check - Full response:', data);
+          console.log('🔧 Maintenance mode value:', data.maintenance_mode, 'Type:', typeof data.maintenance_mode);
+          
+          // Parse boolean value correctly
+          let isMaintenanceMode = false;
+          if (typeof data.maintenance_mode === 'boolean') {
+            isMaintenanceMode = data.maintenance_mode;
+          } else if (typeof data.maintenance_mode === 'string') {
+            const normalized = data.maintenance_mode.toLowerCase().trim();
+            isMaintenanceMode = normalized === 'true' || normalized === '1';
+          } else if (typeof data.maintenance_mode === 'number') {
+            isMaintenanceMode = data.maintenance_mode === 1;
+          }
+          
+          console.log('🔧 Parsed maintenance mode:', isMaintenanceMode);
+          
+          // Always set the maintenance mode state (admins can still see it's enabled)
+          // The rendering logic will decide whether to show the maintenance page
+          setMaintenanceMode(isMaintenanceMode);
+          
+          if (isMaintenanceMode) {
+            console.log('✅ Maintenance mode is ON - Users should see maintenance page');
+          } else {
+            console.log('❌ Maintenance mode is OFF - Normal access');
+          }
+        } else {
+          console.error('❌ Failed to fetch maintenance mode status:', response.status);
+          // On error, assume maintenance mode is off
+          setMaintenanceMode(false);
+        }
+      } catch (err) {
+        console.error('❌ Error checking maintenance mode:', err);
+        // On error, assume maintenance mode is off
+        setMaintenanceMode(false);
+      } finally {
+        setCheckingMaintenance(false);
+      }
+    };
+    
+    // Check immediately on mount
+    checkMaintenanceMode();
+    
+    // Check periodically (every 5 seconds) to detect when admin turns maintenance mode on/off
+    const interval = setInterval(checkMaintenanceMode, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const adminToken = localStorage.getItem('adminToken');
+  const isAdmin = adminToken !== null;
+
+  // Admin pages should not be blocked by the checkingMaintenance loading screen
+  // Allow admin pages to load immediately so admins can manage settings
+  if (checkingMaintenance && !isAdminPage) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  // Debug logging
+  const shouldShowMaintenance = maintenanceMode && !isAdminPage && !isPublicPage;
+  console.log('🔍 Route check:', {
+    pathname,
+    'original pathname': location.pathname,
+    maintenanceMode,
+    isAdmin,
+    isAdminPage,
+    isPublicPage,
+    shouldShowMaintenance,
+    'adminRoutes includes pathname?': adminRoutes.includes(pathname),
+    'adminRoutes': adminRoutes
+  });
+
+  // Admin pages are ALWAYS accessible, even during maintenance mode
+  // This allows admins to manage settings and turn off maintenance mode
+  // Skip all maintenance checks for admin pages
+  if (isAdminPage) {
+    console.log('✅ Admin page detected - always accessible, even during maintenance');
+    // Continue to render admin pages normally - no maintenance page blocking
+    // Return early to skip all maintenance mode checks
+  }
+  // Public pages (signin, signup, etc.) are also always accessible during maintenance
+  else if (isPublicPage) {
+    console.log('ℹ️ Public page - always accessible during maintenance');
+  }
+  // If maintenance mode is active and it's a user page (not admin, not public):
+  // Show maintenance page to ALL users (including admins)
+  else if (maintenanceMode) {
+    console.log('🚧 SHOWING MAINTENANCE PAGE');
+    console.log('   - maintenanceMode:', maintenanceMode);
+    console.log('   - isAdmin:', isAdmin, '(admins also see maintenance page on user pages)');
+    console.log('   - isAdminPage:', isAdminPage);
+    console.log('   - isPublicPage:', isPublicPage);
+    return <MaintenancePage />;
+  }
+
   return (
-    <>
+    <div 
+      className={isAdminPage ? 'admin-page-no-overlay' : ''}
+      style={isAdminPage ? { 
+        pointerEvents: 'auto', 
+        opacity: 1,
+        position: 'relative',
+        zIndex: 1,
+        isolation: 'isolate' /* Create new stacking context */
+      } : {}}
+    >
       {/* Navbars */}
       {isAdminPage && pathname !== "/admin-login" && <AdminNavbar />}
       {!isNoNavbarPage && !isAdminPage && (isPublicPage ? <Navbars /> : <Navbar />)}
@@ -120,7 +246,7 @@ function Layout() {
         floatingAllowedRoutes.some((path) => pathname.startsWith(path)) && (
           <FloatingPsychologists />
         )}
-    </>
+    </div>
   );
 }
 

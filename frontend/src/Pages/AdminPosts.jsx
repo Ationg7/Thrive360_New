@@ -33,8 +33,17 @@ const [postToDelete, setPostToDelete] = useState(null);
   const toImageUrl = (img) => {
     if (!img) return null;
     if (typeof img !== 'string') return null;
+    // If already a full URL, return as is
     if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    return `http://127.0.0.1:8000/${img}`;
+    // Handle different path formats
+    if (img.startsWith('/storage/')) {
+      return `http://127.0.0.1:8000${img}`;
+    }
+    if (img.startsWith('storage/')) {
+      return `http://127.0.0.1:8000/${img}`;
+    }
+    // Handle plain paths - prepend /storage/
+    return `http://127.0.0.1:8000/storage/${img}`;
   };
 
   // Fetch posts from Freedom Wall API
@@ -164,7 +173,7 @@ const [postToDelete, setPostToDelete] = useState(null);
       position: "fixed",
       bottom: "20px",
       left: "0px",
-      zIndex: 9999,
+      zIndex: 10000,
       backgroundColor: "rgb(32,31,36)",
       borderLeft: `6px solid ${success ? "green" : "red"}`,
       borderRadius: "0 6px 6px 0",
@@ -337,7 +346,7 @@ const [postToDelete, setPostToDelete] = useState(null);
          {showDeleteConfirm && postToDelete && (
   <div
     className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-    style={{ background: "rgba(0,0,0,0.35)", zIndex: 9999 }}
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 10050 }}
   >
     <div
       className="rounded-4 shadow-lg p-4"

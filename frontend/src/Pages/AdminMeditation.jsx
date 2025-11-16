@@ -98,13 +98,20 @@ const [meditationToDelete, setMeditationToDelete] = useState(null);
   }, [navigate]);
 
   // Handle file upload
-  const handleFileChange = (e, fileType) => {
+  const handleFileChange = (e, fileType, isEdit = false) => {
     const file = e.target.files[0];
     if (file) {
-      setUploadData(prev => ({
-        ...prev,
-        [fileType]: file
-      }));
+      if (isEdit) {
+        setEditData(prev => ({
+          ...prev,
+          [fileType]: file
+        }));
+      } else {
+        setUploadData(prev => ({
+          ...prev,
+          [fileType]: file
+        }));
+      }
     }
   };
 
@@ -969,9 +976,39 @@ const [meditationToDelete, setMeditationToDelete] = useState(null);
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => handleFileChange(e, 'imageFile')}
+                      onChange={(e) => handleFileChange(e, 'imageFile', true)}
                       className="form-file"
                     />
+                    {editData.imageFile && (
+                      <div className="image-preview" style={{ marginTop: '10px' }}>
+                        <img 
+                          src={URL.createObjectURL(editData.imageFile)} 
+                          alt="New image preview" 
+                          style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '1px solid #ddd' }}
+                        />
+                        <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
+                          New image selected: {editData.imageFile.name}
+                        </small>
+                      </div>
+                    )}
+                    {!editData.imageFile && editingMeditation && toImageUrl(editingMeditation.image_url) && (
+                      <div className="image-preview" style={{ marginTop: '10px' }}>
+                        <img 
+                          src={toImageUrl(editingMeditation.image_url)} 
+                          alt="Current image" 
+                          style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '1px solid #ddd' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            if (e.target.nextElementSibling) {
+                              e.target.nextElementSibling.style.display = 'block';
+                            }
+                          }}
+                        />
+                        <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
+                          Current image
+                        </small>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -988,59 +1025,99 @@ const [meditationToDelete, setMeditationToDelete] = useState(null);
                     </button>
                   </div>
                   
-                  {editData.tutorialSteps.map((step, index) => (
-                    <div key={index} className="tutorial-step">
-                      <div className="step-header">
-                        <h5>Step {step.step}</h5>
-                        {editData.tutorialSteps.length > 1 && (
-                          <button 
-                            type="button"
-                            onClick={() => removeEditTutorialStep(index)}
-                            className="btn-remove-step"
-                          >
-                            Remove
-                          </button>
-                        )}
+                  {editData.tutorialSteps.map((step, index) => {
+                    // Get current step image from editingMeditation if it exists
+                    let currentStepImage = null;
+                    if (editingMeditation?.tutorial_steps) {
+                      try {
+                        const parsedSteps = JSON.parse(editingMeditation.tutorial_steps);
+                        if (Array.isArray(parsedSteps) && parsedSteps[index]) {
+                          currentStepImage = parsedSteps[index].image_url;
+                        }
+                      } catch (e) {
+                        console.error('Error parsing tutorial steps:', e);
+                      }
+                    }
+
+                    return (
+                      <div key={index} className="tutorial-step">
+                        <div className="step-header">
+                          <h5>Step {step.step}</h5>
+                          {editData.tutorialSteps.length > 1 && (
+                            <button 
+                              type="button"
+                              onClick={() => removeEditTutorialStep(index)}
+                              className="btn-remove-step"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div className="form-group">
+                          <label>Step Title</label>
+                          <input
+                            type="text"
+                            value={step.title}
+                            onChange={(e) => handleEditTutorialStepChange(index, 'title', e.target.value)}
+                            placeholder={`Enter step ${step.step} title`}
+                            className="form-input"
+                          />
+                        </div>
+                        
+                        <div className="form-group">
+                          <label>Step Description</label>
+                          <textarea
+                            value={step.description}
+                            onChange={(e) => handleEditTutorialStepChange(index, 'description', e.target.value)}
+                            placeholder={`Describe what to do in step ${step.step}`}
+                            className="form-textarea"
+                            rows="2"
+                          />
+                        </div>
+                        
+                        <div className="form-group">
+                          <label>Step Image (Optional)</label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleEditTutorialStepImageChange(index, e.target.files[0])}
+                            className="form-file"
+                          />
+                          {step.imageFile && (
+                            <div className="image-preview" style={{ marginTop: '10px' }}>
+                              <img 
+                                src={URL.createObjectURL(step.imageFile)} 
+                                alt={`Step ${step.step} new preview`} 
+                                style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '1px solid #ddd' }}
+                              />
+                              <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
+                                New image selected: {step.imageFile.name}
+                              </small>
+                            </div>
+                          )}
+                          {!step.imageFile && currentStepImage && toImageUrl(currentStepImage) && (
+                            <div className="image-preview" style={{ marginTop: '10px' }}>
+                              <img 
+                                src={toImageUrl(currentStepImage)} 
+                                alt={`Step ${step.step} current image`} 
+                                style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '1px solid #ddd' }}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  if (e.target.nextElementSibling) {
+                                    e.target.nextElementSibling.style.display = 'block';
+                                  }
+                                }}
+                              />
+                              <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
+                                Current image for step {step.step}
+                              </small>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      
-                      <div className="form-group">
-                        <label>Step Title</label>
-                        <input
-                          type="text"
-                          value={step.title}
-                          onChange={(e) => handleEditTutorialStepChange(index, 'title', e.target.value)}
-                          placeholder={`Enter step ${step.step} title`}
-                          className="form-input"
-                        />
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Step Description</label>
-                        <textarea
-                          value={step.description}
-                          onChange={(e) => handleEditTutorialStepChange(index, 'description', e.target.value)}
-                          placeholder={`Describe what to do in step ${step.step}`}
-                          className="form-textarea"
-                          rows="2"
-                        />
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Step Image (Optional)</label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleEditTutorialStepImageChange(index, e.target.files[0])}
-                          className="form-file"
-                        />
-                        {step.imageFile && (
-                          <div className="file-preview">
-                            <small>Selected: {step.imageFile.name}</small>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               

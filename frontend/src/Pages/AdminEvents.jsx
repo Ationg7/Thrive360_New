@@ -270,9 +270,12 @@ const editEvent = (event) => {
                     <td>
                       {event.image_path ? (
                         <img 
-                          src={`http://127.0.0.1:8000/storage/${event.image_path}`} 
+                          src={event.image_path.startsWith('http') ? event.image_path : `http://127.0.0.1:8000/storage/${event.image_path}`} 
                           alt={event.title}
                           style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
                         />
                       ) : (
                         <div style={{ width: '50px', height: '50px', backgroundColor: '#f8f9fa', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -352,7 +355,7 @@ const editEvent = (event) => {
       {showDeleteConfirm && eventToDelete && (
   <div
     className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-    style={{ background: "rgba(0,0,0,0.35)", zIndex: 9999 }}
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 10050 }}
   >
     <div
       className="rounded-4 shadow-lg p-4"

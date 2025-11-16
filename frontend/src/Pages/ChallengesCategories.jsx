@@ -22,19 +22,13 @@ const ChallengesCategories = () => {
     const loadChallenges = async () => {
       try {
         let challenges = await challengesAPI.getChallenges();
-
-        // Add an extra Monthly challenge for consistency
-        const monthlyChallenges = challenges.filter((c) => c.type === "Monthly");
-        if (monthlyChallenges.length === 1) {
-          challenges.push({
-            id: "monthly-2",
-            type: "Monthly",
-            title: "Monthly Challenge 2",
-            description: "Extra Monthly challenge to match layout width.",
-            participants: 50,
-            difficulty: "Medium",
-          });
-        }
+        
+        // Map category to type for backward compatibility, or use category directly
+        challenges = challenges.map(challenge => ({
+          ...challenge,
+          type: challenge.category || challenge.type, // Use category if available, fallback to type
+          category: challenge.category || challenge.type // Ensure category exists
+        }));
 
         setAllChallenges(challenges);
       } catch (err) {
@@ -55,7 +49,7 @@ const ChallengesCategories = () => {
         ...challenge,
         status: "In Progress",
         progress: 0,
-        theme: getTheme(challenge.type),
+        theme: getTheme(challenge.category || challenge.type),
       });
     }
   };
@@ -97,7 +91,7 @@ const ChallengesCategories = () => {
                 }}
               >
                 {allChallenges
-                  .filter((c) => c.type === type)
+                  .filter((c) => (c.category || c.type) === type)
                   .map((challenge, index) => {
                     const isJoined = joinedChallenges.some(
                       (jc) => jc.title === challenge.title
@@ -123,7 +117,7 @@ const ChallengesCategories = () => {
                         >
                           {/* Header with status tag */}
                           <div className="card-header d-flex justify-content-between align-items-center">
-                            <span className="type-tag">{challenge.type}</span>
+                            <span className="type-tag">{challenge.category || challenge.type}</span>
                             <span
                               className="status-tag"
                               style={{
@@ -192,7 +186,7 @@ const ChallengesCategories = () => {
                 {/* ✅ Invisible placeholders for equal row width */}
                 {(() => {
                   const count = allChallenges.filter(
-                    (c) => c.type === type
+                    (c) => (c.category || c.type) === type
                   ).length;
                   const placeholders = 3 - count; // assume 3 cards per row layout
                   return placeholders > 0
@@ -212,7 +206,7 @@ const ChallengesCategories = () => {
               </div>
 
               {/* No challenges fallback */}
-              {allChallenges.filter((c) => c.type === type).length === 0 && (
+              {allChallenges.filter((c) => (c.category || c.type) === type).length === 0 && (
                 <div
                   style={{
                     width: "100%",

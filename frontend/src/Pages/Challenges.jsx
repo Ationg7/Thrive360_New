@@ -13,6 +13,8 @@ export const ChallengesProvider = ({ children }) => {
   const [joinedChallenges, setJoinedChallenges] = useState([]);
   const [completedChallenges, setCompletedChallenges] = useState([]);
   const [allChallenges, setAllChallenges] = useState([]);
+  const [showCompletionMessage, setShowCompletionMessage] = useState(false);
+  const [completionMessage, setCompletionMessage] = useState("");
   const { isLoggedIn } = useAuth();
 
   useEffect(() => {
@@ -33,7 +35,8 @@ export const ChallengesProvider = ({ children }) => {
             id: h.challenge_id,
             title: h.challenge_title,
             description: h.challenge_description,
-            type: h.challenge_type,
+            type: h.challenge_category || h.challenge_type,
+            category: h.challenge_category || h.challenge_type,
             status: h.status === "Completed" ? "Completed" : "In Progress",
             progress: h.progress_percentage,
           }));
@@ -44,7 +47,8 @@ export const ChallengesProvider = ({ children }) => {
             id: h.challenge_id,
             title: h.challenge_title,
             description: h.challenge_description,
-            type: h.challenge_type,
+            type: h.challenge_category || h.challenge_type,
+            category: h.challenge_category || h.challenge_type,
             status: "Completed",
             progress: h.progress_percentage,
           }));
@@ -80,7 +84,8 @@ export const ChallengesProvider = ({ children }) => {
           id: h.challenge_id,
           title: h.challenge_title,
           description: h.challenge_description,
-          type: h.challenge_type,
+          type: h.challenge_category || h.challenge_type,
+          category: h.challenge_category || h.challenge_type,
           status: h.status,
           progress: h.progress_percentage,
         }))
@@ -90,7 +95,8 @@ export const ChallengesProvider = ({ children }) => {
           id: h.challenge_id,
           title: h.challenge_title,
           description: h.challenge_description,
-          type: h.challenge_type,
+          type: h.challenge_category || h.challenge_type,
+          category: h.challenge_category || h.challenge_type,
           status: "Completed",
           progress: h.progress_percentage,
         }))
@@ -108,6 +114,26 @@ export const ChallengesProvider = ({ children }) => {
 
       await challengesAPI.updateProgress(item.id, { progress_percentage: 100 });
 
+      // Show comforting message
+      const messages = [
+        "🌟 Amazing work! You've completed another challenge!",
+        "✨ Congratulations! You're making incredible progress!",
+        "🎉 Well done! Every step forward is a victory!",
+        "💪 You're doing great! Keep up the excellent work!",
+        "🏆 Fantastic! Your dedication is inspiring!",
+        "⭐ Outstanding! You're building amazing habits!",
+        "🎊 Wonderful! You're on the right track!",
+        "💚 Excellent! You're taking care of yourself beautifully!",
+      ];
+      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+      setCompletionMessage(randomMessage);
+      setShowCompletionMessage(true);
+
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        setShowCompletionMessage(false);
+      }, 5000);
+
       const [history, challenges] = await Promise.all([
         challengesAPI.getUserHistory(),
         challengesAPI.getChallenges(),
@@ -123,7 +149,8 @@ export const ChallengesProvider = ({ children }) => {
           id: h.challenge_id,
           title: h.challenge_title,
           description: h.challenge_description,
-          type: h.challenge_type,
+          type: h.challenge_category || h.challenge_type,
+          category: h.challenge_category || h.challenge_type,
           status: h.status,
           progress: h.progress_percentage,
         }))
@@ -133,7 +160,8 @@ export const ChallengesProvider = ({ children }) => {
           id: h.challenge_id,
           title: h.challenge_title,
           description: h.challenge_description,
-          type: h.challenge_type,
+          type: h.challenge_category || h.challenge_type,
+          category: h.challenge_category || h.challenge_type,
           status: "Completed",
           progress: h.progress_percentage,
         }))
@@ -145,7 +173,16 @@ export const ChallengesProvider = ({ children }) => {
 
   return (
     <ChallengesContext.Provider
-      value={{ joinedChallenges, completedChallenges, allChallenges, joinChallenge, markDone }}
+      value={{ 
+        joinedChallenges, 
+        completedChallenges, 
+        allChallenges, 
+        joinChallenge, 
+        markDone,
+        showCompletionMessage,
+        completionMessage,
+        setShowCompletionMessage
+      }}
     >
       {children}
     </ChallengesContext.Provider>
@@ -157,7 +194,15 @@ export const useChallenges = () => useContext(ChallengesContext);
 // -------------------- Overview Page --------------------
 const ChallengesOverview = () => {
   const { isLoggedIn } = useAuth();
-  const { joinedChallenges, completedChallenges, allChallenges, markDone } = useChallenges();
+  const { 
+    joinedChallenges, 
+    completedChallenges, 
+    allChallenges, 
+    markDone,
+    showCompletionMessage,
+    completionMessage,
+    setShowCompletionMessage
+  } = useChallenges();
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
   const navigate = useNavigate();
@@ -247,7 +292,7 @@ const ChallengesOverview = () => {
 
       {/* Challenge Sections */}
       {challengeTypes.map((type) => {
-        const filteredChallenges = joinedChallenges.filter((c) => c.type === type && c.status !== "Completed");
+        const filteredChallenges = joinedChallenges.filter((c) => (c.category || c.type) === type && c.status !== "Completed");
 
         return (
           <div
@@ -274,7 +319,7 @@ const ChallengesOverview = () => {
                     style={{ minHeight: "350px", position: "relative", overflow: "hidden" }}
                   >
                     <div className="card-header d-flex justify-content-between align-items-center">
-                      <span className="type-tag">{challenge.type}</span>
+                      <span className="type-tag">{challenge.category || challenge.type}</span>
                       <span style={getStatusStyle(challenge.status)}>{challenge.status}</span>
                     </div>
 
@@ -308,6 +353,59 @@ const ChallengesOverview = () => {
           </div>
         );
       })}
+
+      {/* Completion Success Message */}
+      {showCompletionMessage && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 10000,
+            backgroundColor: "#28a745",
+            color: "#fff",
+            padding: "20px 30px",
+            borderRadius: "12px",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+            display: "flex",
+            alignItems: "center",
+            gap: "15px",
+            minWidth: "320px",
+            maxWidth: "500px",
+            animation: "slideUp 0.3s ease forwards",
+            fontFamily: "Poppins, sans-serif",
+          }}
+        >
+          <div style={{ fontSize: "32px" }}>🎉</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: "16px", marginBottom: "4px" }}>
+              Challenge Completed!
+            </div>
+            <div style={{ fontSize: "14px", opacity: 0.95 }}>
+              {completionMessage}
+            </div>
+          </div>
+          <button
+            onClick={() => setShowCompletionMessage(false)}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#fff",
+              fontSize: "20px",
+              cursor: "pointer",
+              padding: "0",
+              width: "24px",
+              height: "24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Floating Popup for Guests */}
       {showPopup && (

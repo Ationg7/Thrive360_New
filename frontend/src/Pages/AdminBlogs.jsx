@@ -94,10 +94,17 @@ const [blogToDelete, setBlogToDelete] = useState(null);
   const handleFileChange = (e, fileType) => {
     const file = e.target.files[0];
     if (file) {
-      setUploadData(prev => ({
-        ...prev,
-        [fileType]: file
-      }));
+      if (fileType === 'imageFile' && showEditModal) {
+        setEditData(prev => ({
+          ...prev,
+          [fileType]: file
+        }));
+      } else {
+        setUploadData(prev => ({
+          ...prev,
+          [fileType]: file
+        }));
+      }
     }
   };
 
@@ -302,7 +309,7 @@ const [blogToDelete, setBlogToDelete] = useState(null);
       position: "fixed",
       bottom: "20px",
       left: "0px",
-      zIndex: 9999,
+      zIndex: 10000,
       backgroundColor: "rgb(32,31,36)",
       borderLeft: `6px solid ${success ? "green" : "red"}`,
       borderRadius: "0 6px 6px 0",
@@ -467,7 +474,7 @@ onClick={() => {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      zIndex: 9999
+      zIndex: 10050
     }}
   >
     <div
@@ -755,6 +762,30 @@ onClick={() => {
                     onChange={(e) => handleFileChange(e, 'imageFile')}
                     className="form-file"
                   />
+                  {editData.imageFile && (
+                    <div className="image-preview" style={{ marginTop: '10px' }}>
+                      <img 
+                        src={URL.createObjectURL(editData.imageFile)} 
+                        alt="Preview" 
+                        style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '1px solid #ddd' }}
+                      />
+                      <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
+                        New image selected: {editData.imageFile.name}
+                      </small>
+                    </div>
+                  )}
+                  {!editData.imageFile && editingBlog && toImageUrl(editingBlog.image_url) && (
+                    <div className="image-preview" style={{ marginTop: '10px' }}>
+                      <img 
+                        src={toImageUrl(editingBlog.image_url)} 
+                        alt="Current" 
+                        style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '1px solid #ddd' }}
+                      />
+                      <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
+                        Current image
+                      </small>
+                    </div>
+                  )}
                 </div>
               </div>
               

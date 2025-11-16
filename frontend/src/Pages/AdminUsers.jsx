@@ -169,7 +169,7 @@ const [userToDelete, setUserToDelete] = useState(null);
       position: "fixed",
       bottom: "20px",
       left: "0px",
-      zIndex: 9999,
+      zIndex: 10000,
       backgroundColor: "rgb(32,31,36)",
       borderLeft: `6px solid ${success ? "green" : "red"}`,
       borderRadius: "0 6px 6px 0",
@@ -344,7 +344,7 @@ const [userToDelete, setUserToDelete] = useState(null);
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      zIndex: 9999
+      zIndex: 10050
     }}
   >
     <div

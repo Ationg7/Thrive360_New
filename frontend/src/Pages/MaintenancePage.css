@@ -1,0 +1,104 @@
+.maintenance-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10000;
+}
+
+/* Hide maintenance page on admin pages - CRITICAL */
+.admin-page-no-overlay .maintenance-page,
+body:has(.admin-settings) .maintenance-page,
+body:has([class*="admin"]) .maintenance-page {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+.maintenance-container {
+  text-align: center;
+  background: white;
+  padding: 60px 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 100%;
+}
+
+.maintenance-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.maintenance-container h1 {
+  font-size: 32px;
+  color: #333;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.maintenance-message {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.maintenance-submessage {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 30px;
+}
+
+.maintenance-actions {
+  margin-top: 30px;
+}
+
+.refresh-btn {
+  padding: 12px 30px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.refresh-btn:hover {
+  background: #5568d3;
+}
+
+@media (max-width: 768px) {
+  .maintenance-container {
+    padding: 40px 30px;
+  }
+  
+  .maintenance-container h1 {
+    font-size: 24px;
+  }
+  
+  .maintenance-message {
+    font-size: 16px;
+  }
+}
+
