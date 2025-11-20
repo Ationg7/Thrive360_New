@@ -5,25 +5,32 @@ import React, { memo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, STORAGE_KEYS, ROUTES, MESSAGES } from '../constants/adminConstants';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { Bar } from 'react-chartjs-2';
+import { Bar , Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
+  PointElement,
+  LineElement, // add this
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 } from 'chart.js';
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
+  PointElement, // add this
+  LineElement,  // add this
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend ,
+  Filler
 );
+
 
 import MessageDisplay from '../components/MessageDisplay';
 import './AdminAnalytics.css';
@@ -383,120 +390,138 @@ const AdminAnalytics = memo(() => {
 
       <div className="analytics-charts">
 
-  {/* Posts Chart */}
-  <div className="chart-container">
-    <div className="chart-header">
-      <h3>Posts Activity</h3>
-      <p>Posts created per day</p>
-    </div>
-    <div className="chart-content">
-      {analytics.posts_per_day.length > 0 ? (
-        <Bar
-          data={{
-            labels: analytics.posts_per_day.map(item => new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-            datasets: [
-              {
-                label: 'Posts',
-                data: analytics.posts_per_day.map(item => item.count),
-                backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                borderRadius: 6
-              }
-            ]
-          }}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: { display: false },
-              tooltip: { mode: 'index', intersect: false }
-            },
-            scales: {
-              x: { grid: { display: false } },
-              y: { beginAtZero: true }
-            }
-          }}
-        />
-      ) : (
-        <div className="no-data">No posts data available</div>
-      )}
-    </div>
+ 
+{/* --- Posts Chart --- */}
+<div className="chart-container">
+  <div className="chart-header">
+    <h3>Posts Activity</h3>
+    <p>Posts created per day</p>
   </div>
-
-  {/* Challenges Chart */}
-  <div className="chart-container">
-    <div className="chart-header">
-      <h3>Challenges Activity</h3>
-      <p>Challenges created per day</p>
-    </div>
-    <div className="chart-content">
-      {analytics.challenges_per_day.length > 0 ? (
-        <Bar
-          data={{
-            labels: analytics.challenges_per_day.map(item => new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-            datasets: [
-              {
-                label: 'Challenges',
-                data: analytics.challenges_per_day.map(item => item.count),
-                backgroundColor: 'rgba(255, 206, 86, 0.7)',
-                borderRadius: 6
-              }
-            ]
-          }}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: { display: false },
-              tooltip: { mode: 'index', intersect: false }
-            },
-            scales: {
-              x: { grid: { display: false } },
-              y: { beginAtZero: true }
+  <div className="chart-content">
+    {analytics.posts_per_day.length > 0 ? (
+      <Line
+        data={{
+          labels: analytics.posts_per_day.map(item =>
+            new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          ),
+          datasets: [
+            {
+              label: 'Posts',
+              data: analytics.posts_per_day.map(item => item.count),
+              borderColor: 'rgba(54, 162, 235, 1)',
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 4,
+              pointHoverRadius: 6
             }
-          }}
-        />
-      ) : (
-        <div className="no-data">No challenges data available</div>
-      )}
-    </div>
+          ]
+        }}
+        options={{
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { mode: 'index', intersect: false }
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true }
+          }
+        }}
+      />
+    ) : (
+      <div className="no-data">No posts data available</div>
+    )}
   </div>
+</div>
 
-  {/* User Registrations Chart */}
-  <div className="chart-container">
-    <div className="chart-header">
-      <h3>User Registrations</h3>
-      <p>New users registered per day</p>
-    </div>
-    <div className="chart-content">
-      {analytics.user_registrations.length > 0 ? (
-        <Bar
-          data={{
-            labels: analytics.user_registrations.map(item => new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-            datasets: [
-              {
-                label: 'Users',
-                data: analytics.user_registrations.map(item => item.count),
-                backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                borderRadius: 6
-              }
-            ]
-          }}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: { display: false },
-              tooltip: { mode: 'index', intersect: false }
-            },
-            scales: {
-              x: { grid: { display: false } },
-              y: { beginAtZero: true }
+{/* --- Challenges Chart --- */}
+<div className="chart-container">
+  <div className="chart-header">
+    <h3>Challenges Activity</h3>
+    <p>Challenges created per day</p>
+  </div>
+  <div className="chart-content">
+    {analytics.challenges_per_day.length > 0 ? (
+      <Line
+        data={{
+          labels: analytics.challenges_per_day.map(item =>
+            new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          ),
+          datasets: [
+            {
+              label: 'Challenges',
+              data: analytics.challenges_per_day.map(item => item.count),
+              borderColor: 'rgba(255, 206, 86, 1)',
+              backgroundColor: 'rgba(255, 206, 86, 0.2)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 4,
+              pointHoverRadius: 6
             }
-          }}
-        />
-      ) : (
-        <div className="no-data">No user registration data available</div>
-      )}
-    </div>
+          ]
+        }}
+        options={{
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { mode: 'index', intersect: false }
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true }
+          }
+        }}
+      />
+    ) : (
+      <div className="no-data">No challenges data available</div>
+    )}
   </div>
+</div>
 
+{/* --- User Registrations Chart --- */}
+<div className="chart-container">
+  <div className="chart-header">
+    <h3>User Registrations</h3>
+    <p>New users registered per day</p>
+  </div>
+  <div className="chart-content">
+    {analytics.user_registrations.length > 0 ? (
+      <Line
+        data={{
+          labels: analytics.user_registrations.map(item =>
+            new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          ),
+          datasets: [
+            {
+              label: 'Users',
+              data: analytics.user_registrations.map(item => item.count),
+              borderColor: 'rgba(75, 192, 192, 1)',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }
+          ]
+        }}
+        options={{
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { mode: 'index', intersect: false }
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true }
+          }
+        }}
+      />
+    ) : (
+      <div className="no-data">No user registration data available</div>
+    )}
+  </div>
+</div>
 </div>
 
         {/* Detailed Reports Section */}

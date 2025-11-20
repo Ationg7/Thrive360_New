@@ -24,6 +24,8 @@ class Blog extends Model
         'tags' => 'array',
     ];
 
+      protected $appends = ['excerpt']; // <-- add this line delete if sayup sya ako ra gi experement
+
     // Scope for filtering by category
     public function scopeByCategory($query, $category)
     {

@@ -298,7 +298,7 @@ const Meditation = () => {
           text-align: center;
          background: rgba(255,255,255,0.25);
           border-radius: 8px;
-          pointer-events: none;
+          pointer-events: auto;
 }
 
 .meditation-notif-popup {

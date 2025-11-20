@@ -505,16 +505,16 @@ const Profile = () => {
                 <ThreeDotsVertical />
               </Dropdown.Toggle>
               <Dropdown.Menu>
-  <Dropdown.Item onClick={() => setShowChangePhoto(true)}>
+  <Dropdown.Item  onClick={() => setShowChangePhoto(true)}>
     Change Photo
   </Dropdown.Item>
-  <Dropdown.Item onClick={() => setShowEventsModal(true)}>
+  <Dropdown.Item className="desktop-hide" onClick={() => setShowEventsModal(true)}>
     Upcoming Events
   </Dropdown.Item>
-  <Dropdown.Item onClick={() => setShowHistoryModal(true)}>
+  <Dropdown.Item className="desktop-hide" onClick={() => setShowHistoryModal(true)}>
   Challenge's History
 </Dropdown.Item>
-  <Dropdown.Item onClick={() => setShowTodoModal(true)}>
+  <Dropdown.Item className="desktop-hide" onClick={() => setShowTodoModal(true)}>
     To-Do List
   </Dropdown.Item>
 </Dropdown.Menu>
@@ -603,7 +603,7 @@ const Profile = () => {
       </button>
 
       {/* Challenge History Content */}
-      <Card className="mb-3 events-card shadow-sm border-0" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <Card className="mb-3 events-card shadow-sm border-0 mobile-hide-section" style={{ fontFamily: 'Poppins, sans-serif' }}>
         <div className="events-scroll-wrapper" style={{ maxHeight: '400px', overflowY: 'auto' }}>
           <ListGroup variant="flush">
             <ChallengeHistoryList />
@@ -643,8 +643,8 @@ const Profile = () => {
 
 
         {/* Left Side */}
-        <Col md={3} className="events-container">
-  <Card className="mb-3 events-card">
+        <Col md={3} className="events-container mobile-hide-section">
+  <Card className="mb-3 events-card ">
 
     
    
@@ -1064,6 +1064,50 @@ const Profile = () => {
                   </Card>
                 ))}
               </div>
+ {/* Undo Snackbar */}
+{showUndo && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: "20px",
+      left: "0px", // flush to left edge
+      zIndex: 9999,
+      backgroundColor: "rgb(32,31,36)", // white background
+      borderLeft: "4px solid green", // green accent
+      borderRadius: "0 6px 6px 0", // rounded except left edge
+      padding: "14px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
+      fontFamily: "Poppins, sans-serif",
+      fontSize: "16px",
+      minWidth: "320px",
+      maxWidth: "400px",
+      wordBreak: "break-word",
+      marginLeft: "20px",
+    }}
+  >
+    <span style={{ color: "#fff", fontWeight: 600 }}>
+      Post hidden
+    </span>
+    
+    <div style={{ display: "flex", gap: "14px" }}>
+      <span
+        onClick={undoHide}
+        style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600, display:"underline" }}
+      >
+        Undo
+      </span>
+      <span
+        onClick={() => setShowUndo(false)}
+        style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600 }}
+      >
+        Ok
+      </span>
+    </div>
+  </div>
+)}
 
          
        
@@ -1141,7 +1185,7 @@ const Profile = () => {
         <Col
   xs={12}
   md={3}
-  className="right-sidebar"
+  className="right-sidebar mobile-hide-section"
   style={{
     maxHeight: "calc(100vh - 20px)", // leave a little space from top/bottom
     overflowY: "auto",

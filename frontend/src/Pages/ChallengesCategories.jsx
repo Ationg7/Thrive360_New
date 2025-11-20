@@ -58,6 +58,7 @@ const ChallengesCategories = () => {
 
   return (
     <Container className="challenges-container" style={{ marginTop: "50px" }}>
+      
       {/* Header */}
       <div className="header text-center mb-4">
         <h2>All Challenges</h2>
@@ -65,6 +66,7 @@ const ChallengesCategories = () => {
           Choose challenges to join and improve your habits!
         </p>
       </div>
+      
 
       {/* Tabs for Daily / Weekly / Monthly */}
       <Tab.Container defaultActiveKey="Daily">
@@ -153,22 +155,22 @@ const ChallengesCategories = () => {
                             <Card.Title>{challenge.title}</Card.Title>
                             <Card.Text>{challenge.description}</Card.Text>
 
-                           <div className="details w-100 d-flex justify-content-start">
-    <span>
-      👥 {challenge.participants ?? 140} participants
-    </span>
-    <span
-    className="px-2 py-1 rounded-pill"
-    style={{
-      border: '1px solid #6c757d',
-      color: '#6c757d',
-      fontSize: '0.75rem',
-      fontWeight: 500,
-    }}
+                           <div className="details w-100 d-flex justify-content-between align-items-center">
+  <span>👥 {challenge.participants ?? 0} participants</span>
+  <span
+    className={`px-3 py-1 rounded-pill fw-medium badge-difficulty ${
+      challenge.difficulty?.toLowerCase() === "easy"
+        ? "easy-border"
+        : challenge.difficulty?.toLowerCase() === "hard"
+        ? "hard-border"
+        : "medium-border"
+    }`}
   >
     {challenge.difficulty ?? "Medium"}
   </span>
-  </div>  
+</div>
+
+
 
                             <Button
                               className="challenge-button mt-1"

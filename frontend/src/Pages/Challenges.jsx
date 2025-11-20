@@ -355,57 +355,21 @@ const ChallengesOverview = () => {
       })}
 
       {/* Completion Success Message */}
-      {showCompletionMessage && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 10000,
-            backgroundColor: "#28a745",
-            color: "#fff",
-            padding: "20px 30px",
-            borderRadius: "12px",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-            display: "flex",
-            alignItems: "center",
-            gap: "15px",
-            minWidth: "320px",
-            maxWidth: "500px",
-            animation: "slideUp 0.3s ease forwards",
-            fontFamily: "Poppins, sans-serif",
-          }}
-        >
-          <div style={{ fontSize: "32px" }}>🎉</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: "16px", marginBottom: "4px" }}>
-              Challenge Completed!
-            </div>
-            <div style={{ fontSize: "14px", opacity: 0.95 }}>
-              {completionMessage}
-            </div>
-          </div>
-          <button
-            onClick={() => setShowCompletionMessage(false)}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#fff",
-              fontSize: "20px",
-              cursor: "pointer",
-              padding: "0",
-              width: "24px",
-              height: "24px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            ×
-          </button>
-        </div>
-      )}
+     {showCompletionMessage && (
+  <div className="completion-message">
+    <div className="completion-message-content">
+      <div className="completion-message-icon">🎉</div>
+      <div>
+        <div className="completion-message-title">Challenge Completed!</div>
+        <div className="completion-message-text">{completionMessage}</div>
+      </div>
+    </div>
+
+    <div className="completion-message-close" onClick={() => setShowCompletionMessage(false)}>×</div>
+  </div>
+)}
+
+
 
       {/* Floating Popup for Guests */}
       {showPopup && (
@@ -541,6 +505,57 @@ const ChallengesOverview = () => {
 .join-challenges-btn button {
   min-width: 150px;
 }
+  /* Completion Message */
+.completion-message {
+  position: fixed;
+  bottom: 20px;
+  left: 20px; /* add some space from the left edge */
+  z-index: 10000;
+  background-color: rgb(32,31,36);
+  border-left: 4px solid #28a745;
+  border-radius: 0 6px 6px 0;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
+  font-family: Poppins, sans-serif;
+  font-size: 16px;
+  min-width: 320px;
+  max-width: 400px;
+  word-break: break-word;
+  transition: all 0.3s ease;
+}
+
+.completion-message-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #e0e0e0;
+}
+
+.completion-message-icon {
+  font-size: 28px;
+}
+
+.completion-message-title {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.completion-message-text {
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+.completion-message-close {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 18px;
+  color: rgb(138, 180, 248);
+  margin-left: 10px;
+}
+
 
 /* Mobile responsive */
 @media (max-width: 768px) {
@@ -551,6 +566,36 @@ const ChallengesOverview = () => {
   .join-challenges-btn button {
     width: 50%;       /* almost full width */
     max-width: 300px; /* optional cap */
+    height: 50px;
+  }
+    .completion-message {
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 8px;
+    padding: 10px 16px;
+    min-width: 260px;
+    max-width: 300px;
+    font-size: 14px;
+  }
+
+  .completion-message-icon {
+    font-size: 22px;
+  }
+
+  .completion-message-title {
+    font-size: 14px;
+  }
+
+  .completion-message-text {
+    font-size: 12px;
+  }
+
+  .completion-message-content {
+    gap: 8px;
+  }
+
+  .completion-message-close {
+    font-size: 16px;
   }
 }
 

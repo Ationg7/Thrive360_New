@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(0, 0, 0, 0.5); /* semi-transparent background for floating effect */
   padding: 20px;
   position: fixed;
   top: 0;
@@ -31,6 +31,19 @@ body:has([class*="admin"]) .maintenance-page {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   max-width: 500px;
   width: 100%;
+  animation: floatIn 0.5s ease-out;
+}
+
+/* Floating animation */
+@keyframes floatIn {
+  0% {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .maintenance-icon {
@@ -74,7 +87,7 @@ body:has([class*="admin"]) .maintenance-page {
 
 .refresh-btn {
   padding: 12px 30px;
-  background: #667eea;
+ background: linear-gradient(135deg,#28a745,#34ce57);
   color: white;
   border: none;
   border-radius: 8px;
@@ -85,9 +98,10 @@ body:has([class*="admin"]) .maintenance-page {
 }
 
 .refresh-btn:hover {
-  background: #5568d3;
+background: linear-gradient(135deg,#34ce57 ,#28a745);
 }
 
+/* Mobile responsiveness */
 @media (max-width: 768px) {
   .maintenance-container {
     padding: 40px 30px;
@@ -102,3 +116,27 @@ body:has([class*="admin"]) .maintenance-page {
   }
 }
 
+/* Extra mobile tweaks for small screens */
+@media (max-width: 480px) {
+  .maintenance-container {
+    padding: 30px 20px;
+  }
+  
+  .maintenance-icon {
+    font-size: 60px;
+  }
+  
+  .maintenance-message {
+    font-size: 14px;
+  }
+  
+  .maintenance-submessage {
+    font-size: 12px;
+  }
+  
+  .refresh-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+}
