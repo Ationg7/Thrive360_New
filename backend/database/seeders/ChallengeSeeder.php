@@ -13,7 +13,8 @@ class ChallengeSeeder extends Seeder
             [
                 'title' => 'Morning Mindfulness',
                 'description' => 'Start your daily with 5 minutes of mindful breathing to center yourself before classes begin.',
-                'type' => 'Daily',
+                   'category' => 'Daily',
+                   'difficulty_level' => 'Easy',
                 'status' => 'Progress',
                 'days_left' => 2,
                 'participants' => 120,
@@ -24,7 +25,8 @@ class ChallengeSeeder extends Seeder
             [
                 'title' => 'Digital Detox',
                 'description' => 'Spend 2 hours each day without digital devices. Use the time for reading, walking, or in-person connections.',
-                'type' => 'Weekly',
+                   'category' => 'Weekly',
+                   'difficulty_level' => 'Medium',
                 'status' => 'Progress',
                 'days_left' => 5,
                 'participants' => 156,
@@ -35,7 +37,8 @@ class ChallengeSeeder extends Seeder
             [
                 'title' => 'Gratitude Journal',
                 'description' => 'Write down three things you\'re grateful for each day this month. Watch how it transforms your outlook.',
-                'type' => 'Monthly',
+                   'category' => 'Monthly',
+                   'difficulty_level' => 'Easy',
                 'status' => 'Not Started',
                 'days_left' => null,
                 'participants' => 83,
@@ -46,7 +49,8 @@ class ChallengeSeeder extends Seeder
             [
                 'title' => 'Hydration Challenge',
                 'description' => 'Drink 8 glasses of water daily for a week. Stay hydrated and feel the difference in your energy levels.',
-                'type' => 'Weekly',
+                   'category' => 'Weekly',
+                   'difficulty_level' => 'Easy',
                 'status' => 'Not Started',
                 'days_left' => 7,
                 'participants' => 45,
@@ -57,7 +61,8 @@ class ChallengeSeeder extends Seeder
             [
                 'title' => 'Evening Reflection',
                 'description' => 'Spend 10 minutes each evening reflecting on your day. What went well? What could be improved?',
-                'type' => 'Daily',
+                   'category' => 'Daily',
+                   'difficulty_level' => 'Medium',
                 'status' => 'Not Started',
                 'days_left' => 14,
                 'participants' => 67,

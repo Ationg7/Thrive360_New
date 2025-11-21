@@ -24,11 +24,17 @@ const ChallengesCategories = () => {
         let challenges = await challengesAPI.getChallenges();
         
         // Map category to type for backward compatibility, or use category directly
-        challenges = challenges.map(challenge => ({
-          ...challenge,
-          type: challenge.category || challenge.type, // Use category if available, fallback to type
-          category: challenge.category || challenge.type // Ensure category exists
-        }));
+        challenges = challenges.map(challenge => {
+          // Normalize difficulty to lowercase for consistent comparison
+          const normalizedDifficulty = (challenge.difficulty_level || challenge.difficulty || "Medium").toLowerCase();
+          return {
+            ...challenge,
+            type: challenge.category || challenge.type, // Use category if available, fallback to type
+            category: challenge.category || challenge.type, // Ensure category exists
+            difficulty: normalizedDifficulty,
+            difficulty_level: normalizedDifficulty, // Ensure both properties exist
+          };
+        });
 
         setAllChallenges(challenges);
       } catch (err) {
@@ -163,14 +169,14 @@ const ChallengesCategories = () => {
   <span>👥 {challenge.participants ?? 0} participants</span>
   <span
     className={`px-3 py-1 rounded-pill fw-medium badge-difficulty ${
-      challenge.difficulty?.toLowerCase() === "easy"
+      challenge.difficulty === "easy"
         ? "easy-border"
-        : challenge.difficulty?.toLowerCase() === "hard"
+        : challenge.difficulty === "hard"
         ? "hard-border"
         : "medium-border"
     }`}
   >
-    {challenge.difficulty ?? "Medium"}
+    {challenge.difficulty ? challenge.difficulty.charAt(0).toUpperCase() + challenge.difficulty.slice(1) : "Medium"}
   </span>
 </div>
 

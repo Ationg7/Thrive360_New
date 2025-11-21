@@ -31,27 +31,39 @@ export const ChallengesProvider = ({ children }) => {
 
         const joined = history
           .filter((h) => !h.is_completed)
-          .map((h) => ({
-            id: h.challenge_id,
-            title: h.challenge_title,
-            description: h.challenge_description,
-            type: h.challenge_category || h.challenge_type,
-            category: h.challenge_category || h.challenge_type,
-            status: h.status === "Completed" ? "Completed" : "In Progress",
-            progress: h.progress_percentage,
-          }));
+          .map((h) => {
+            const fallbackChallenge = challenges.find((c) => c.id === h.challenge_id) || {};
+            const rawDifficulty = h.challenge_difficulty_level || h.difficulty_level || h.difficulty || fallbackChallenge.difficulty_level || fallbackChallenge.difficulty || "Medium";
+            const difficulty = String(rawDifficulty).toLowerCase();
+            return {
+              id: h.challenge_id,
+              title: h.challenge_title,
+              description: h.challenge_description,
+              type: h.challenge_category || h.challenge_type,
+              category: h.challenge_category || h.challenge_type,
+              status: h.status === "Completed" ? "Completed" : "In Progress",
+              progress: h.progress_percentage,
+              difficulty,
+            };
+          });
 
         const completed = history
           .filter((h) => h.is_completed)
-          .map((h) => ({
-            id: h.challenge_id,
-            title: h.challenge_title,
-            description: h.challenge_description,
-            type: h.challenge_category || h.challenge_type,
-            category: h.challenge_category || h.challenge_type,
-            status: "Completed",
-            progress: h.progress_percentage,
-          }));
+          .map((h) => {
+            const fallbackChallenge = challenges.find((c) => c.id === h.challenge_id) || {};
+            const rawDifficulty = h.challenge_difficulty_level || h.difficulty_level || h.difficulty || fallbackChallenge.difficulty_level || fallbackChallenge.difficulty || "Medium";
+            const difficulty = String(rawDifficulty).toLowerCase();
+            return {
+              id: h.challenge_id,
+              title: h.challenge_title,
+              description: h.challenge_description,
+              type: h.challenge_category || h.challenge_type,
+              category: h.challenge_category || h.challenge_type,
+              status: "Completed",
+              progress: h.progress_percentage,
+              difficulty,
+            };
+          });
 
         setJoinedChallenges(joined);
         setCompletedChallenges(completed);
@@ -80,26 +92,36 @@ export const ChallengesProvider = ({ children }) => {
       const completed = history.filter((h) => h.is_completed);
 
       setJoinedChallenges(
-        joined.map((h) => ({
-          id: h.challenge_id,
-          title: h.challenge_title,
-          description: h.challenge_description,
-          type: h.challenge_category || h.challenge_type,
-          category: h.challenge_category || h.challenge_type,
-          status: h.status,
-          progress: h.progress_percentage,
-        }))
+        joined.map((h) => {
+          const fallbackChallenge = challenges.find((c) => c.id === h.challenge_id) || {};
+          const rawDifficulty = h.challenge_difficulty_level || h.difficulty_level || h.difficulty || fallbackChallenge.difficulty_level || fallbackChallenge.difficulty || "Medium";
+          return {
+            id: h.challenge_id,
+            title: h.challenge_title,
+            description: h.challenge_description,
+            type: h.challenge_category || h.challenge_type,
+            category: h.challenge_category || h.challenge_type,
+            status: h.status,
+            progress: h.progress_percentage,
+            difficulty: String(rawDifficulty).toLowerCase(),
+          };
+        })
       );
       setCompletedChallenges(
-        completed.map((h) => ({
-          id: h.challenge_id,
-          title: h.challenge_title,
-          description: h.challenge_description,
-          type: h.challenge_category || h.challenge_type,
-          category: h.challenge_category || h.challenge_type,
-          status: "Completed",
-          progress: h.progress_percentage,
-        }))
+        completed.map((h) => {
+          const fallbackChallenge = challenges.find((c) => c.id === h.challenge_id) || {};
+          const rawDifficulty = h.challenge_difficulty_level || h.difficulty_level || h.difficulty || fallbackChallenge.difficulty_level || fallbackChallenge.difficulty || "Medium";
+          return {
+            id: h.challenge_id,
+            title: h.challenge_title,
+            description: h.challenge_description,
+            type: h.challenge_category || h.challenge_type,
+            category: h.challenge_category || h.challenge_type,
+            status: "Completed",
+            progress: h.progress_percentage,
+            difficulty: String(rawDifficulty).toLowerCase(),
+          };
+        })
       );
     } catch (err) {
       console.error("Failed to join challenge:", err);
@@ -145,26 +167,36 @@ export const ChallengesProvider = ({ children }) => {
       const completed = history.filter((h) => h.is_completed);
 
       setJoinedChallenges(
-        joined.map((h) => ({
-          id: h.challenge_id,
-          title: h.challenge_title,
-          description: h.challenge_description,
-          type: h.challenge_category || h.challenge_type,
-          category: h.challenge_category || h.challenge_type,
-          status: h.status,
-          progress: h.progress_percentage,
-        }))
+        joined.map((h) => {
+          const fallbackChallenge = challenges.find((c) => c.id === h.challenge_id) || {};
+          const rawDifficulty = h.challenge_difficulty_level || h.difficulty_level || h.difficulty || fallbackChallenge.difficulty_level || fallbackChallenge.difficulty || "Medium";
+          return {
+            id: h.challenge_id,
+            title: h.challenge_title,
+            description: h.challenge_description,
+            type: h.challenge_category || h.challenge_type,
+            category: h.challenge_category || h.challenge_type,
+            status: h.status,
+            progress: h.progress_percentage,
+            difficulty: String(rawDifficulty).toLowerCase(),
+          };
+        })
       );
       setCompletedChallenges(
-        completed.map((h) => ({
-          id: h.challenge_id,
-          title: h.challenge_title,
-          description: h.challenge_description,
-          type: h.challenge_category || h.challenge_type,
-          category: h.challenge_category || h.challenge_type,
-          status: "Completed",
-          progress: h.progress_percentage,
-        }))
+        completed.map((h) => {
+          const fallbackChallenge = challenges.find((c) => c.id === h.challenge_id) || {};
+          const rawDifficulty = h.challenge_difficulty_level || h.difficulty_level || h.difficulty || fallbackChallenge.difficulty_level || fallbackChallenge.difficulty || "Medium";
+          return {
+            id: h.challenge_id,
+            title: h.challenge_title,
+            description: h.challenge_description,
+            type: h.challenge_category || h.challenge_type,
+            category: h.challenge_category || h.challenge_type,
+            status: "Completed",
+            progress: h.progress_percentage,
+            difficulty: String(rawDifficulty).toLowerCase(),
+          };
+        })
       );
     } catch (err) {
       console.error("Failed to mark as done:", err);
@@ -339,7 +371,9 @@ const ChallengesOverview = () => {
         : "medium-border"
     }`}
   >
-    {challenge.difficulty ?? "Medium"}
+    {challenge.difficulty
+      ? challenge.difficulty.charAt(0).toUpperCase() + challenge.difficulty.slice(1)
+      : "Medium"}
   </span>
                       </div>
 

@@ -34,6 +34,7 @@ class ChallengeController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'required|string|max:1000',
                 'category' => 'required|enum:Daily,Weekly,Monthly',
+                'difficulty_level'=>'required|enum:Easy,Medium,Hard',
                 'theme' => 'nullable|string|max:50',
                 'start_date' => 'nullable|date',
                 'end_date' => 'nullable|date|after:start_date',
@@ -45,7 +46,7 @@ class ChallengeController extends Controller
             }
 
             $challengeData = $request->only([
-                'title', 'description', 'category',  'theme', 'start_date', 'end_date'
+                'title', 'description', 'category', 'difficulty_level', 'theme', 'start_date', 'end_date'
             ]);
             
             $userId = auth()->id();
@@ -96,6 +97,7 @@ class ChallengeController extends Controller
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string|max:1000',
             'category' => 'required|enum:Daily,Weekly,Monthly',
+            'difficulty_level'=>'required|enum:Easy,Medium,Hard',
             'theme' => 'nullable|string|max:50',
             'is_active' => 'sometimes|boolean',
         ]);
@@ -213,6 +215,7 @@ class ChallengeController extends Controller
                     'challenge_title' => optional($progress->challenge)->title,
                     'challenge_description' => optional($progress->challenge)->description,
                     'challenge_category' => optional($progress->challenge)->category,
+                    'challenge_difficulty_level' => optional($progress->challenge)->difficulty_level,
                     'status' => $progress->status,
                     'progress_percentage' => $progress->progress_percentage,
                     'joined_at' => $progress->created_at,

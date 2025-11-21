@@ -13,6 +13,7 @@ class Challenge extends Model
         'title',
         'description',
         'category',
+        'difficulty_level',
         'status',
         'participants',
         'progress_percentage',
