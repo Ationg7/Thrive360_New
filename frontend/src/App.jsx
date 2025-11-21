@@ -231,13 +231,14 @@ function Layout() {
         isolation: 'isolate' /* Create new stacking context */
       } : {}}
     >
+       <div className="page-container">
       {/* Navbars */}
       {isAdminPage && pathname !== "/admin-login" && <AdminNavbar />}
       {!isNoNavbarPage && !isAdminPage && (isPublicPage ? <Navbars /> : <Navbar />)}
-         
+          <div className="content-wrap">
       {/* Page content */}
       <Outlet />
-
+</div>
       {/* Footer */}
       {!isNoFooterPage && <Footer />}
 
@@ -246,6 +247,7 @@ function Layout() {
         floatingAllowedRoutes.some((path) => pathname.startsWith(path)) && (
           <FloatingPsychologists />
         )}
+    </div>
     </div>
   );
 }

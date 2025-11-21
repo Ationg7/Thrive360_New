@@ -10,7 +10,7 @@ import { Modal, Button } from "react-bootstrap";
 function NavigationBar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [setShowSuccess] = useState(false);
@@ -24,15 +24,9 @@ function NavigationBar() {
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     setIsLoggedIn(!!token);
-    // Update email from user object immediately when it changes
-    if (user?.email) {
-      setUserEmail(user.email);
-      localStorage.setItem("userEmail", user.email);
-    } else {
-      const email = localStorage.getItem("userEmail");
-      setUserEmail(email || "");
-    }
-  }, [location, user]);
+    const email = localStorage.getItem("userEmail");
+    setUserEmail(email || "");
+  }, [location]);
 
   // Fetch unread notifications
   useEffect(() => {
@@ -75,29 +69,13 @@ function NavigationBar() {
     setIsProfileOpen(false);
   };
 
-  const performLogout = async () => {
-    try {
-      const token = localStorage.getItem("authToken");
-      if (token) {
-        // Call backend logout endpoint
-        await fetch("http://127.0.0.1:8000/api/logout", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => {}); // Ignore errors
-      }
-    } catch (e) {
-      // Ignore errors
-    } finally {
-      // Clear local state and storage
-      logout();
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-      localStorage.removeItem("userEmail");
-      setIsLoggedIn(false);
-      setShowConfirm(false);
-      // Force immediate page refresh
-      window.location.href = "/signin";
-    }
+  const performLogout = () => {
+    localStorage.removeItem("authToken");
+    setIsLoggedIn(false);
+    setShowConfirm(false);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+    navigate("/signin");
   };
 
   return (
@@ -163,34 +141,35 @@ function NavigationBar() {
             {/* Notification */}
             <div className="position-relative">
               <button
-                className="btn p-2 rounded-circle bell-btn"
-                style={{ background: "transparent", border: "none" }}
-                onClick={() => setShowNotifications(!showNotifications)}
-              >
-                <Bell size={26} color="#000000" />
+                 className="rounded-circle bell-btn"
+  onClick={() => setShowNotifications(!showNotifications)}
+>
+  <Bell size={26} color="#000000" />
 
                 {/* Unread badge above the bell */}
                 {unreadCount > 0 && (
                   <span
-                    style={{
-                      position: 'absolute',
-                      top: '-4px',
-                      right: '-4px',
-                      backgroundColor: 'red',
-                      color: 'white',
-                      fontSize: '0.65rem',
-                      fontWeight: 'bold',
-                      borderRadius: '50%',
-                      width: '16px',
-                      height: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      zIndex: 10,
-                    }}
-                  >
-                    {unreadCount}
-                  </span>
+  style={{
+    position: 'absolute',
+    top: '0px',
+    right: '0px',
+    transform: 'translate(30%, -30%)',
+    backgroundColor: 'red',
+    color: 'white',
+    fontSize: '0.65rem',
+    fontWeight: 'bold',
+    borderRadius: '50%',
+    width: '16px',
+    height: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  }}
+>
+  {unreadCount}
+</span>
+
                 )}
               </button>
 
@@ -315,6 +294,28 @@ function NavigationBar() {
 
      <style>{`
      /* Desktop - keep original size */
+     /* Bell Hover Circle Effect – Works on all screens */
+.bell-btn {
+  position: relative;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s ease, transform 0.1s ease;
+}
+
+.bell-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+.bell-btn:active {
+  transform: scale(0.92);
+  background: rgba(0, 0, 0, 0.12);
+}
+
 .notification-dropdown {
   position: absolute;
   top: 40px;
@@ -361,6 +362,26 @@ function NavigationBar() {
   right: 0;
   z-index: 10000;
   transition: all 0.3s ease;
+}
+.bell-btn {
+  position: relative;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s ease, transform 0.1s ease;
+}
+
+.bell-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+.bell-btn:active {
+  transform: scale(0.92);
+  background: rgba(0, 0, 0, 0.12);
 }
 
 /* Mobile only */

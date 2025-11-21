@@ -293,6 +293,28 @@ function NavigationBar() {
 
      <style>{`
      /* Desktop - keep original size */
+     /* Bell Hover Circle Effect – Works on all screens */
+.bell-btn {
+  position: relative;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s ease, transform 0.1s ease;
+}
+
+.bell-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+.bell-btn:active {
+  transform: scale(0.92);
+  background: rgba(0, 0, 0, 0.12);
+}
+
 .notification-dropdown {
   position: absolute;
   top: 40px;

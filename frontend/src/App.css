@@ -995,6 +995,16 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   margin: 0 5px;
   color: white;
 }
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-wrap {
+  flex: 1;
+}
+
 /* ===== MOBILE FOOTER (≤768px) ===== */
 @media (max-width: 768px) {
 
@@ -2941,6 +2951,9 @@ button:hover {
     grid-template-columns: repeat(2, 1fr); /* 2 columns */
     gap: 20px;
   }
+  .category{
+    margin-right: 160px;
+  }
 }
 
 /* Extra small screens (mobile phones) */
@@ -3052,7 +3065,8 @@ button:hover {
 .top-card {
   display: flex;
   justify-content: space-between;
-  align-items: center; /* vertically align text and image */
+  align-items: flex-start;
+
   background: #fff;
   border-radius: 12px;
   padding: 30px;

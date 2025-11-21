@@ -327,7 +327,7 @@ const ChallengesOverview = () => {
                       <Card.Title>{challenge.title}</Card.Title>
                       <Card.Text>{challenge.description}</Card.Text>
 
-                      <div className="details w-100 d-flex justify-content-start">
+                      <div className="details w-100 d-flex justify-content-between align-items-center">
                         
                         <span>👥 {allChallenges.find(c => c.id === challenge.id)?.participants ?? 0} participants</span>
                         <span
@@ -365,20 +365,33 @@ const ChallengesOverview = () => {
         );
       })}
 
-      {/* Completion Success Message */}
-     {showCompletionMessage && (
-  <div className="completion-message">
-    <div className="completion-message-content">
-      <div className="completion-message-icon">🎉</div>
-      <div>
-        <div className="completion-message-title">Challenge Completed!</div>
-        <div className="completion-message-text">{completionMessage}</div>
-      </div>
-    </div>
+     {/* Completion Success Message */}
+   {showCompletionMessage && (
+  <div className="completion-overlay">
+    <div className="completion-box">
+      <button
+        className="completion-close"
+        onClick={() => setShowCompletionMessage(false)}
+      >
+        ×
+      </button>
 
-    <div className="completion-message-close" onClick={() => setShowCompletionMessage(false)}>×</div>
+      <div className="completion-icon">🎉</div>
+
+      <h5 className="completion-title">Challenge Completed!</h5>
+
+      <p className="completion-text">{completionMessage}</p>
+
+      <button
+        className="completion-ok"
+        onClick={() => setShowCompletionMessage(false)}
+      >
+        Okay
+      </button>
+    </div>
   </div>
 )}
+
 
 
 
@@ -516,55 +529,94 @@ const ChallengesOverview = () => {
 .join-challenges-btn button {
   min-width: 150px;
 }
-  /* Completion Message */
-.completion-message {
+ /* Completion Message */
+/* Background overlay */
+.completion-overlay {
   position: fixed;
-  bottom: 20px;
-  left: 20px; /* add some space from the left edge */
-  z-index: 10000;
-  background-color: rgb(32,31,36);
-  border-left: 4px solid #28a745;
-  border-radius: 0 6px 6px 0;
-  padding: 14px 20px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.35);
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
-  font-family: Poppins, sans-serif;
-  font-size: 16px;
-  min-width: 320px;
-  max-width: 400px;
-  word-break: break-word;
-  transition: all 0.3s ease;
+  z-index: 9999;
 }
 
-.completion-message-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #e0e0e0;
+/* White popup box */
+.completion-box {
+  background: #fff;
+  padding: 28px;
+  width: 380px;
+  max-width: 92%;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  position: relative;
+  text-align: center;
+  animation: fadeIn 0.25s ease;
+  font-family: "Poppins", sans-serif;
 }
 
-.completion-message-icon {
-  font-size: 28px;
-}
-
-.completion-message-title {
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.completion-message-text {
-  font-size: 14px;
-  opacity: 0.95;
-}
-
-.completion-message-close {
+/* Close button (X) */
+.completion-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
   cursor: pointer;
+  color: #555;
+}
+
+/* Big celebration icon */
+.completion-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+/* Title */
+.completion-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #222;
+}
+
+/* Text message */
+.completion-text {
+  font-size: 15px;
+  color: #555;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* OK Button — same as Bootstrap "success" button */
+.completion-ok {
+  padding: 10px 24px;
+  border-radius: 10px;
+  background: #2e7d32;     /* success green */
+  border: 1px solid #198754;
+  color: white;
   font-weight: 600;
-  font-size: 18px;
-  color: rgb(138, 180, 248);
-  margin-left: 10px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+/* Hover — matches Bootstrap success hover */
+.completion-ok:hover {
+  background: #157347;     /* darker green */
+  border-color: #146c43;   /* matching darker border */
+  color: white;
+}
+
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 
