@@ -603,7 +603,7 @@ const Profile = () => {
       </button>
 
       {/* Challenge History Content */}
-      <Card className="mb-3 events-card shadow-sm border-0 mobile-hide-section" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <Card className="mb-3 events-card shadow-sm border-0 mobile-visible-section" style={{ fontFamily: 'Poppins, sans-serif' }}>
         <div className="events-scroll-wrapper" style={{ maxHeight: '400px', overflowY: 'auto' }}>
           <ListGroup variant="flush">
             <ChallengeHistoryList />

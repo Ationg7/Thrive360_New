@@ -1573,6 +1573,9 @@ label {
   .mobile-hide-section {
     display: none !important;
   }
+  .mobile-visible-section {
+    display: block !important;
+  }
   .sidebar-left,
   .sidebar-right {
     position: relative !important;

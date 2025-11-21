@@ -13,7 +13,7 @@ const getTheme = (type) => {
 };
 
 const ChallengesCategories = () => {
-  const { joinedChallenges, joinChallenge } = useChallenges();
+  const { joinedChallenges, completedChallenges, joinChallenge } = useChallenges();
   const { isLoggedIn } = useAuth();
   const [allChallenges, setAllChallenges] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
@@ -44,7 +44,11 @@ const ChallengesCategories = () => {
       return;
     }
 
-    if (!joinedChallenges.some((c) => c.title === challenge.title)) {
+    const alreadyJoined =
+      joinedChallenges.some((c) => c.title === challenge.title) ||
+      completedChallenges.some((c) => c.title === challenge.title);
+
+    if (!alreadyJoined) {
       joinChallenge({
         ...challenge,
         status: "In Progress",
@@ -95,9 +99,9 @@ const ChallengesCategories = () => {
                 {allChallenges
                   .filter((c) => (c.category || c.type) === type)
                   .map((challenge, index) => {
-                    const isJoined = joinedChallenges.some(
-                      (jc) => jc.title === challenge.title
-                    );
+                    const isJoined =
+                      joinedChallenges.some((jc) => jc.title === challenge.title) ||
+                      completedChallenges.some((cc) => cc.title === challenge.title);
                     return (
                       <div
                         key={challenge.id ?? index}

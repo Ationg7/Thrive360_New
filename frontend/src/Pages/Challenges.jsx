@@ -330,6 +330,17 @@ const ChallengesOverview = () => {
                       <div className="details w-100 d-flex justify-content-start">
                         
                         <span>👥 {allChallenges.find(c => c.id === challenge.id)?.participants ?? 0} participants</span>
+                        <span
+    className={`px-3 py-1 rounded-pill fw-medium badge-difficulty ${
+      challenge.difficulty?.toLowerCase() === "easy"
+        ? "easy-border"
+        : challenge.difficulty?.toLowerCase() === "hard"
+        ? "hard-border"
+        : "medium-border"
+    }`}
+  >
+    {challenge.difficulty ?? "Medium"}
+  </span>
                       </div>
 
                       <Button
