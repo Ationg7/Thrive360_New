@@ -57,16 +57,17 @@ const ChangePhoto = ({ closeModal, toImageUrl }) => {
 
       const data = await res.json();
       
-      // Update user in context
+      // Update user in context with the URL from backend response
+      const updatedCoverUrl = data.profile_cover_url || coverUrl;
       if (updateUser && user) {
-        updateUser({ ...user, profile_cover_url: data.profile_cover_url });
+        updateUser({ ...user, profile_cover_url: updatedCoverUrl });
       }
       
-      // Update localStorage
-      localStorage.setItem('profileCoverUrl', coverUrl);
+      // Remove generic localStorage key - use user-specific data instead
+      // localStorage key was causing shared covers across users
       
       // Dispatch event for Profile page to update
-      window.dispatchEvent(new CustomEvent('profile-cover-updated', { detail: { url: coverUrl } }));
+      window.dispatchEvent(new CustomEvent('profile-cover-updated', { detail: { url: updatedCoverUrl } }));
       
       setSuccess('Profile cover updated successfully!');
       setTimeout(() => {

@@ -28,6 +28,7 @@ class User extends Authenticatable
         'profile_cover_url',
         'restricted_until',
         'restriction_reason',
+        'last_login',
     ];
 
     /**
@@ -52,6 +53,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'restricted_until' => 'datetime',
+            'last_login' => 'datetime',
         ];
     }
 
@@ -123,4 +125,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(PasswordResetCode::class, 'email', 'email');
     }
+
+public function devices()
+    {
+        return $this->hasMany(UserDevice::class);
+    }
 }
+

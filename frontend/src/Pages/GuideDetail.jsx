@@ -1,13 +1,78 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import "../App.css";
 
 const GuideDetails = () => {
   const location = useLocation();
-  const { guide } = location.state || {};
+  const { guide: guideFromState } = location.state || {};
+  const [guide, setGuide] = useState(guideFromState);
+  const [loading, setLoading] = useState(false);
 
-  if (!guide) {
+  const BASE_URL = "http://127.0.0.1:8000";
+
+  // Helper to normalize image URL
+  const getImageUrl = (image) => {
+    if (!image) return null;
+    if (typeof image !== "string") return null;
+    if (image.startsWith("http")) return image;
+    return `${BASE_URL}/storage/${image}`;
+  };
+
+  // Fetch fresh guide data from backend if guide has an ID
+  useEffect(() => {
+    const fetchFreshGuide = async () => {
+      // Only fetch if guide has an ID (backend guide) and we have state data
+      if (guideFromState?.id && guideFromState?.title) {
+        setLoading(true);
+        try {
+          // Fetch all meditations and find the matching one
+          const res = await fetch(`${BASE_URL}/api/admin/meditation`);
+          if (res.ok) {
+            const data = await res.json();
+            const matchedGuide = Array.isArray(data) 
+              ? data.find((m) => m.id === guideFromState.id || m.title === guideFromState.title)
+              : null;
+            
+            if (matchedGuide) {
+              const normalizedGuide = {
+                id: matchedGuide.id,
+                title: matchedGuide.title,
+                category: matchedGuide.category || guideFromState.category,
+                description: matchedGuide.description || guideFromState.description,
+                image: getImageUrl(matchedGuide.image_url) || guideFromState.image,
+                steps: matchedGuide.tutorial_steps
+                  ? (Array.isArray(matchedGuide.tutorial_steps)
+                      ? matchedGuide.tutorial_steps
+                      : JSON.parse(matchedGuide.tutorial_steps || "[]"))
+                      .map((step) => ({
+                        step: step.step,
+                        title: step.title,
+                        description: step.description,
+                        img: step.image_url ? getImageUrl(step.image_url) : null,
+                      }))
+                  : guideFromState.steps || [],
+              };
+              setGuide(normalizedGuide);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching fresh guide data:", error);
+          // Keep using guide from state if fetch fails
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchFreshGuide();
+  }, [guideFromState?.id, guideFromState?.title]);
+
+  if (!guide && !loading) {
     return <p>No guide details available.</p>;
+  }
+
+  if (loading) {
+    return <p>Loading guide details...</p>;
   }
 
   return (
@@ -26,33 +91,34 @@ const GuideDetails = () => {
       </div>
 
       {/* Instructions */}
-      <div className="instructions">
-        <h3 className="steps-title">Step-by-Step Instructions</h3>
-        <div className="steps-grid">
-          {guide.steps && guide.steps.length > 0 ? (
-            guide.steps.map((item) => (
-              <div className="step-cards" key={item.step}>
-                {item.img ? (
-                  <img src={item.img} alt={`Step ${item.step}`} />
-                ) : (
-                  <div className="step-placeholder">
-                    <span className="step-number">{item.step}</span>
-                  </div>
-                )}
-                <div className="step-text">
-                  <h4>Step {item.step}</h4>
-                  <p>{item.title}</p>
-                  {item.description && (
-                    <p className="step-description">{item.description}</p>
-                  )}
-                </div>
-              </div>
-            ))
+     {/* Instructions */}
+<div className="instructions">
+  <h3 className="steps-title">Step-by-Step Instructions</h3>
+  <div className="steps-grid">
+    {guide.steps && guide.steps.length > 0 ? (
+      guide.steps.map((item) => (
+        <div className="step-cards" key={item.step}>
+          {item.img ? (
+            <img src={item.img} alt={`Step ${item.step}`} className="step-image" />
           ) : (
-            <p>No steps available for this guide.</p>
+            <div className="step-placeholder">
+              <span className="step-number">{item.step}</span>
+            </div>
           )}
+          <div className="step-text">
+            <h4 className="step-title">Step {item.step}: {item.title}</h4>
+            {item.description && (
+              <p className="step-description">{item.description}</p>
+            )}
+          </div>
         </div>
-      </div>
+      ))
+    ) : (
+      <p>No steps available for this guide.</p>
+    )}
+  </div>
+</div>
+
     </div>
   );
 };

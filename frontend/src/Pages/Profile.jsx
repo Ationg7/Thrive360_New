@@ -116,7 +116,7 @@ const Profile = () => {
   const [showTodoModal, setShowTodoModal] = useState(false);
 
   const [showNoReasonModal, setShowNoReasonModal] = useState(false);
-  const [profileCoverUrl, setProfileCoverUrl] = useState(() => localStorage.getItem('profileCoverUrl') || null);
+  const [profileCoverUrl, setProfileCoverUrl] = useState(null);
 
   // ---------------- Helper ----------------
   const toImageUrl = (img) => {
@@ -456,14 +456,30 @@ const Profile = () => {
   }, [user]);
   useEffect(() => { loadEvents(); }, []);
 
+  // Fetch user-specific profile cover from user object
+  useEffect(() => {
+    if (user?.profile_cover_url) {
+      setProfileCoverUrl(user.profile_cover_url);
+    } else {
+      setProfileCoverUrl(null);
+    }
+  }, [user]);
+
+  // Listen for cover updates
   useEffect(() => {
     const onCoverUpdated = (e) => {
-      const url = e?.detail?.url || localStorage.getItem('profileCoverUrl');
-      if (url) setProfileCoverUrl(url);
+      const url = e?.detail?.url;
+      if (url) {
+        setProfileCoverUrl(url);
+        // Also update the user object in context
+        if (updateUser && user) {
+          updateUser({ ...user, profile_cover_url: url });
+        }
+      }
     };
     window.addEventListener('profile-cover-updated', onCoverUpdated);
     return () => window.removeEventListener('profile-cover-updated', onCoverUpdated);
-  }, []);
+  }, [user, updateUser]);
 
   return (
     <Container fluid className="profile-container">

@@ -14,14 +14,16 @@ const WellnessBlog = () => {
   const blogCardsRef = useRef([]);
 
   // Hardcoded fallback blogs
-  const fallbackBlogs = [
-    {
-      id: 1,
-      title: "Finding Balance: How to Manage Academic Stress",
-      category: "Mental Health",
-      image:
-        "https://i.pinimg.com/474x/1e/e6/6a/1ee66a4517d068f5db3b0443684b748b.jpg",
-      fullText: `Academic life can often feel overwhelming, with assignments, exams, and deadlines constantly piling up. It’s easy to feel stressed, anxious, or burned out, but managing academic stress is possible with the right strategies. Finding balance between studies, personal life, and self-care is key to staying productive and maintaining overall well-being.
+ const fallbackBlogs = [
+  {
+    id: 1,
+    title: "Finding Balance: How to Manage Academic Stress",
+    category: "Mental Health",
+    image:
+      "https://i.pinimg.com/474x/1e/e6/6a/1ee66a4517d068f5db3b0443684b748b.jpg",
+    excerpt:
+      "Academic life can feel overwhelming, but with proper planning, self-care, and mindfulness, students can manage stress and maintain balance.",
+    fullText: `Academic life can often feel overwhelming, with assignments, exams, and deadlines constantly piling up. It’s easy to feel stressed, anxious, or burned out, but managing academic stress is possible with the right strategies. Finding balance between studies, personal life, and self-care is key to staying productive and maintaining overall well-being.
 
 One effective way to reduce stress is by organizing your tasks and prioritizing them. Creating a to-do list or schedule allows you to focus on the most important assignments first, preventing last-minute panic and helping you feel more in control. Breaking large projects into smaller, manageable tasks also makes studying less intimidating and more achievable.
 
@@ -30,30 +32,34 @@ Incorporating regular breaks into your routine is equally important. Short pause
 Maintaining a healthy lifestyle also plays a big role in managing stress. Adequate sleep, balanced nutrition, and regular exercise improve energy levels and resilience, while staying hydrated helps your brain function at its best. Surrounding yourself with a supportive network of friends, family, or mentors provides encouragement and guidance during challenging times.
 
 By combining planning, self-care, and mindfulness practices, students can navigate their academic responsibilities more effectively and reduce the impact of stress. Remember, managing stress isn’t about eliminating challenges—it’s about finding a sustainable balance that allows you to thrive academically while taking care of your mind and body.`,
-      author: "Dr. Channy San",
-    },
-    {
-      id: 2,
-      title: "Brain Foods: Eating for Academic Success",
-      category: "Nutrition",
-      image:
-        "https://i.pinimg.com/474x/86/6a/d0/866ad0b1e99a5a6a7809ebe4801b2147.jpg",
-      fullText: `Eating the right foods can have a surprisingly big impact on your academic performance. Brain foods provide essential nutrients that improve focus, memory, and overall cognitive function, helping students stay sharp during classes, study sessions, and exams. Simple dietary changes, like including more fruits, vegetables, and healthy fats, can boost energy levels and support mental clarity throughout the day.
+    author: "Dr. Channy San",
+  },
+  {
+    id: 2,
+    title: "Brain Foods: Eating for Academic Success",
+    category: "Nutrition",
+    image:
+      "https://i.pinimg.com/474x/86/6a/d0/866ad0b1e99a5a6a7809ebe4801b2147.jpg",
+    excerpt:
+      "Eating nutrient-rich foods boosts focus, memory, and energy, helping students stay alert and perform better academically.",
+    fullText: `Eating the right foods can have a surprisingly big impact on your academic performance. Brain foods provide essential nutrients that improve focus, memory, and overall cognitive function, helping students stay sharp during classes, study sessions, and exams. Simple dietary changes, like including more fruits, vegetables, and healthy fats, can boost energy levels and support mental clarity throughout the day.
 
 Incorporating foods rich in omega-3 fatty acids, such as salmon, walnuts, and chia seeds, helps enhance brain cell communication, improving memory and learning capacity. Leafy greens like spinach and kale provide antioxidants that protect brain cells from damage, while berries are known to support concentration and reduce mental fatigue. Whole grains, eggs, and yogurt provide steady energy and essential vitamins that keep the mind alert for longer periods.
 
 It’s not just about what you eat, but also when you eat. Balanced meals and healthy snacks throughout the day prevent energy crashes and keep blood sugar levels stable, which contributes to sustained focus and productivity. Drinking plenty of water is also crucial, as dehydration can quickly lead to fatigue and reduced cognitive performance.
 
 By prioritizing brain-boosting foods and maintaining a consistent, balanced diet, students can support their learning, improve memory retention, and feel more energized throughout the day. Small, mindful changes in eating habits can make a big difference in achieving academic success, proving that what you put on your plate directly influences what you can achieve in the classroom.`,
-      author: "Dr. Channy San",
-    },
-    {
-      id: 3,
-      title: "The Student's Guide to Quality Sleep",
-      category: "Physical Wellness",
-      image:
-        "https://i.pinimg.com/474x/0b/70/38/0b70385eece9929f2460e7e18f8a15e5.jpg",
-      fullText: `Sleep is something every student needs, but it's often the first thing to get sacrificed when deadlines, exams, and assignments start piling up. Skipping sleep might seem like a quick solution to get more done, but in reality, it can make focus, memory, and overall performance worse. Getting enough quality rest isn’t just about feeling less tired—it’s about helping your brain and body function at their best.
+    author: "Dr. Channy San",
+  },
+  {
+    id: 3,
+    title: "The Student's Guide to Quality Sleep",
+    category: "Physical Wellness",
+    image:
+      "https://i.pinimg.com/474x/0b/70/38/0b70385eece9929f2460e7e18f8a15e5.jpg",
+    excerpt:
+      "Sleep is crucial for students' performance. Consistent routines, healthy habits, and a calming environment can greatly improve sleep quality and overall well-being.",
+    fullText: `Sleep is something every student needs, but it's often the first thing to get sacrificed when deadlines, exams, and assignments start piling up. Skipping sleep might seem like a quick solution to get more done, but in reality, it can make focus, memory, and overall performance worse. Getting enough quality rest isn’t just about feeling less tired—it’s about helping your brain and body function at their best.
 
 One of the simplest ways to improve sleep is by sticking to a consistent schedule. Going to bed and waking up at roughly the same time each day helps regulate your body’s internal clock, making it easier to fall asleep naturally and wake up refreshed. Pairing this with a calming bedtime routine—like reading a book, meditating, or putting your phone away—can make a big difference in how well you sleep.
 
@@ -62,15 +68,17 @@ Your sleep environment also matters more than you might think. A dark, quiet, an
 Even what you eat and drink can affect sleep. Caffeine, energy drinks, or heavy meals late at night can keep you awake, while light snacks like bananas, almonds, or herbal tea may actually help you relax. Combine this with regular exercise and stress management, and you’re giving your body the best chance for a restful night.
 
 Prioritizing 7 to 9 hours of sleep each night doesn’t just improve alertness and concentration—it also helps manage stress, supports your immune system, and improves overall mood. By understanding why sleep matters and building simple habits around it, students can maximize their academic performance, stay energized throughout the day, and take better care of their mind and body. Remember, it’s not just about the hours you spend asleep—it’s about the quality of those hours and the routines that support them.`,
-      author: "Dr. Channy San",
-    },
-    {
-      id: 4,
-      title: "Stress-Free Studying: Mind Hacks for Exams",
-      category: "Stress Management",
-      image:
-        "https://i.pinimg.com/474x/1e/3e/88/1e3e8884e34fa76dfcfe969d1ec0bb88.jpg",
-      fullText: `Exams can often feel overwhelming, with deadlines piling up and expectations running high. However, studying doesn’t have to be a stressful experience. By applying a few strategic mind hacks, you can improve focus, retention, and even enjoy the process of learning. One of the most effective techniques is breaking study sessions into small, manageable chunks. Instead of long hours of cramming, try studying for 25 minutes and then taking a 5-minute break. This approach, known as the Pomodoro technique, helps maintain concentration and prevents mental fatigue.
+    author: "Dr. Channy San",
+  },
+  {
+    id: 4,
+    title: "Stress-Free Studying: Mind Hacks for Exams",
+    category: "Stress Management",
+    image:
+      "https://i.pinimg.com/474x/1e/3e/88/1e3e8884e34fa76dfcfe969d1ec0bb88.jpg",
+    excerpt:
+      "Studying doesn’t have to be stressful. Using effective techniques like time chunking, prioritizing topics, and mindfulness can make exam prep easier and more productive.",
+    fullText: `Exams can often feel overwhelming, with deadlines piling up and expectations running high. However, studying doesn’t have to be a stressful experience. By applying a few strategic mind hacks, you can improve focus, retention, and even enjoy the process of learning. One of the most effective techniques is breaking study sessions into small, manageable chunks. Instead of long hours of cramming, try studying for 25 minutes and then taking a 5-minute break. This approach, known as the Pomodoro technique, helps maintain concentration and prevents mental fatigue.
 
 Prioritizing key topics is another helpful strategy. Make a list of the subjects or chapters that are most important, focusing first on areas that carry the most weight in your exams. This helps reduce the anxiety that comes from feeling like you have too much to cover. Teaching what you learn to someone else, or even aloud to yourself, is a powerful way to reinforce your understanding. Explaining concepts forces your brain to organize and process information more effectively, improving long-term retention.
 
@@ -79,12 +87,17 @@ Visual aids such as mind maps, diagrams, and charts can also make complex topics
 Mindfulness exercises, even just a couple of minutes of deep breathing or short meditation before studying, can greatly improve concentration and calmness. Coupled with sufficient sleep, these strategies allow your brain to absorb and retain information much better than late-night cramming. Lastly, maintaining a positive mindset is crucial. Replace negative thoughts like “I’ll never remember this” with affirmations such as “I can tackle this one step at a time.” A calm and confident mind is always more efficient than one overwhelmed by anxiety.
 
 By breaking your study sessions into manageable pieces, using visual aids, practicing mindfulness, and taking care of your body and mind, you can approach exams with confidence and efficiency. Remember, it’s not just about the quantity of hours you spend studying, but the quality of your focus and preparation. Stress-free studying is possible, and with the right techniques, you can perform at your best without burning out.`,
-      author: "Dr. Channy San",
-    },
+    author: "Dr. Channy San",
+  },
+
+
   ].map((b) => ({
     ...b,
-    excerpt: b.fullText.substring(0, 150) + "...", // ✅ add excerpt
+    excerpt: b.excerpt ?? (b.fullText.substring(0, 150) + "..."),
   }));
+  
+
+ 
 
   // Fetch blogs from backend
   useEffect(() => {
@@ -111,7 +124,8 @@ By breaking your study sessions into manageable pieces, using visual aids, pract
                 toImageUrl(b.image_path) ||
                 "https://via.placeholder.com/600x400?text=Health+%26+Wellness",
               fullText: b.content,
-              excerpt: b.content.substring(0, 150) + "...", // ✅ add excerpt
+              // Use the actual excerpt from database if it exists, otherwise generate from content
+              excerpt: b.excerpt && b.excerpt.trim() ? b.excerpt : (b.content.substring(0, 150) + "..."),
               author: b.author_name || "Admin",
             }))
           : [];

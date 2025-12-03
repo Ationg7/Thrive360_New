@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\User;
 use App\Models\Notification;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -62,19 +63,22 @@ class EventController extends Controller
 
         $event = Event::create($eventData);
 
-        // Notify all users about the new event
-        $users = User::all();
-        foreach ($users as $user) {
-            Notification::createNotification(
-                $user->id,
-                'event',
-                'New Event Available',
-                "A new event '{$event->title}' has been created. Check it out!",
-                [
-                    'event_id' => $event->id,
-                    'redirect_url' => url("/events/{$event->id}")
-                ]
-            );
+        // Notify all users about the new event only if notifications are enabled
+        $notificationsEnabled = Setting::getValue('email_notifications', false);
+        if ($notificationsEnabled) {
+            $users = User::all();
+            foreach ($users as $user) {
+                Notification::createNotification(
+                    $user->id,
+                    'event',
+                    'New Event Available',
+                    "A new event '{$event->title}' has been created. Check it out!",
+                    [
+                        'event_id' => $event->id,
+                        'redirect_url' => url("/events/{$event->id}")
+                    ]
+                );
+            }
         }
 
         return response()->json($event, 201);

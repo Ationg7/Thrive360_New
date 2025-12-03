@@ -171,10 +171,14 @@ const [psychiatristToDelete, setPsychiatristToDelete] = useState(null);
         ? `${API_ENDPOINTS.ADMIN_PSYCHIATRISTS}/${editingPsychiatrist.id}`
         : API_ENDPOINTS.ADMIN_PSYCHIATRISTS;
       
-      const method = editingPsychiatrist ? 'PUT' : 'POST';
+      // Laravel only parses multipart form data on POST requests,
+      // so we always POST and spoof the method when editing.
+      if (editingPsychiatrist) {
+        submitData.append('_method', 'PUT');
+      }
 
       const response = await fetch(url, {
-        method,
+        method: 'POST',
         headers: {
           "Authorization": `Bearer ${adminToken}`,
         },

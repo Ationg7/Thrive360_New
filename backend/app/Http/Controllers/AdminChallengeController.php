@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Challenge;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Setting;
 
 class AdminChallengeController extends Controller
 {
@@ -47,19 +48,22 @@ public function index()
 
         $challenge->save();
 
-        // Notify all users
-        $users = \App\Models\User::all();
-        foreach ($users as $user) {
-            \App\Models\Notification::createNotification(
-                $user->id,
-                'challenge_joined',
-                'New Challenge Available',
-                "A new challenge '{$challenge->title}' is now available.",
-                [
-                    'challenge_id' => $challenge->id,
-                    'redirect_url' => url("/challenges/{$challenge->id}") // redirect URL
-                ]
-            );
+        // Notify all users (respect admin notification setting)
+        $notificationsEnabled = Setting::getValue('email_notifications', false);
+        if ($notificationsEnabled) {
+            $users = \App\Models\User::all();
+            foreach ($users as $user) {
+                \App\Models\Notification::createNotification(
+                    $user->id,
+                    'challenge_joined',
+                    'New Challenge Available',
+                    "A new challenge '{$challenge->title}' is now available.",
+                    [
+                        'challenge_id' => $challenge->id,
+                        'redirect_url' => url("/challenges/{$challenge->id}") // redirect URL
+                    ]
+                );
+            }
         }
 
         return response()->json($challenge);

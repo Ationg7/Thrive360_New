@@ -52,13 +52,17 @@ const BlogDetail = () => {
   {/* CONTENT AREA */}
   <div className="blog-content-area">
     <div className="content-card">
-  {/* Full blog text at the top */}
- <p
-  className="content-excerpt"
-  
->
-  {blog.fullText}
-</p>
+  {/* Excerpt at the top */}
+  {blog.excerpt && (
+    <p className="content-excerpt">
+      {blog.excerpt}
+    </p>
+  )}
+
+  {/* Full blog text */}
+  <p className="content-paragraph">
+    {blog.fullText}
+  </p>
 
   {/* Full blog paragraphs */}
   {paragraphs.map((para, index) => (

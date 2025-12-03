@@ -142,6 +142,10 @@ class AuthController extends Controller
             if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
                 $user = Auth::user();
                 
+                // Update last login timestamp
+                $user->last_login = now();
+                $user->save();
+                
                 // Create token for the user
                 $token = $user->createToken('auth-token')->plainTextToken;
                 

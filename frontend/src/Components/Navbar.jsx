@@ -10,7 +10,7 @@ import { Modal, Button } from "react-bootstrap";
 function NavigationBar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [setShowSuccess] = useState(false);
@@ -70,12 +70,17 @@ function NavigationBar() {
   };
 
   const performLogout = () => {
+    // Call AuthContext logout to clear all auth state
+    logout();
     localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
     setIsLoggedIn(false);
     setShowConfirm(false);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
+    // Force page refresh to update UI immediately
     navigate("/signin");
+    window.location.reload();
   };
 
   return (

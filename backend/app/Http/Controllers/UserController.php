@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\UserDevice;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -211,4 +212,57 @@ class UserController extends Controller
         // In a real app, you'd store these in a separate table
         return response()->json(['message' => 'Privacy settings updated successfully']);
     }
+    
+    /**
+     * Store or update an FCM token for the authenticated user.
+     */
+    public function saveFcmToken(Request $request)
+    {
+        $request->validate([
+            'fcm_token' => 'required|string',
+            'device_type' => 'nullable|string|max:50',
+            'device_name' => 'nullable|string|max:255',
+        ]);
+
+        $user = $request->user();
+
+        $device = UserDevice::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'fcm_token' => $request->fcm_token,
+            ],
+            [
+                'device_type' => $request->device_type,
+                'device_name' => $request->device_name,
+                'last_used_at' => now(),
+            ]
+        );
+
+        return response()->json([
+            'message' => 'FCM token saved successfully',
+            'device' => $device,
+        ]);
+    }
+
+    /**
+     * Remove an FCM token for the authenticated user (e.g., on logout).
+     */
+    public function deleteFcmToken(Request $request)
+    {
+        $request->validate([
+            'fcm_token' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        UserDevice::where('user_id', $user->id)
+            ->where('fcm_token', $request->fcm_token)
+            ->delete();
+
+        return response()->json([
+            'message' => 'FCM token deleted successfully',
+        ]);
+    }
+
+
 }

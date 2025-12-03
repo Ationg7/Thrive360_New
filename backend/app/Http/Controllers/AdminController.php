@@ -129,7 +129,15 @@ class AdminController extends Controller
     // User Management
     public function getUsers()
     {
-        $users = User::select('id', 'name', 'email', 'role', 'is_active', 'created_at')
+        // Auto-mark users as inactive if they haven't logged in for 1 month
+        // Only mark inactive users who have logged in at least once
+        $oneMonthAgo = now()->subMonth();
+        User::where('is_active', true)
+            ->whereNotNull('last_login')
+            ->where('last_login', '<', $oneMonthAgo)
+            ->update(['is_active' => false]);
+        
+        $users = User::select('id', 'name', 'email', 'role', 'is_active', 'created_at', 'restricted_until', 'last_login')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -283,20 +291,23 @@ class AdminController extends Controller
 
         $meditation->save();
 
-       // Notify all users
-$users = User::all();
-foreach ($users as $user) {
-    Notification::createNotification(
-        $user->id,
-        'meditation',
-        'New Meditation Available',
-        "A new meditation '{$meditation->title}' is now available.",
-        [
-            'meditation_id' => $meditation->id,
-            'redirect_url' => url("/meditations/{$meditation->id}") // Add redirect URL
-        ]
-    );
-}
+       // Notify all users (only if notifications are enabled)
+        $notificationsEnabled = Setting::getValue('email_notifications', false);
+        if ($notificationsEnabled) {
+            $users = User::all();
+            foreach ($users as $user) {
+                Notification::createNotification(
+                    $user->id,
+                    'meditation',
+                    'New Meditation Available',
+                    "A new meditation '{$meditation->title}' is now available.",
+                    [
+                        'meditation_id' => $meditation->id,
+                        'redirect_url' => url("/meditations/{$meditation->id}") // Add redirect URL
+                    ]
+                );
+            }
+        }
 
         return response()->json($meditation, 201);
     }
@@ -319,7 +330,7 @@ foreach ($users as $user) {
         }
 
         $meditation->update($request->only([
-            'title', 'description', 'duration', 'category', 'tutorial_steps'
+            'title', 'description', 'duration', 'category'
         ]));
 
         if ($request->hasFile('image_file')) {
@@ -327,7 +338,58 @@ foreach ($users as $user) {
             if ($meditation->image_url) {
                 Storage::disk('public')->delete($meditation->image_url);
             }
-            $meditation->image_url = $request->file('image_file')->store('meditations', 'public');
+            $meditation->image_url = $request->file('image_file')->store('meditations/images', 'public');
+            $meditation->save();
+        }
+
+        // Handle tutorial steps with images
+        if ($request->has('tutorial_steps')) {
+            $tutorialSteps = json_decode($request->tutorial_steps, true);
+            $tutorialData = [];
+            
+            // Get existing tutorial steps to preserve old image URLs
+            $existingSteps = [];
+            if ($meditation->tutorial_steps) {
+                $existingStepsJson = is_string($meditation->tutorial_steps) 
+                    ? json_decode($meditation->tutorial_steps, true) 
+                    : $meditation->tutorial_steps;
+                if (is_array($existingStepsJson)) {
+                    foreach ($existingStepsJson as $existingStep) {
+                        $existingSteps[$existingStep['step']] = $existingStep;
+                    }
+                }
+            }
+            
+            foreach ($tutorialSteps as $index => $step) {
+                $stepData = [
+                    'step' => $step['step'],
+                    'title' => $step['title'],
+                    'description' => $step['description'],
+                    'image_url' => null
+                ];
+                
+                // Handle tutorial step images
+                $imageKey = "tutorial_step_" . ($index + 1) . "_image";
+                if ($request->hasFile($imageKey)) {
+                    // Delete old step image if exists
+                    $existingStep = $existingSteps[$step['step']] ?? null;
+                    if ($existingStep && isset($existingStep['image_url']) && $existingStep['image_url']) {
+                        Storage::disk('public')->delete($existingStep['image_url']);
+                    }
+                    // Store new step image
+                    $stepData['image_url'] = $request->file($imageKey)->store('meditations/tutorial-steps', 'public');
+                } else {
+                    // Preserve existing image URL if no new image is uploaded
+                    $existingStep = $existingSteps[$step['step']] ?? null;
+                    if ($existingStep && isset($existingStep['image_url'])) {
+                        $stepData['image_url'] = $existingStep['image_url'];
+                    }
+                }
+                
+                $tutorialData[] = $stepData;
+            }
+            
+            $meditation->tutorial_steps = json_encode($tutorialData);
             $meditation->save();
         }
 
@@ -386,21 +448,23 @@ foreach ($users as $user) {
 
         $blog->save();
 
-        // Notify all users
-$users = User::where('id', '!=', auth()->id())->get();
-foreach ($users as $user) {
-    Notification::createNotification(
-        $user->id,
-        'blog',
-        'New Blog Uploaded',
-        "A new blog titled '{$blog->title}' has been uploaded.",
-        [
-            'blog_id' => $blog->id,
-            'redirect_url' => url("/blogs/{$blog->id}") // Add redirect URL
-        ]
-    );
-}
-
+        // Notify all users (only if notifications are enabled)
+        $notificationsEnabled = Setting::getValue('email_notifications', false);
+        if ($notificationsEnabled) {
+            $users = User::where('id', '!=', auth()->id())->get();
+            foreach ($users as $user) {
+                Notification::createNotification(
+                    $user->id,
+                    'blog',
+                    'New Blog Uploaded',
+                    "A new blog titled '{$blog->title}' has been uploaded.",
+                    [
+                        'blog_id' => $blog->id,
+                        'redirect_url' => url("/blogs/{$blog->id}") // Add redirect URL
+                    ]
+                );
+            }
+        }
 
         return response()->json($blog, 201);
     }
@@ -422,7 +486,13 @@ foreach ($users as $user) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $blogData = $request->only(['title', 'content', 'category', 'excerpt']);
+        $blogData = $request->only(['title', 'content', 'category']);
+        
+        // Explicitly handle excerpt to ensure it's saved properly (even if empty string)
+        // Check if excerpt key exists in request (not just if it has value)
+        if ($request->exists('excerpt')) {
+            $blogData['excerpt'] = $request->input('excerpt', null);
+        }
 
         if ($request->tags) {
             $blogData['tags'] = array_map('trim', explode(',', $request->tags));
@@ -528,8 +598,9 @@ foreach ($users as $user) {
         $report = PostReport::findOrFail($reportId);
         $post = $report->post;
 
-        // Create a notification for the user who posted
-        if ($post && $post->user_id) {
+        // Create a notification for the user who posted (only if notifications are enabled)
+        $notificationsEnabled = Setting::getValue('email_notifications', false);
+        if ($post && $post->user_id && $notificationsEnabled) {
             \App\Models\Notification::createNotification(
                 $post->user_id,
                 'warning',
@@ -577,20 +648,23 @@ foreach ($users as $user) {
                 'restriction_reason' => $request->message
             ]);
 
-            // Create a notification for the user
-            \App\Models\Notification::createNotification(
-                $post->user_id,
-                'restriction',
-                'Account Restriction',
-                "Your account has been restricted for {$request->days} days. Reason: {$request->message}",
-                [
-                    'report_id' => $report->id,
-                    'post_id' => $post->id,
-                    'restriction_days' => $request->days,
-                    'restriction_end' => $restrictionEndDate->toISOString(),
-                    'redirect_url' => url("/profile")
-                ]
-            );
+            // Create a notification for the user (only if notifications are enabled)
+            $notificationsEnabled = Setting::getValue('email_notifications', false);
+            if ($notificationsEnabled) {
+                \App\Models\Notification::createNotification(
+                    $post->user_id,
+                    'restriction',
+                    'Account Restriction',
+                    "Your account has been restricted for {$request->days} days. Reason: {$request->message}",
+                    [
+                        'report_id' => $report->id,
+                        'post_id' => $post->id,
+                        'restriction_days' => $request->days,
+                        'restriction_end' => $restrictionEndDate->toISOString(),
+                        'redirect_url' => url("/profile")
+                    ]
+                );
+            }
         }
 
         $report->update([
@@ -899,6 +973,13 @@ foreach ($users as $user) {
         }
 
         try {
+            $notificationsEnabled = Setting::getValue('email_notifications', false);
+            if (!$notificationsEnabled) {
+                return response()->json([
+                    'message' => 'Notifications are currently disabled. Please enable notifications in settings first.'
+                ], 403);
+            }
+            
             $users = User::where('role', 'user')->where('is_active', true)->get();
             $sentCount = 0;
 
@@ -998,19 +1079,22 @@ foreach ($users as $user) {
             'uploaded_by' => auth()->id()
         ]);
 
-        // Notify all users about the new profile cover
-        $users = User::all();
-        foreach ($users as $user) {
-            Notification::createNotification(
-                $user->id,
-                'profile_cover',
-                'New Profile Cover Available',
-                "A new profile cover has been uploaded and is now available for use!",
-                [
-                    'profile_cover_id' => $record->id,
-                    'redirect_url' => url("/profile-covers")
-                ]
-            );
+        // Notify all users about the new profile cover (only if notifications are enabled)
+        $notificationsEnabled = Setting::getValue('email_notifications', false);
+        if ($notificationsEnabled) {
+            $users = User::all();
+            foreach ($users as $user) {
+                Notification::createNotification(
+                    $user->id,
+                    'profile_cover',
+                    'New Profile Cover Available',
+                    "A new profile cover has been uploaded and is now available for use!",
+                    [
+                        'profile_cover_id' => $record->id,
+                        'redirect_url' => url("/profile-covers")
+                    ]
+                );
+            }
         }
 
         return response()->json($record, 201);

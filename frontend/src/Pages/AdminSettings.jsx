@@ -13,7 +13,6 @@ const AdminSettings = memo(() => {
     allowRegistrations: true,
     emailNotifications: true,
     autoBackup: true,
-    theme: 'light',
   });
   
   // Use ref to always access latest settings state
@@ -29,35 +28,23 @@ const AdminSettings = memo(() => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: '',
+    new_password: '',
+    new_password_confirmation: '',
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const navigate = useNavigate();
-
-  // Apply theme to document
-  const applyTheme = useCallback((theme) => {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark-theme');
-      root.classList.remove('light-theme');
-    } else {
-      root.classList.add('light-theme');
-      root.classList.remove('dark-theme');
-    }
-    // Store theme preference
-    localStorage.setItem('admin-theme', theme);
-  }, []);
 
   // Load settings on component mount
   useEffect(() => {
     loadSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Apply theme when it changes
-  useEffect(() => {
-    if (settings.theme) {
-      applyTheme(settings.theme);
-    }
-  }, [settings.theme, applyTheme]);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -117,7 +104,6 @@ const AdminSettings = memo(() => {
         allowRegistrations: parseBoolean(data.allow_registration),
         emailNotifications: parseBoolean(data.email_notifications),
         autoBackup: parseBoolean(data.auto_backup),
-        theme: data.theme || 'light',
       };
       
       console.log('Parsed settings:', newSettings);
@@ -148,6 +134,78 @@ const AdminSettings = memo(() => {
     });
   }, []);
 
+  const handlePasswordInputChange = useCallback((field, value) => {
+    setPasswordForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
+
+  const handleChangePassword = useCallback(async () => {
+    try {
+      setSaving(true);
+      setError('');
+      setSuccess('');
+
+      if (!passwordForm.current_password || !passwordForm.new_password || !passwordForm.new_password_confirmation) {
+        setError('All password fields are required.');
+        setSaving(false);
+        return;
+      }
+
+      if (passwordForm.new_password !== passwordForm.new_password_confirmation) {
+        setError('New password and confirmation do not match.');
+        setSaving(false);
+        return;
+      }
+
+      const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+      if (!adminToken) {
+        navigate(ROUTES.ADMIN_LOGIN);
+        return;
+      }
+
+      const response = await fetch(API_ENDPOINTS.USER_CHANGE_PASSWORD, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          current_password: passwordForm.current_password,
+          new_password: passwordForm.new_password,
+          new_password_confirmation: passwordForm.new_password_confirmation,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const backendMessage =
+          data?.message ||
+          (data?.errors && Object.values(data.errors)[0]?.[0]) ||
+          `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(backendMessage);
+      }
+
+      setSuccess(data.message || 'Password changed successfully.');
+      setPasswordForm({
+        current_password: '',
+        new_password: '',
+        new_password_confirmation: '',
+      });
+      setShowChangePassword(false);
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      console.error('Error changing password:', err);
+      setError(err.message || 'Failed to change password');
+      setTimeout(() => setError(''), 5000);
+    } finally {
+      setSaving(false);
+    }
+  }, [passwordForm, navigate]);
+
   const handleSaveSettings = useCallback(async () => {
     try {
       setSaving(true);
@@ -167,7 +225,6 @@ const AdminSettings = memo(() => {
       const payload = {
         site_name: currentSettings.siteName,
         site_description: currentSettings.siteDescription,
-        theme: currentSettings.theme,
         maintenance_mode: Boolean(currentSettings.maintenanceMode),
         allow_registration: Boolean(currentSettings.allowRegistrations),
         email_notifications: Boolean(currentSettings.emailNotifications),
@@ -234,7 +291,6 @@ const AdminSettings = memo(() => {
           allowRegistrations: parseBoolean(data.settings.allow_registration),
           emailNotifications: parseBoolean(data.settings.email_notifications),
           autoBackup: parseBoolean(data.settings.auto_backup),
-          theme: data.settings.theme || settingsRef.current.theme,
         };
         console.log('Updating settings from response:', updatedSettings);
         console.log('Raw maintenance_mode value:', data.settings.maintenance_mode, 'Type:', typeof data.settings.maintenance_mode);
@@ -305,7 +361,6 @@ const AdminSettings = memo(() => {
           allowRegistrations: data.settings.allow_registration === true || data.settings.allow_registration === 'true',
           emailNotifications: data.settings.email_notifications === true || data.settings.email_notifications === 'true',
           autoBackup: data.settings.auto_backup === true || data.settings.auto_backup === 'true',
-          theme: data.settings.theme || 'light',
         });
       }
       
@@ -322,11 +377,6 @@ const AdminSettings = memo(() => {
       setSaving(false);
     }
   }, [navigate]);
-
-  const clearMessages = useCallback(() => {
-    setError('');
-    setSuccess('');
-  }, []);
 
   if (loading && !settings.siteName) {
     return (
@@ -418,17 +468,7 @@ const AdminSettings = memo(() => {
                 />
               </div>
               
-              <div className="setting-item">
-                <label>Theme</label>
-                <select
-                  value={settings.theme}
-                  onChange={(e) => handleInputChange('theme', e.target.value)}
-                  className="setting-select"
-                >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </div>
+              
            
 
             </div>
@@ -482,45 +522,29 @@ const AdminSettings = memo(() => {
             <h2>Notification Settings</h2>
             <div className="settings-grid">
               <div className="setting-item setting-toggle">
-                <label>Email Notifications</label>
+                <label>Notifications</label>
                 <div className="toggle-switch">
                   <input
                     type="checkbox"
                     checked={!!settings.emailNotifications}
                     onChange={(e) => {
                       const newValue = e.target.checked;
-                      console.log('Email Notifications toggle clicked, new value:', newValue);
+                      console.log('Notifications toggle clicked, new value:', newValue);
                       handleInputChange('emailNotifications', newValue);
                     }}
                     id="emailNotifications"
                   />
                   <label htmlFor="emailNotifications" className="toggle-label"></label>
                 </div>
-                <small>Send email notifications for important events</small>
+                <small>Send notifications for important events</small>
               </div>
               
-              <div className="setting-item setting-toggle">
-                <label>Auto Backup</label>
-                <div className="toggle-switch">
-                  <input
-                    type="checkbox"
-                    checked={!!settings.autoBackup}
-                    onChange={(e) => {
-                      const newValue = e.target.checked;
-                      console.log('Auto Backup toggle clicked, new value:', newValue);
-                      handleInputChange('autoBackup', newValue);
-                    }}
-                    id="autoBackup"
-                  />
-                  <label htmlFor="autoBackup" className="toggle-label"></label>
-                </div>
-                <small>Automatically backup data daily</small>
-              </div>
+              
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="settings-actions">
+          {/* Action Buttons & Change Password */}
+          <div className="settings-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
             <button 
               onClick={handleResetSettings}
               className="btn-reset"
@@ -539,6 +563,13 @@ const AdminSettings = memo(() => {
                   Saving...
                 </>
               ) : 'Save Settings'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowChangePassword(true)}
+              className="btn-reset"
+            >
+              Change Password
             </button>
           </div>
         </div>
@@ -632,10 +663,163 @@ const AdminSettings = memo(() => {
             </div>
           </div>
         )}
+
+       
+        {/* CHANGE PASSWORD MODAL */}
+        {showChangePassword && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              background: "rgba(0,0,0,0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10050
+            }}
+          >
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: "12px",
+                padding: "24px",
+                width: "400px",
+                maxWidth: "92%",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                position: "relative"
+              }}
+            >
+              <button
+                onClick={() => setShowChangePassword(false)}
+                style={{
+                  position: "absolute",
+                  top: "12px",
+                  right: "12px",
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  color: "#555"
+                }}
+              >
+                ×
+              </button>
+
+              <h5 style={{ fontWeight: 600, marginBottom: "12px" }}>Change Password</h5>
+
+              {/* CURRENT PASSWORD */}
+              <div style={{ marginBottom: "15px", position: "relative" }}>
+                <label>Current Password</label>
+                <input
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={passwordForm.current_password}
+                  onChange={(e) => handlePasswordInputChange("current_password", e.target.value)}
+                  style={{width: "100%", paddingRight: "40px" , 
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #28a745", }}
+                />
+
+                {/* 👇 YOUR NEW ICON BUTTON */}
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    top: "35px",
+                    fontSize: "14px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  {showCurrentPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+
+              {/* NEW PASSWORD */}
+              <div style={{ marginBottom: "15px", position: "relative" }}>
+                <label>New Password</label>
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  value={passwordForm.new_password}
+                  onChange={(e) => handlePasswordInputChange("new_password", e.target.value)}
+                  style={{ width: "100%", paddingRight: "40px" , 
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #28a745",}}
+                />
+
+                {/* 👇 ICON BUTTON */}
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    top: "35px",
+                    fontSize: "14px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  {showNewPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+
+              {/* CONFIRM PASSWORD */}
+              <div style={{ marginBottom: "15px", position: "relative" }}>
+                <label>Confirm New Password</label>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={passwordForm.new_password_confirmation}
+                  onChange={(e) => handlePasswordInputChange("new_password_confirmation", e.target.value)}
+                  style={{ width: "100%", paddingRight: "40px" , 
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #28a745", }}
+                />
+
+                {/* 👇 ICON BUTTON */}
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    top: "35px",
+                    fontSize: "14px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  {showConfirmPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+
+              <button
+                onClick={handleChangePassword}
+                className="btn-save"
+                disabled={saving}
+                style={{ width: "100%", marginTop: "10px" }}
+              >
+                Change Password
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );
 });
+
 
 AdminSettings.displayName = 'AdminSettings';
 

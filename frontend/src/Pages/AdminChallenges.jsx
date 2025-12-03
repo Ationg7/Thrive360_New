@@ -16,7 +16,7 @@ const AdminChallenges = memo(() => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingChallenge, setEditingChallenge] = useState(null);
@@ -231,16 +231,20 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
     }
   }, [editData, editingChallenge, fetchChallenges, clearMessages]);
 
-  // Filter challenges based on search and filters
+  // Filter challenges based on search and category
   const filteredChallenges = challenges.filter(challenge => {
-    const matchesSearch = challenge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         challenge.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (challenge.user && challenge.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = filterStatus === 'all' || 
-                         (filterStatus === 'active' && challenge.is_active) ||
-                         (filterStatus === 'inactive' && !challenge.is_active);
+    const searchLower = (searchTerm || '').toLowerCase().trim();
+    const matchesSearch = !searchLower || 
+      (challenge.title && challenge.title.toLowerCase().includes(searchLower)) ||
+      (challenge.description && challenge.description.toLowerCase().includes(searchLower)) ||
+      (challenge.user && challenge.user.name && challenge.user.name.toLowerCase().includes(searchLower));
     
-    return matchesSearch && matchesStatus;
+    // Category filter
+    const challengeCategory = (challenge.category || 'Daily').trim();
+    const matchesCategory = filterCategory === 'all' || 
+                           challengeCategory.toLowerCase() === filterCategory.toLowerCase();
+    
+    return matchesSearch && matchesCategory;
   });
 
   // Initialize data
@@ -332,13 +336,14 @@ const [challengeToDelete, setChallengeToDelete] = useState(null);
           
           <div className="admin-filter-group">
             <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
               className="admin-filter-select"
             >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="all">All Categories</option>
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Monthly">Monthly</option>
             </select>
           </div>
         </div>

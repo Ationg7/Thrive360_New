@@ -100,47 +100,30 @@ const [userToDelete, setUserToDelete] = useState(null);
     }
   }, [clearMessages]);
 
-  // Toggle user status
-  const handleToggleStatus = useCallback(async (userId, currentStatus) => {
-    try {
-      const adminToken = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
-      
-      const response = await fetch(`${API_ENDPOINTS.USERS}/${userId}`, {
-        method: 'PUT',
-        headers: {
-          "Authorization": `Bearer ${adminToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          is_active: !currentStatus
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      setUsers(prevUsers => 
-        prevUsers.map(user => 
-          user.id === userId 
-            ? { ...user, is_active: !currentStatus }
-            : user
-        )
-      );
-      setSuccess(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
-      clearMessages();
-      
-    } catch (error) {
-      console.error('Error updating user status:', error);
-      setError(error.message || 'Failed to update user status');
-    }
-  }, [clearMessages]);
 
   // Filter users based on search and filters
-  const filteredUsers = users.filter(user =>
-  ((user.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-   (user.email || "").toLowerCase().includes(searchTerm.toLowerCase()))
-);
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = ((user.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (user.email || "").toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesRole = filterRole === 'all' || user.role === filterRole;
+    
+    // Check if user is restricted
+    const isRestricted = user.restricted_until && new Date(user.restricted_until) > new Date();
+    
+    let matchesStatus = true;
+    if (filterStatus !== 'all') {
+      if (filterStatus === 'restricted') {
+        matchesStatus = isRestricted;
+      } else if (filterStatus === 'active') {
+        matchesStatus = user.is_active && !isRestricted;
+      } else if (filterStatus === 'inactive') {
+        matchesStatus = !user.is_active && !isRestricted;
+      }
+    }
+    
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   // Initialize data
   useEffect(() => {
@@ -253,6 +236,7 @@ const [userToDelete, setUserToDelete] = useState(null);
         <option value="all">All Status</option>
         <option value="active">Active</option>
         <option value="inactive">Inactive</option>
+        <option value="restricted">Restricted</option>
       </select>
     </div>
   </div>
@@ -299,20 +283,19 @@ const [userToDelete, setUserToDelete] = useState(null);
               </span>
             </td>
             <td>
-              <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
-                {user.is_active ? 'Active' : 'Inactive'}
-              </span>
+              {user.restricted_until && new Date(user.restricted_until) > new Date() ? (
+                <span className="status-badge restricted">
+                  Restricted
+                </span>
+              ) : (
+                <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
+                  {user.is_active ? 'Active' : 'Inactive'}
+                </span>
+              )}
             </td>
             <td>{new Date(user.created_at).toLocaleDateString()}</td>
             <td>
               <div className="action-buttons">
-                <button
-                  onClick={() => handleToggleStatus(user.id, user.is_active)}
-                  className={`action-btn ${user.is_active ? 'deactivate' : 'activate'}`}
-                  title={user.is_active ? 'Deactivate User' : 'Activate User'}
-                >
-                  {user.is_active ? '⏸️' : '▶️'}
-                </button>
                 <button
                   onClick={() => {
                     setUserToDelete(user);

@@ -80,6 +80,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/notification-settings', [UserController::class, 'updateNotificationSettings']);
     Route::get('/user/privacy-settings', [UserController::class, 'getPrivacySettings']);
     Route::put('/user/privacy-settings', [UserController::class, 'updatePrivacySettings']);
+    Route::post('/user/fcm-token', [UserController::class, 'saveFcmToken']);
+    Route::delete('/user/fcm-token', [UserController::class, 'deleteFcmToken']);
+
+
     
     // Event protected routes
     Route::post('/events', [EventController::class, 'store']);

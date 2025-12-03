@@ -24,8 +24,6 @@ class Blog extends Model
         'tags' => 'array',
     ];
 
-      protected $appends = ['excerpt']; // <-- add this line delete if sayup sya ako ra gi experement
-
     // Scope for filtering by category
     public function scopeByCategory($query, $category)
     {
@@ -35,12 +33,17 @@ class Blog extends Model
         return $query;
     }
 
-    // Get excerpt from content if not provided
+    // Get excerpt from content if not provided - only when reading, not when saving
     public function getExcerptAttribute($value)
     {
-        if ($value) {
+        // Return the actual saved excerpt if it exists and is not empty
+        if ($value !== null && $value !== '') {
             return $value;
         }
-        return substr(strip_tags($this->content), 0, 150) . '...';
+        // Only generate from content if excerpt is null or empty in database
+        if (isset($this->attributes['content']) && !empty($this->attributes['content'])) {
+            return substr(strip_tags($this->attributes['content']), 0, 150) . '...';
+        }
+        return $value;
     }
 }

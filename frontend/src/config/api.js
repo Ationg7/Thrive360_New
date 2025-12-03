@@ -101,6 +101,7 @@ export const API_ENDPOINTS = {
   // User Profile
   USER_PROFILE: `${API_BASE_URL}/user/profile`,
   USER_PROFILE_COVER: `${API_BASE_URL}/user/profile-cover`,
+  USER_CHANGE_PASSWORD: `${API_BASE_URL}/user/change-password`,
 };
 
 // Helper function to make API calls

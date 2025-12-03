@@ -77,29 +77,30 @@ const [postToDelete, setPostToDelete] = useState(null);
 
       const data = await response.json();
 
-     const normalizedPosts = (Array.isArray(data) ? data : []).map((p) => {
-  const imageUrl = p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
+      const normalizedPosts = (Array.isArray(data) ? data : []).map((p) => {
+        const imageUrl =
+          p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
 
-  const userName = p.user?.name || p.author || 'Guest User';
-  const userEmail = p.user?.email || p.email || '';
-  const isGuest = !p.user && !p.author;
+        const userName = p.user?.name || p.author || 'Guest User';
+        const userEmail = p.user?.email || p.email || '';
 
-  return {
-    id: p.id,
-    content: p.content,
-    created_at: p.created_at,
-    likes_count: p.likes || 0,
-    shares_count: p.saves || 0,
-    is_guest_post: isGuest,
-    user: {
-      name: userName,
-      email: userEmail,
-    },
-    image_url: imageUrl,
-  };
-});
+        // Guest posts: no email; User posts: has email
+        const isGuest = !userEmail;
 
-
+        return {
+          id: p.id,
+          content: p.content,
+          created_at: p.created_at,
+          likes_count: p.likes || 0,
+          shares_count: p.saves || 0,
+          is_guest_post: isGuest,
+          user: {
+            name: userName,
+            email: userEmail,
+          },
+          image_url: imageUrl,
+        };
+      });
 
       setPosts(normalizedPosts);
       setSuccess('Posts loaded successfully');
@@ -140,13 +141,23 @@ const [postToDelete, setPostToDelete] = useState(null);
 
   // Filter posts
   const filteredPosts = posts.filter((post) => {
+    // Search filter - check content and author name/email
+    const searchLower = (searchTerm || '').toLowerCase().trim();
     const matchesSearch =
-      post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (post.user && post.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      !searchLower ||
+      (post.content && post.content.toLowerCase().includes(searchLower)) ||
+      (post.user && post.user.name && post.user.name.toLowerCase().includes(searchLower)) ||
+      (post.user && post.user.email && post.user.email.toLowerCase().includes(searchLower));
+
+    // Type filter
+    // - "User Posts" => posts that HAVE an email
+    // - "Guest Posts" => posts that DO NOT have an email
+    const hasEmail = !!(post.user && post.user.email);
     const matchesType =
       filterType === 'all' ||
-      (filterType === 'user' && !post.is_guest_post) ||
-      (filterType === 'guest' && post.is_guest_post);
+      (filterType === 'user' && hasEmail) ||
+      (filterType === 'guest' && !hasEmail);
+
     return matchesSearch && matchesType;
   });
 
