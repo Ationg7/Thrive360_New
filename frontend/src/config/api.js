@@ -1,18 +1,45 @@
 // API Configuration
 // This file centralizes all API endpoints and base URLs
 
-// Get the current hostname and port to construct the API base URL dynamically
-const getApiBaseUrl = () => {
-  // In development, use localhost:8000
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://127.0.0.1:8000/api';
-  }
-  
-  // In production, use the same hostname as the frontend but with port 8000
-  // You can modify this logic based on your deployment setup
-  return `${window.location.protocol}//${window.location.hostname}:8000/api`;
+// Helper to check if hostname is an IP address
+const isIPAddress = (hostname) => {
+  // IPv4 pattern
+  const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+  // IPv6 pattern (simplified)
+  const ipv6Pattern = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+  return ipv4Pattern.test(hostname) || ipv6Pattern.test(hostname);
 };
 
+// Get the current hostname and port to construct the API base URL dynamically
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  
+  // Desktop/Mobile View: localhost - use same hostname to avoid CORS issues
+  // This ensures frontend (localhost:5173) and API (localhost:8000) are same origin
+  if (hostname === 'localhost') {
+    return `${protocol}//localhost:8000/api`;
+  }
+  
+  // Desktop: 127.0.0.1 - use same hostname for consistency
+  if (hostname === '127.0.0.1') {
+    return `${protocol}//127.0.0.1:8000/api`;
+  }
+  
+  // Mobile/Network: If accessing via IP address, use same IP for API
+  // This handles mobile devices accessing the dev server via network IP
+  if (isIPAddress(hostname)) {
+    return `${protocol}//${hostname}:8000/api`;
+  }
+  
+  // Production or other hostnames: use same hostname with port 8000
+  return `${protocol}//${hostname}:8000/api`;
+};
+
+// Make API_BASE_URL a function to recalculate dynamically if needed
+export const getApiBaseUrlDynamic = () => getApiBaseUrl();
+
+// Export static version for backward compatibility
 export const API_BASE_URL = getApiBaseUrl();
 
 // Helper function to get storage URL for images

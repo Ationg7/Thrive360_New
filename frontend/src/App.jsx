@@ -46,8 +46,7 @@ import AdminProfileCovers from "./Pages/AdminProfileCovers";
 import Settings from "./Pages/Settings";
 import ChangePhoto from "./Pages/ChangePhoto";
 import MaintenancePage from "./Pages/MaintenancePage";
-
-
+import { useFcmRegistration } from "./hooks/useFcm";
 import { AuthProvider, useAuth } from "./AuthContext";
 import { ChallengesProvider } from "./Pages/Challenges";
 import { API_ENDPOINTS } from "./config/api";
@@ -109,6 +108,9 @@ function Layout() {
     "/wellnessblog",
     "/freedomwall",
   ];
+
+  // Register FCM push notifications when user is logged in
+  useFcmRegistration(isLoggedIn);
 
   // Check maintenance mode
   useEffect(() => {

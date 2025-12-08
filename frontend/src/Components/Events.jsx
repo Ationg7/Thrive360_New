@@ -1,21 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { Card, ListGroup, Badge } from 'react-bootstrap';
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 
 const Events = ({ hideHeader = false }) => {
   const [events, setEvents] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const loadEvents = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/events');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(API_ENDPOINTS.EVENTS || `${API_BASE_URL}/events`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
       if (response.ok) {
         const data = await response.json();
-        setEvents(data);
+        setEvents(Array.isArray(data) ? data : []);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.message || `Failed to load events (${response.status})`);
       }
     } catch (error) {
+      if (error.name === 'AbortError') {
+        setError('Request timed out. Please check your connection.');
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        setError('Network error. Please check your connection and ensure the API server is running.');
+      } else {
+        setError(error.message || 'Failed to load events. Please check your connection and try again.');
+      }
       console.error('Error loading events:', error);
     } finally {
       setLoading(false);
@@ -27,19 +47,27 @@ const Events = ({ hideHeader = false }) => {
       const token = localStorage.getItem('authToken');
       if (!token) return;
 
-      const response = await fetch('http://127.0.0.1:8000/api/events/suggestions', {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(API_ENDPOINTS.EVENTS_SUGGESTIONS || `${API_BASE_URL}/events/suggestions`, {
+        signal: controller.signal,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
-        setSuggestions(data);
+        setSuggestions(Array.isArray(data) ? data : []);
       }
     } catch (error) {
-      console.error('Error loading suggestions:', error);
+      // Silently fail for suggestions - not critical
+      if (error.name !== 'AbortError') {
+        console.error('Error loading suggestions:', error);
+      }
     }
   };
 
@@ -57,7 +85,9 @@ const Events = ({ hideHeader = false }) => {
     if (!img) return null;
     if (typeof img !== 'string') return null;
     if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    return `http://127.0.0.1:8000/storage/${img}`;
+    // Use API_BASE_URL but remove /api suffix for storage paths
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    return `${baseUrl}/storage/${img}`;
   };
 
   const formatDateTime = (dateString) => {
@@ -139,6 +169,10 @@ const Events = ({ hideHeader = false }) => {
         )}
         {loading ? (
           <div className="p-3 text-center">Loading...</div>
+        ) : error ? (
+          <ListGroup.Item className="text-center text-danger small">
+            {error}
+          </ListGroup.Item>
         ) : (
           <ListGroup variant="flush">
             {events.length === 0 ? (

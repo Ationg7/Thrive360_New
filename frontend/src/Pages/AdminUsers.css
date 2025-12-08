@@ -364,3 +364,21 @@
   --gray-text: #666666;
   --primary-color: #007bff;
 }
+.status-badge.restricted {
+  background-color: #ffe5e5;   /* very light red background */
+  color: #d32f2f;              /* darker red text */
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: capitalize;
+  display: inline-block;
+}
+.status-badge.inactive {
+  background-color: #eeeeee;   /* light gray */
+  color: #616161;              /* dark gray */
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: capitalize;
+  display: inline-block;
+}

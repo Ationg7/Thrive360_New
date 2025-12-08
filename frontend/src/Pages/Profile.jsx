@@ -21,23 +21,58 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import Events from "../Components/Events";
 import ChangePhoto from "./ChangePhoto"; // <-- import your component
+import { API_BASE_URL, API_ENDPOINTS } from "../config/api";
 import './Profile.css'
 
 // Challenge History Component
 const ChallengeHistoryList = () => {
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const token = localStorage.getItem('authToken');
-        if (!token) { setItems([]); return; }
-        const res = await fetch('http://127.0.0.1:8000/api/challenges/history', { headers: { Authorization: `Bearer ${token}` } });
+        if (!token) { 
+          setItems([]); 
+          setLoading(false);
+          return; 
+        }
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const res = await fetch(API_ENDPOINTS.CHALLENGES_HISTORY || `${API_BASE_URL}/challenges/history`, { 
+          signal: controller.signal,
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          } 
+        });
+        clearTimeout(timeoutId);
+        
         if (res.ok) {
           const data = await res.json();
-          setItems(data.filter((x) => x.is_completed));
+          setItems(Array.isArray(data) ? data.filter((x) => x.is_completed) : []);
+        } else {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData?.message || `Failed to load challenge history (${res.status})`);
         }
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          setError('Request timed out. Please check your connection.');
+        } else if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+          setError('Network error. Please check your connection and ensure the API server is running.');
+        } else {
+          setError(e.message || 'Failed to load challenge history. Please check your connection and try again.');
+        }
+        console.error('Error loading challenge history:', e);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);
@@ -52,6 +87,25 @@ const ChallengeHistoryList = () => {
       </span>
     );
   };
+
+  if (loading) {
+    return (
+      <ListGroup.Item className="text-center text-muted py-3 small">
+        <div style={{ padding: '20px' }}>Loading challenge history...</div>
+      </ListGroup.Item>
+    );
+  }
+
+  if (error) {
+    return (
+      <ListGroup.Item className="text-center text-danger py-3 small">
+        <div style={{ padding: '20px' }}>
+          <div style={{ fontSize: '24px', marginBottom: '10px' }}>⚠️</div>
+          <div>{error}</div>
+        </div>
+      </ListGroup.Item>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -114,6 +168,11 @@ const Profile = () => {
   const [showEventsModal, setShowEventsModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showTodoModal, setShowTodoModal] = useState(false);
+  const [modalKeys, setModalKeys] = useState({
+    events: Date.now(),
+    history: Date.now(),
+    todo: Date.now()
+  });
 
   const [showNoReasonModal, setShowNoReasonModal] = useState(false);
   const [profileCoverUrl, setProfileCoverUrl] = useState(null);
@@ -122,8 +181,10 @@ const Profile = () => {
   const toImageUrl = (img) => {
     if (!img) return null;
     if (img.startsWith('http')) return img;
-    if (img.startsWith('/storage')) return `http://127.0.0.1:8000${img}`;
-    return `http://127.0.0.1:8000/storage/${img}`;
+    // Use API_BASE_URL but remove /api suffix for storage paths
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    if (img.startsWith('/storage')) return `${baseUrl}${img}`;
+    return `${baseUrl}/storage/${img}`;
   };
 
   const reportReasons = [
@@ -433,7 +494,13 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("authToken");
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-      const response = await fetch("http://127.0.0.1:8000/api/events", { headers });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const response = await fetch(API_ENDPOINTS.EVENTS || `${API_BASE_URL}/events`, { 
+        headers,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
       if (response.ok) {
         const data = await response.json();
         setEvents(data);
@@ -524,13 +591,22 @@ const Profile = () => {
   <Dropdown.Item  onClick={() => setShowChangePhoto(true)}>
     Change Photo
   </Dropdown.Item>
-  <Dropdown.Item className="desktop-hide" onClick={() => setShowEventsModal(true)}>
+  <Dropdown.Item className="desktop-hide" onClick={() => {
+    setModalKeys(prev => ({ ...prev, events: Date.now() }));
+    setShowEventsModal(true);
+  }}>
     Upcoming Events
   </Dropdown.Item>
-  <Dropdown.Item className="desktop-hide" onClick={() => setShowHistoryModal(true)}>
+  <Dropdown.Item className="desktop-hide" onClick={() => {
+    setModalKeys(prev => ({ ...prev, history: Date.now() }));
+    setShowHistoryModal(true);
+  }}>
   Challenge's History
 </Dropdown.Item>
-  <Dropdown.Item className="desktop-hide" onClick={() => setShowTodoModal(true)}>
+  <Dropdown.Item className="desktop-hide" onClick={() => {
+    setModalKeys(prev => ({ ...prev, todo: Date.now() }));
+    setShowTodoModal(true);
+  }}>
     To-Do List
   </Dropdown.Item>
 </Dropdown.Menu>
@@ -585,10 +661,12 @@ const Profile = () => {
     }}
     onClick={() => setShowEventsModal(false)}
   >
-    <div onClick={(e) => e.stopPropagation()} className="p-3 bg-white rounded shadow" style={{ maxWidth: "500px", width: "90%" }}>
-      <h4>Upcoming Events</h4>
-      <button onClick={() => setShowEventsModal(false)} style={{ position: "absolute", top: "10px", right: "10px", border: "none", background: "transparent", fontSize: "20px", cursor: "pointer" }}>×</button>
-      <Events hideCardHeader /> {/* reuse your Events component */}
+    <div onClick={(e) => e.stopPropagation()} className="p-3 bg-white rounded shadow mobile-modal-content" style={{ maxWidth: "500px", width: "90%", position: "relative" }}>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 style={{ margin: 0 }}>Upcoming Events</h4>
+        <button onClick={() => setShowEventsModal(false)} className="mobile-modal-close">×</button>
+      </div>
+      <Events key={`events-modal-${modalKeys.events}`} hideCardHeader /> {/* reuse your Events component */}
     </div>
   </div>
 )}
@@ -610,19 +688,18 @@ const Profile = () => {
     onClick={() => setShowHistoryModal(false)}
   >
     <div onClick={(e) => e.stopPropagation()} 
-         className="p-3 bg-white rounded shadow" 
-         style={{ maxWidth: "500px", width: "90%", maxHeight: "80vh", overflowY: "auto" }}>
-      <h4>Challenge History</h4>
-      <button onClick={() => setShowHistoryModal(false)} 
-              style={{ position: "absolute", top: "10px", right: "10px", border: "none", background: "transparent", fontSize: "20px", cursor: "pointer" }}>
-        ×
-      </button>
+         className="p-3 bg-white rounded shadow mobile-modal-content" 
+         style={{ maxWidth: "500px", width: "90%", maxHeight: "80vh", overflowY: "auto", position: "relative" }}>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 style={{ margin: 0 }}>Challenge History</h4>
+        <button onClick={() => setShowHistoryModal(false)} className="mobile-modal-close">×</button>
+      </div>
 
       {/* Challenge History Content */}
       <Card className="mb-3 events-card shadow-sm border-0 mobile-visible-section" style={{ fontFamily: 'Poppins, sans-serif' }}>
         <div className="events-scroll-wrapper" style={{ maxHeight: '400px', overflowY: 'auto' }}>
           <ListGroup variant="flush">
-            <ChallengeHistoryList />
+            <ChallengeHistoryList key={`history-modal-${modalKeys.history}`} />
           </ListGroup>
         </div>
       </Card>
@@ -649,10 +726,12 @@ const Profile = () => {
     }}
     onClick={() => setShowTodoModal(false)}
   >
-    <div onClick={(e) => e.stopPropagation()} className="p-3 bg-white rounded shadow" style={{ maxWidth: "500px", width: "90%" }}>
-      <h4>To-Do List</h4>
-      <button onClick={() => setShowTodoModal(false)} style={{ position: "absolute", top: "10px", right: "10px", border: "none", background: "transparent", fontSize: "20px", cursor: "pointer" }}>×</button>
-      <TodoList /> {/* reuse your TodoList component */}
+    <div onClick={(e) => e.stopPropagation()} className="p-3 bg-white rounded shadow mobile-modal-content" style={{ maxWidth: "500px", width: "90%", position: "relative" }}>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 style={{ margin: 0 }}>To-Do List</h4>
+        <button onClick={() => setShowTodoModal(false)} className="mobile-modal-close">×</button>
+      </div>
+      <TodoList key={`todo-modal-${modalKeys.todo}`} /> {/* reuse your TodoList component */}
     </div>
   </div>
 )}

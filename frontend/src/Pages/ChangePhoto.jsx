@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Card, Button, Alert, Row, Col } from 'react-bootstrap';
 import { useAuth } from '../AuthContext';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 import './AdminProfileCovers.css';
 
 const ChangePhoto = ({ closeModal, toImageUrl }) => {
@@ -16,12 +17,29 @@ const ChangePhoto = ({ closeModal, toImageUrl }) => {
     setError(null);
     try {
       // Fetch available covers from public endpoint (no auth needed)
-      const res = await fetch('http://127.0.0.1:8000/api/admin/profile-covers');
-      if (!res.ok) throw new Error('Failed to load covers');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const res = await fetch(API_ENDPOINTS.ADMIN_PROFILE_COVERS || `${API_BASE_URL}/admin/profile-covers`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData?.message || `Failed to load covers (${res.status})`);
+      }
       const data = await res.json();
       setCovers(Array.isArray(data) ? data : []);
     } catch (e) {
-      setError(e.message || 'Failed to load covers');
+      if (e.name === 'AbortError') {
+        setError('Request timed out. Please check your connection and try again.');
+      } else if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+        setError('Network error. Please check your connection and ensure the API server is running.');
+      } else {
+        setError(e.message || 'Failed to load covers. Please check your connection and try again.');
+      }
+      console.error('Error fetching covers:', e);
     } finally {
       setLoading(false);
     }
@@ -41,14 +59,19 @@ const ChangePhoto = ({ closeModal, toImageUrl }) => {
 
       const coverUrl = toImageUrl(cover.url || cover.path);
       
-      const res = await fetch('http://127.0.0.1:8000/api/user/profile-cover', {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const res = await fetch(API_ENDPOINTS.USER_PROFILE_COVER || `${API_BASE_URL}/user/profile-cover`, {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ profile_cover_url: coverUrl })
       });
+      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -74,7 +97,14 @@ const ChangePhoto = ({ closeModal, toImageUrl }) => {
         if (closeModal) closeModal();
       }, 1000);
     } catch (e) {
-      setError(e.message || 'Failed to update profile cover');
+      if (e.name === 'AbortError') {
+        setError('Request timed out. Please check your connection and try again.');
+      } else if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+        setError('Network error. Please check your connection and ensure the API server is running.');
+      } else {
+        setError(e.message || 'Failed to update profile cover');
+      }
+      console.error('Error updating profile cover:', e);
     } finally {
       setSaving(false);
     }

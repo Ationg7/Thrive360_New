@@ -1601,6 +1601,49 @@ label {
   }
 }
 
+/* Explicitly show desktop-hide items on mobile */
+@media (max-width: 768px) {
+  .dropdown-menu .desktop-hide {
+    display: block !important;
+  }
+}
+
+/* Mobile Modal Improvements */
+.mobile-modal-content {
+  position: relative !important;
+}
+
+.mobile-modal-close {
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+  color: #555;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.mobile-modal-close:hover {
+  color: #000;
+}
+
+/* Fix TodoList modal z-index for mobile */
+@media (max-width: 768px) {
+  .todo-modal-mobile {
+    z-index: 10050 !important;
+  }
+  
+  .todo-modal-mobile + .modal-backdrop {
+    z-index: 10049 !important;
+  }
+}
+
 .profile-container {
   background-color: #fff;
   padding: 20px;
@@ -2674,10 +2717,9 @@ button:hover {
   text-align: center;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
   background: white;
-}
 
+}
 /* Tabs + Search */
 .category-search-container {
   display: flex;
@@ -3287,6 +3329,17 @@ button:hover {
 /* Challenges Categories CSS */
 /* Challenges card hover */
 /* -------------------- General Container -------------------- */
+
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .challenges-container {
   max-width: 1100px;
   margin: auto;

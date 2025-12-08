@@ -35,4 +35,22 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Firebase Cloud Messaging
+    |--------------------------------------------------------------------------
+    |
+    | Service account JSON file path for Firebase Admin SDK.
+    | Set FCM_SERVICE_ACCOUNT_PATH in your .env to the path of your service account JSON file.
+    | Default: storage/app/firebase-service-account.json
+    |
+    | Alternatively, you can set FCM_SERVICE_ACCOUNT_JSON as a JSON string in .env
+    | (useful for environment variables in cloud deployments).
+    |
+    */
+    'fcm' => [
+        'service_account_path' => env('FCM_SERVICE_ACCOUNT_PATH', storage_path('app/firebase-service-account.json')),
+        'service_account_json' => env('FCM_SERVICE_ACCOUNT_JSON'), // Optional: JSON string instead of file path
+    ],
+
 ];

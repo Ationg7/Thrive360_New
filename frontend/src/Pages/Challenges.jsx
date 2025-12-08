@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect , useRef} from "react";
 import { Container, Card, Button } from "react-bootstrap";
 import { useAuth } from "../AuthContext";
 import { challengesAPI } from "../services/api";
@@ -271,42 +271,100 @@ const ChallengesOverview = () => {
   const completedCount = completedChallenges.length;
   const completedPercent = Math.round((completedCount / totalChallenges) * 100);
 
+
+  
+ const [animatedPercent, setAnimatedPercent] = useState(0);
+const  textRef = useRef(null);
+const barRef = useRef(null);
+
+
+// Animate progress on mount or when completedPercent changes
+useEffect(() => {
+  let start = 0;
+  const duration = 800; // ms
+  const stepTime = 16; // ~60fps
+
+  const step = () => {
+    start += (completedPercent - start) * (stepTime / duration);
+    if (Math.abs(start - completedPercent) < 0.5) {
+      setAnimatedPercent(completedPercent);
+    } else {
+      setAnimatedPercent(start);
+      requestAnimationFrame(step);
+    }
+  };
+
+  requestAnimationFrame(step);
+}, [completedPercent]);
+
+// Determine text color dynamically
+const getTextColor = () => {
+  if (!textRef.current || !barRef.current) return "black";
+
+  const barWidth = (barRef.current.offsetWidth / 100) * animatedPercent;
+  const textCenter = textRef.current.offsetLeft + textRef.current.offsetWidth / 2;
+
+  return barWidth >= textCenter ? "white" : "black";
+};
+
+
   return (
     <Container className="challenges-container" style={{ marginTop: "50px" }}>
       {/* Progress Bar */}
-      <div
-        className="progress-container"
-        style={{
-          width: "100%",
-          backgroundColor: "white",
-          padding: "20px 25px",
-          borderRadius: "12px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-          marginTop: "50px",
-          marginBottom: "30px",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-          <h5 style={{ margin: 0, fontWeight: 600, color: "#1e1e1e" }}>Your Progress</h5>
-          <span style={{ fontWeight: 500, color: "#28a745" }}>{completedPercent}%</span>
-        </div>
-        <div style={{ position: "relative", height: "16px", backgroundColor: "#f1f3f5", borderRadius: "8px", overflow: "hidden" }}>
-          <div style={{ width: `${completedPercent}%`, backgroundColor: "#28a745", height: "100%", borderRadius: "8px", transition: "width 0.4s ease" }} />
-          <span
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: "50%",
-              transform: "translate(-50%, -50%)",
-              fontWeight: 500,
-              fontSize: "0.85rem",
-              color: completedPercent >= 50 ? "white" : "black",
-            }}
-          >
-            {completedCount} / {totalChallenges} Completed
-          </span>
-        </div>
-      </div>
+      
+<div
+  className="progress-container"
+  style={{
+    width: "100%",
+    backgroundColor: "white",
+    padding: "20px 25px",
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    marginTop: "50px",
+    marginBottom: "30px",
+  }}
+>
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+    <h5 style={{ margin: 0, fontWeight: 600, color: "#1e1e1e" }}>Your Progress</h5>
+    <span style={{ fontWeight: 500, color: "#28a745" }}>{Math.round(animatedPercent)}%</span>
+  </div>
+
+
+  <div
+    ref={barRef}
+    style={{ position: "relative", height: "16px", backgroundColor: "#f1f3f5", borderRadius: "8px", overflow: "hidden" }}
+  >
+    <div
+      style={{
+        width: `${animatedPercent}%`,
+    height: "100%",
+    borderRadius: "8px",
+    background: "linear-gradient(90deg, #28a745 25%, #2ecc71 50%, #28a745 75%)",
+    backgroundSize: "200% 100%", // allows the gradient to move
+    animation: "shimmer 2s linear infinite",
+    transition: "width 0.3s ease-out",
+      }}
+    />
+    <span
+      ref={textRef}
+      style={{
+        position: "absolute",
+        left: "50%",
+        top: "50%",
+        transform: "translate(-50%, -50%)",
+        fontWeight: 600,
+        fontSize: "0.85rem",
+        color: getTextColor(),
+        zIndex: 2,
+        pointerEvents: "none",
+        transition: "color 0.2s ease",
+      }}
+    >
+      {completedCount} / {totalChallenges} Completed
+    </span>
+  </div>
+</div>
+
 
       <div className="join-challenges-btn">
   <Button

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Services\FcmService;
 
 class Notification extends Model
 {
@@ -54,12 +55,26 @@ class Notification extends Model
     // Static method to create notifications
     public static function createNotification($userId, $type, $title, $message, $data = null)
     {
-        return self::create([
+        $notification = self::create([
             'user_id' => $userId,
             'type' => $type,
             'title' => $title,
             'message' => $message,
             'data' => $data
         ]);
+
+        // Also send a push notification via FCM (if configured)
+        try {
+            /** @var FcmService $fcm */
+            $fcm = app(FcmService::class);
+            $fcm->sendToUser($userId, $title, $message, is_array($data) ? $data : []);
+        } catch (\Throwable $e) {
+            // Avoid breaking app flow if push sending fails
+            \Log::error('Failed to send FCM push notification', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $notification;
     }
 }

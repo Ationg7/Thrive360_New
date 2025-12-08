@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { ListGroup, Button, Form, Modal, Card, Badge } from 'react-bootstrap';
-import { Plus, CheckCircle, Circle, Trash2, Edit3 , BookOpen } from 'lucide-react';
+import { Plus, CheckCircle, Circle, Trash2, Edit3 , BookOpen, Wifi, WifiOff } from 'lucide-react';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { todoOfflineService } from '../utils/todoOfflineService';
+import { useAuth } from '../AuthContext';
 
 const TodoList = () => {
+  const { user } = useAuth();
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showModal, setShowModal] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   const [formData, setFormData] = useState({
@@ -14,22 +19,30 @@ const TodoList = () => {
   });
 
   const loadTodos = async () => {
+    if (!user?.id) return; // Don't load if no user
+    
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://127.0.0.1:8000/api/todos', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTodos(data);
-      }
+      const apiUrl = API_ENDPOINTS.TODOS || `${API_BASE_URL}/todos`;
+      
+      // Load from IndexedDB first (offline-first approach) - filtered by user_id
+      const localTodos = await todoOfflineService.loadTodos(apiUrl, token, user.id);
+      setTodos(Array.isArray(localTodos) ? localTodos : []);
+      
+      // If online, sync will happen in background via loadTodos
     } catch (error) {
       console.error('Error loading todos:', error);
+      // Even if there's an error, try to get local todos for this user
+      try {
+        const localTodos = await todoOfflineService.getTodosByUserId(user.id);
+        setTodos(localTodos.map(t => {
+          const { _synced, _lastModified, ...todo } = t;
+          return todo;
+        }));
+      } catch (localError) {
+        console.error('Error loading local todos:', localError);
+      }
     } finally {
       setLoading(false);
     }
@@ -40,27 +53,92 @@ const TodoList = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const url = editingTodo 
-        ? `http://127.0.0.1:8000/api/todos/${editingTodo.id}`
-        : 'http://127.0.0.1:8000/api/todos';
+      const apiUrl = API_ENDPOINTS.TODOS || `${API_BASE_URL}/todos`;
       
-      const method = editingTodo ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        await loadTodos();
-        setShowModal(false);
-        setEditingTodo(null);
-        setFormData({ title: '', description: '', priority: 1 });
+      if (editingTodo) {
+        // Update existing todo
+        const updatedTodo = {
+          ...editingTodo,
+          user_id: user.id, // Ensure user_id is set
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority
+        };
+        
+        // Save to IndexedDB immediately
+        await todoOfflineService.saveTodo(updatedTodo);
+        
+        // Add to sync queue
+        await todoOfflineService.addToSyncQueue('update', updatedTodo);
+        
+        // If online, try to sync immediately
+        if (todoOfflineService.isOnline()) {
+          try {
+            const response = await fetch(`${apiUrl}/${editingTodo.id}`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(formData)
+            });
+            
+            if (response.ok) {
+              const serverTodo = await response.json();
+              await todoOfflineService.saveTodo({ ...serverTodo, _synced: true });
+            }
+          } catch (error) {
+            console.warn('Failed to sync update, will retry later:', error);
+          }
+        }
+      } else {
+        // Create new todo
+        const newTodo = {
+          id: `local_${Date.now()}`, // Temporary local ID
+          user_id: user.id, // Add user_id
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority,
+          is_completed: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        // Save to IndexedDB immediately
+        await todoOfflineService.saveTodo(newTodo);
+        
+        // Add to sync queue
+        await todoOfflineService.addToSyncQueue('create', newTodo);
+        
+        // If online, try to sync immediately
+        if (todoOfflineService.isOnline()) {
+          try {
+            const response = await fetch(apiUrl, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(formData)
+            });
+            
+            if (response.ok) {
+              const serverTodo = await response.json();
+              // Delete local version and save server version
+              await todoOfflineService.deleteTodo(newTodo.id);
+              await todoOfflineService.saveTodo({ ...serverTodo, _synced: true });
+            }
+          } catch (error) {
+            console.warn('Failed to sync create, will retry later:', error);
+          }
+        }
       }
+      
+      // Reload todos to show updated list
+      await loadTodos();
+      setShowModal(false);
+      setEditingTodo(null);
+      setFormData({ title: '', description: '', priority: 1 });
     } catch (error) {
       console.error('Error saving todo:', error);
     }
@@ -69,17 +147,50 @@ const TodoList = () => {
   const toggleTodo = async (id) => {
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://127.0.0.1:8000/api/todos/${id}/toggle`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const apiUrl = API_ENDPOINTS.TODOS || `${API_BASE_URL}/todos`;
+      
+      // Find the todo in local state
+      const todo = todos.find(t => t.id === id);
+      if (!todo) return;
+      
+      // Update locally immediately
+      const updatedTodo = {
+        ...todo,
+        is_completed: !todo.is_completed,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Save to IndexedDB immediately
+      await todoOfflineService.saveTodo(updatedTodo);
+      
+      // Add to sync queue
+      await todoOfflineService.addToSyncQueue('toggle', updatedTodo);
+      
+      // If online, try to sync immediately
+      if (todoOfflineService.isOnline()) {
+        try {
+          const response = await fetch(`${apiUrl}/${id}/toggle`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const serverTodo = await response.json();
+            await todoOfflineService.saveTodo({ ...serverTodo, _synced: true });
+          }
+        } catch (error) {
+          console.warn('Failed to sync toggle, will retry later:', error);
         }
-      });
-
-      if (response.ok) {
-        await loadTodos();
       }
+      
+      // Update local state immediately for instant feedback
+      setTodos(todos.map(t => t.id === id ? updatedTodo : t));
+      
+      // Reload to ensure consistency
+      await loadTodos();
     } catch (error) {
       console.error('Error toggling todo:', error);
     }
@@ -90,17 +201,48 @@ const TodoList = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://127.0.0.1:8000/api/todos/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        await loadTodos();
+      const apiUrl = API_ENDPOINTS.TODOS || `${API_BASE_URL}/todos`;
+      
+      // Find the todo
+      const todo = todos.find(t => t.id === id);
+      
+      // Delete from IndexedDB immediately
+      await todoOfflineService.deleteTodo(id);
+      
+      // Add to sync queue
+      if (todo) {
+        await todoOfflineService.addToSyncQueue('delete', { id });
       }
+      
+      // If online, try to sync immediately
+      if (todoOfflineService.isOnline()) {
+        try {
+          const response = await fetch(`${apiUrl}/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            // Remove from sync queue if successful
+            const syncQueue = await todoOfflineService.getSyncQueue();
+            const queueItem = syncQueue.find(item => item.operation === 'delete' && item.data.id === id);
+            if (queueItem) {
+              await todoOfflineService.removeFromSyncQueue(queueItem.id);
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to sync delete, will retry later:', error);
+        }
+      }
+      
+      // Update local state immediately
+      setTodos(todos.filter(t => t.id !== id));
+      
+      // Reload to ensure consistency
+      await loadTodos();
     } catch (error) {
       console.error('Error deleting todo:', error);
     }
@@ -133,8 +275,65 @@ const TodoList = () => {
   };
 
   useEffect(() => {
-    loadTodos();
-  }, []);
+    if (!user?.id) {
+      // Clear todos when user logs out
+      setTodos([]);
+      return;
+    }
+    
+    // Initialize offline service and load todos for current user
+    todoOfflineService.init().then(() => {
+      loadTodos();
+    });
+    
+    // Monitor online/offline status
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Trigger sync when coming back online
+      const token = localStorage.getItem('authToken');
+      const apiUrl = API_ENDPOINTS.TODOS || `${API_BASE_URL}/todos`;
+      todoOfflineService.syncWithBackend(apiUrl, token, user.id).then(() => {
+        loadTodos();
+      });
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Periodic status check for badge (updates every 1 second for quick response)
+    const statusCheckInterval = setInterval(() => {
+      const currentStatus = navigator.onLine;
+      setIsOnline(prevStatus => {
+        // Only update if status actually changed to avoid unnecessary re-renders
+        if (prevStatus !== currentStatus) {
+          return currentStatus;
+        }
+        return prevStatus;
+      });
+    }, 1000); // Check every 1 second
+    
+    // Periodic sync check when online
+    const syncInterval = setInterval(() => {
+      if (todoOfflineService.isOnline() && user?.id) {
+        const token = localStorage.getItem('authToken');
+        const apiUrl = API_ENDPOINTS.TODOS || `${API_BASE_URL}/todos`;
+        todoOfflineService.syncWithBackend(apiUrl, token, user.id).then(() => {
+          loadTodos();
+        });
+      }
+    }, 30000); // Sync every 30 seconds when online
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(statusCheckInterval);
+      clearInterval(syncInterval);
+    };
+  }, [user?.id]); // Re-run when user changes
 
   return (
     <>
@@ -144,6 +343,23 @@ const TodoList = () => {
     <div className="d-flex align-items-center">
       <BookOpen size={20} className="me-2" />
       To Do List
+      <Badge 
+        bg={isOnline ? 'success' : 'secondary'} 
+        className="ms-2 d-flex align-items-center"
+        style={{ fontSize: '0.7rem', padding: '2px 6px' }}
+      >
+        {isOnline ? (
+          <>
+            <Wifi size={12} className="me-1" />
+            Online
+          </>
+        ) : (
+          <>
+            <WifiOff size={12} className="me-1" />
+            Offline
+          </>
+        )}
+      </Badge>
     </div>
     <Button className="plus-button" onClick={() => setShowModal(true)}>
       <Plus size={16} />
@@ -225,11 +441,16 @@ const TodoList = () => {
         )}
       </Card>
 
-      <Modal show={showModal} onHide={() => {
-        setShowModal(false);
-        setEditingTodo(null);
-        setFormData({ title: '', description: '', priority: 1 });
-      }} centered>
+      <Modal 
+        show={showModal} 
+        onHide={() => {
+          setShowModal(false);
+          setEditingTodo(null);
+          setFormData({ title: '', description: '', priority: 1 });
+        }} 
+        centered
+        className="todo-modal-mobile"
+      >
         <Modal.Header closeButton>
           <Modal.Title>{editingTodo ? 'Edit Todo' : 'Add New Todo'}</Modal.Title>
         </Modal.Header>
