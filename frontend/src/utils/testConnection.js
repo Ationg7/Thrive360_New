@@ -1,10 +1,12 @@
 // Test API connection
+import { API_ENDPOINTS } from '../config/api';
+
 export const testAPIConnection = async () => {
   console.log('🔍 Testing API Connection...');
   
   try {
     // Test basic connection
-    const response = await fetch('http://localhost:8000/api/challenges');
+    const response = await fetch(API_ENDPOINTS.CHALLENGES);
     console.log('📡 Response status:', response.status);
     console.log('📡 Response headers:', response.headers);
     
@@ -23,7 +25,7 @@ export const testAPIConnection = async () => {
   }
 };
 
-// Run test
-if (typeof window !== 'undefined') {
+// Run test only in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   testAPIConnection();
-}
+} 

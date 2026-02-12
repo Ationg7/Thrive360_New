@@ -310,7 +310,7 @@ input:checked + .toggle-label:before {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .admin-settings {
     padding: 15px;
   }

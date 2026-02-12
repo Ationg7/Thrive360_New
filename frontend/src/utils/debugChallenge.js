@@ -1,5 +1,6 @@
 // Debug script for challenge creation
 import { challengesAPI } from '../services/api';
+import { API_ENDPOINTS } from '../config/api';
 
 export const debugChallengeCreation = async () => {
   console.log('🔍 Debugging Challenge Creation...');
@@ -8,9 +9,9 @@ export const debugChallengeCreation = async () => {
   const token = localStorage.getItem('authToken');
   console.log('🔑 Auth Token:', token ? 'Present' : 'Missing');
   
-  // Check if backend is reachable
+  // Check if backend is reachable (uses configured API endpoint)
   try {
-    const response = await fetch('http://localhost:8000/api/challenges');
+    const response = await fetch(API_ENDPOINTS.CHALLENGES);
     console.log('🌐 Backend reachable:', response.ok);
     console.log('📊 Response status:', response.status);
   } catch (error) {
@@ -36,7 +37,7 @@ export const debugChallengeCreation = async () => {
   }
 };
 
-// Run debug when imported
-if (typeof window !== 'undefined') {
+// Run debug when imported only in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   debugChallengeCreation();
-}
+} 

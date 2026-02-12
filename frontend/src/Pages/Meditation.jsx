@@ -4,6 +4,7 @@ import { Container, Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import "../App.css";
+import { API_BASE_URL } from "../config/api";
 
 const Meditation = () => {
   const { isLoggedIn } = useAuth(); // ✅ reactive auth state
@@ -20,7 +21,7 @@ const Meditation = () => {
     Workout: [],
   });
 
-  const BASE_URL = "http://127.0.0.1:8000";
+  const BASE_URL = API_BASE_URL.replace("/api", "");
 
   // 🔹 Hardcoded guides
   const hardcodedGuides = {
@@ -464,7 +465,7 @@ const Meditation = () => {
 }
 
      .meditation-notif-overlay {
-    position: absolute;
+    position: fixed;
           top: 0;
           left: 0;
           width: 100%;

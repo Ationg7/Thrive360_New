@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Table, Button, Form, Modal, Alert, Badge } from 'react-bootstrap';
 import { Key, RefreshCw, Eye, EyeOff, Copy, Check } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const AdminPasswordReset = () => {
   const [resetRequests, setResetRequests] = useState([]);
@@ -13,14 +14,12 @@ const AdminPasswordReset = () => {
   const [copied, setCopied] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: '', type: 'success' });
 
-  const BASE_URL = 'http://127.0.0.1:8000';
-
   // Fetch password reset requests
   const fetchResetRequests = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${BASE_URL}/api/admin/password-reset-requests`, {
+      const response = await fetch(`${API_BASE_URL}/admin/password-reset-requests`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -55,7 +54,7 @@ const AdminPasswordReset = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${BASE_URL}/api/admin/generate-password-reset-code`, {
+      const response = await fetch(`${API_BASE_URL}/admin/generate-password-reset-code`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -87,7 +86,7 @@ const AdminPasswordReset = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${BASE_URL}/api/admin/generate-password-reset-code`, {
+      const response = await fetch(`${API_BASE_URL}/admin/generate-password-reset-code`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -3,6 +3,7 @@ import logo from "../assets/Images/logo.png";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaArrowLeft, FaEye, FaEyeSlash } from "react-icons/fa";
+import { API_ENDPOINTS } from "../config/api";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -11,25 +12,19 @@ const ForgotPassword = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [showResendNotif, setShowResendNotif] = useState(false);
 
-
-  // Reset password states
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [resetStage, setResetStage] = useState(false);
 
-  // OTP states
   const [showOtp, setShowOtp] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const firstOtpRef = useRef(null);
 
-  // Eye toggle states
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Snackbar visibility
   const [showSnackbar, setShowSnackbar] = useState(false);
 
-  // Handle requesting password reset code
   const handleRequestCode = async (e) => {
     e.preventDefault();
     setError({});
@@ -41,91 +36,68 @@ const ForgotPassword = () => {
     }
 
     try {
-      // Request a password reset code
-      const response = await fetch("http://127.0.0.1:8000/api/password-reset/request-code", {
+      const response = await fetch(API_ENDPOINTS.PASSWORD_RESET_REQUEST, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setSuccessMessage("Password reset request sent to admin! You will receive the code shortly.");
+        setSuccessMessage("Password reset request sent! Waiting for admin approval.");
         setShowSnackbar(true);
         setTimeout(() => setShowSnackbar(false), 3000);
-        
-        // Start checking for the code
         checkForCode();
       } else {
-        setError({ 
-          email: data.error || "Failed to send reset request. Please try again." 
-        });
+        setError({ email: data.error || "Failed to send reset request." });
       }
-    } catch (error) {
-      console.error("Error requesting reset code:", error);
-      setError({ 
-        email: "Error sending reset request. Please try again." 
-      });
+    } catch (err) {
+      console.error(err);
+      setError({ email: "Error sending reset request." });
     }
   };
 
-  // Check for available code
   const checkForCode = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/password-reset/check-request", {
+      const response = await fetch(API_ENDPOINTS.PASSWORD_RESET_CHECK, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
 
       if (response.ok && data.has_pending_request && data.code) {
-        // Auto-fill the code if available
-        const codeArray = data.code.split('');
-        setOtp(codeArray);
+        setOtp(data.code.split(""));
         setShowOtp(true);
-        setSuccessMessage("Reset code received! Please enter the code provided by admin.");
+        setSuccessMessage("Reset code received! Enter it below.");
         setShowSnackbar(true);
         setTimeout(() => setShowSnackbar(false), 3000);
       } else {
-        // Keep checking every 5 seconds
         setTimeout(checkForCode, 5000);
       }
-    } catch (error) {
-      console.error("Error checking for code:", error);
-      // Keep checking even if there's an error
+    } catch (err) {
+      console.error(err);
       setTimeout(checkForCode, 5000);
     }
   };
 
-  // Focus first OTP box when modal opens
   useEffect(() => {
-    if (showOtp && firstOtpRef.current) {
-      firstOtpRef.current.focus();
-    }
+    if (showOtp && firstOtpRef.current) firstOtpRef.current.focus();
   }, [showOtp]);
 
-  // Handle OTP input
   const handleOtpChange = (index, value) => {
     if (/^\d?$/.test(value)) {
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
-
       if (value && index < otp.length - 1) {
-        const nextInput = document.getElementById(`otp-${index + 1}`);
-        nextInput && nextInput.focus();
+        document.getElementById(`otp-${index + 1}`)?.focus();
       }
     }
   };
 
-  // Handle OTP verification
   const handleOtpSubmit = async () => {
     if (otp.join("").length < 6) {
       setError({ otp: "Please enter the full 6-digit code" });
@@ -133,35 +105,28 @@ const ForgotPassword = () => {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/password-reset/verify-code", {
+      const response = await fetch(API_ENDPOINTS.PASSWORD_RESET_VERIFY, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          code: otp.join("")
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: otp.join("") }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
         setShowOtp(false);
-        setResetStage(true);
-        setSuccessMessage("Code verified! You can now reset your password.");
+        setTimeout(() => setResetStage(true), 250);
+        setSuccessMessage("Code verified! Reset your password.");
         setShowSnackbar(true);
-        setTimeout(() => setShowSnackbar(false), 2000);
       } else {
         setError({ otp: data.error || "Invalid or expired code" });
       }
-    } catch (error) {
-      console.error("Error verifying code:", error);
-      setError({ otp: "Error verifying code. Please try again." });
+    } catch (err) {
+      console.error(err);
+      setError({ otp: "Error verifying code." });
     }
   };
 
-  // Handle password reset
   const handleReset = async (e) => {
     e.preventDefault();
     setError({});
@@ -177,32 +142,29 @@ const ForgotPassword = () => {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/password-reset/reset", {
+      const response = await fetch(API_ENDPOINTS.PASSWORD_RESET_RESET, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email,
+          email,
           code: otp.join(""),
-          password: password,
-          password_confirmation: confirm
+          password,
+          password_confirmation: confirm,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setSuccessMessage("Password successfully reset! Redirecting to login...");
+        setSuccessMessage("Password reset successful! Redirecting...");
         setShowSnackbar(true);
         setTimeout(() => navigate("/SignIn"), 2000);
       } else {
-        console.error("Password reset error:", data);
         setError({ general: data.error || data.message || "Failed to reset password" });
       }
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      setError({ general: "Error resetting password. Please try again." });
+    } catch (err) {
+      console.error(err);
+      setError({ general: "Error resetting password." });
     }
   };
 
@@ -210,66 +172,47 @@ const ForgotPassword = () => {
     <div className="container">
       <div className="signup-container">
         <div className="signup-card">
-
-          {/* Back arrow only on first page */}
-          {!resetStage && (
-            <FaArrowLeft className="back-arrow" onClick={() => navigate(-1)} />
-          )}
-
+          {!resetStage && <FaArrowLeft className="back-arrow" onClick={() => navigate(-1)} />}
           <div className="logo-container">
             <Image src={logo} alt="Logo" className="form-logo" />
           </div>
           <h1 className="title">Thrive360</h1>
 
-          {/* ---------- Email Stage ---------- */}
+          {/* Email Stage */}
           {!resetStage ? (
             <>
-              <p className="description">
-                Enter your email address to request a password reset code from admin.
-              </p>
-
-              <form className="forgot-form" onSubmit={handleRequestCode}>
+              <p className="description">Enter your email to request a reset code.</p>
+              <form onSubmit={handleRequestCode}>
                 <div className="form-group">
                   <label className="label-with-tooltip">
                     Email Address
-                    {error.email && (
-                      <span className="tooltip-error-inline">⚠ {error.email}</span>
-                    )}
+                    {error.email && <span className="tooltip-error-inline">⚠ {error.email}</span>}
                   </label>
                   <input
                     type="email"
-                    placeholder="e.g. user@domain.com"
+                    placeholder="user@domain.com"
                     className="input-field"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-
-                <button className="register-btn" type="submit" style={{ marginTop: "20px" }}>
-                  Request Reset Code
-                </button>
+                <button className="register-btn" type="submit">Request Reset Code</button>
               </form>
-
-              <p className="signup-text" style={{ marginTop: "20px" }}>
-                Don’t have an account?{" "}
-                <Link to="/SignUp" className="signup-link">Sign up</Link>
+              <p className="signup-text">
+                Don’t have an account? <Link to="/SignUp" className="signup-link">Sign up</Link>
               </p>
             </>
           ) : (
             <>
-              {/* ---------- Reset Password Stage ---------- */}
+              {/* Reset Password Stage */}
               <p className="description">Create your new password below.</p>
-
-              <form className="forgot-form" onSubmit={handleReset}>
+              <form onSubmit={handleReset}>
                 <div className="form-group password-container">
-                  <label className="label-with-tooltip">
-                    New Password
-                    {error.password && <span className="tooltip-error-inline">⚠ {error.password}</span>}
-                  </label>
+                  <label>New Password {error.password && <span className="tooltip-error-inline">⚠ {error.password}</span>}</label>
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter new password"
                     className="input-field"
+                    placeholder="Enter new password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
@@ -277,16 +220,12 @@ const ForgotPassword = () => {
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </span>
                 </div>
-
                 <div className="form-group password-container">
-                  <label className="label-with-tooltip">
-                    Confirm Password
-                    {error.confirm && <span className="tooltip-error-inline">⚠ {error.confirm}</span>}
-                  </label>
+                  <label>Confirm Password {error.confirm && <span className="tooltip-error-inline">⚠ {error.confirm}</span>}</label>
                   <input
                     type={showConfirm ? "text" : "password"}
-                    placeholder="Re-enter new password"
                     className="input-field"
+                    placeholder="Re-enter new password"
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                   />
@@ -294,256 +233,89 @@ const ForgotPassword = () => {
                     {showConfirm ? <FaEyeSlash /> : <FaEye />}
                   </span>
                 </div>
-
                 {error.general && <div className="tooltip-error-floating">⚠ {error.general}</div>}
-
-                <button className="register-btn" type="submit" style={{ marginTop: "20px" }}>
-                  Reset Password
-                </button>
+                <button className="register-btn" type="submit">Reset Password</button>
               </form>
             </>
           )}
         </div>
 
-        {/* Side image */}
         <div className="text-centers">
           <div className="circle-borders"></div>
           <div className="circle-backg"></div>
-          <img
-            src="https://www.groupiso.com/wp-content/uploads/2023/02/woman-laughing-on-phone.png"
-            className="img-hero"
-            alt="Hero"
-          />
+          <img src="https://www.groupiso.com/wp-content/uploads/2023/02/woman-laughing-on-phone.png" className="img-hero" alt="Hero" />
         </div>
       </div>
 
-      {/* ---------- Floating OTP ---------- */}
+      {/* OTP Overlay */}
       {showOtp && (
         <div className="otp-overlay">
           <div className="otp-container">
             <span className="otp-close" onClick={() => setShowOtp(false)}>×</span>
             <h3>Enter Verification Code</h3>
-            <p>Enter the 6-digit code provided by admin</p>
-
-<div className="otp-inputs">
-  {otp.map((digit, index) => (
-    <input
-      key={index}
-      id={`otp-${index}`}
-      type="text"
-      maxLength="1"
-      className="otp-box"
-      ref={index === 0 ? firstOtpRef : null}
-      value={digit}
-      onChange={(e) => handleOtpChange(index, e.target.value)}
-    />
-  ))}
-</div>
-
-{/* Centered error */}
-{error.otp && <div className="tooltip-error-otp-center">⚠ {error.otp}</div>}
-
-<div className="otp-actions">
-  <div className="otp-left">
-  <p
-  className="resend-link"
-  onClick={() => {
-    setShowResendNotif(true);
-   
-  }}
->
-  Resend Code
-</p>
-
-
-  </div>
-  <button className="otp-done-btn" onClick={handleOtpSubmit}>Done</button>
-</div>
-
+            <p>Enter the 6-digit code from admin</p>
+            <div className="otp-inputs">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  id={`otp-${index}`}
+                  type="text"
+                  maxLength="1"
+                  className="otp-box"
+                  ref={index === 0 ? firstOtpRef : null}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                />
+              ))}
+            </div>
+            {error.otp && <div className="tooltip-error-otp-center">⚠ {error.otp}</div>}
+            <div className="otp-actions">
+              <p className="resend-link" onClick={() => setShowResendNotif(true)}>Resend Code</p>
+              <button className="otp-done-btn" onClick={handleOtpSubmit}>Done</button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ---------- Snackbar ---------- */}
-      {showSnackbar && (
-        <div className="snackbar">{successMessage}</div>
-      )}
-      {showResendNotif && (
-  <div className="resend-popup-overlay">
-    <div className="resend-popup">
-      <button className="resend-close" onClick={() => setShowResendNotif(false)}>×</button>
-      <h4>Code Resent</h4>
-      <p>A new verification code has been sent to your email.</p>
-      <div className="resend-actions">
-        <button className="resend-ok" onClick={() => setShowResendNotif(false)}>OK</button>
-        <button className="resend-cancel" onClick={() => setShowResendNotif(false)}>Cancel</button>
-      </div>
-    </div>
-  </div>
-)}
+      {/* Snackbar */}
+      {showSnackbar && <div className="snackbar">{successMessage}</div>}
 
+      {/* Resend Notification */}
+      {showResendNotif && (
+        <div className="resend-popup-overlay">
+          <div className="resend-popup">
+            <button className="resend-close" onClick={() => setShowResendNotif(false)}>×</button>
+            <h4>Code Resent</h4>
+            <p>A new verification code has been sent to your email.</p>
+            <div className="resend-actions">
+              <button className="resend-ok" onClick={() => setShowResendNotif(false)}>OK</button>
+              <button className="resend-cancel" onClick={() => setShowResendNotif(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
-      /* Centered OTP error */
-/* Centered OTP error */
-.tooltip-error-otp-center {
-  color: #dc3545;
-  font-size: 0.85rem;
-  margin-bottom: 10px;
-  text-align: center; /* center the text */
-  width: 100%;
-}
-/* Resend notification popup */
-.resend-popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10000;
-  animation: fadeIn 0.3s ease;
-}
-
-.resend-popup {
-  background: #fff;
-  border-radius: 14px;
-  padding: 25px 35px;
-  width: 90%;
-  max-width: 360px;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  position: relative;
-  animation: scaleUp 0.3s ease;
-  font-family: "Poppins", sans-serif;
-}
-
-.resend-popup h4 {
-  margin-bottom: 8px;
-  color: #28a745;
-  font-weight: 600;
-}
-
-.resend-popup p {
-  font-size: 0.9rem;
-  color: #333;
-  margin-bottom: 16px;
-}
-
-.resend-close {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: #666;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-.resend-close:hover {
-  color: #000;
-}
-
-.resend-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-}
-
-.resend-ok,
-.resend-cancel {
-  padding: 8px 20px;
-  border-radius: 6px;
-  border: none;
-  font-weight: 500;
-  cursor: pointer;
-  transition: 0.3s ease;
-}
-
-.resend-ok {
-  background: linear-gradient(135deg,#28a745,#34ce57);
-  color: white;
-}
-
-.resend-cancel {
-  background: #e0e0e0;
-  color: #333;
-}
-
-.resend-ok:hover {
-  background: linear-gradient(135deg,#34ce57,#28a745);
-}
-
-.resend-cancel:hover {
-  background: #d6d6d6;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; } 
-  to { opacity: 1; }
-}
-@keyframes scaleUp {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-
-        .back-arrow { font-size: 18px; cursor: pointer; align-self: flex-start; margin-bottom: 10px; }
-        .tooltip-error-inline { color: #dc3545; font-size: 0.85rem; margin-left: 6px; }
-        .tooltip-error-floating { color: #dc3545; font-size: 0.85rem; position: absolute; left: 0; bottom: -20px; white-space: nowrap; margin-left: 60px; }
-        .label-with-tooltip { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+        .eye-icon { position: absolute; margin-top:13px ; transform: translateY(-50%); right: 12px; cursor: pointer; }
         .password-container { position: relative; }
-        .eye-icon { position: absolute; right: 10px; top: 52px; transform: translateY(-50%); cursor: pointer; }
-        .snackbar { visibility: visible; min-width: 280px; background-color: white; color: black; text-align: center; border-radius: 8px; padding: 14px 24px; position: fixed; top: 20px; right: 20px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-weight: 500; opacity: 0; transform: translateY(-20px); animation: slideIn 0.3s forwards, fadeOut 0.3s 1.7s forwards; }
+        .tooltip-error-inline { color: #dc3545; font-size: 0.85rem; margin-left: 6px; }
+        .tooltip-error-floating { color: #dc3545; font-size: 0.85rem; position: absolute; left: 0; bottom: -20px; margin-left: 60px; }
+        .snackbar { position: fixed; top: 20px; right: 20px; background: #fff; padding: 14px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; font-weight: 500; animation: slideIn 0.3s forwards, fadeOut 0.3s 1.7s forwards; }
+        .otp-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.45); display:flex; justify-content:center; align-items:center; z-index:10000; backdrop-filter:blur(3px); }
+        .otp-container { background:#fff; padding:30px 40px; border-radius:16px; text-align:center; max-width:420px; width:90%; position: relative; display:flex; flex-direction:column; font-family: 'Poppins', sans-serif; }
+        .otp-close { position:absolute; top:12px; right:16px; font-size:26px; cursor:pointer; }
+        .otp-inputs { display:flex; justify-content:center; gap:12px; margin:20px 0; }
+        .otp-box { width:45px; height:50px; font-size:1.3rem; text-align:center; border:2px solid #dcdcdc; border-radius:10px; outline:none; }
+        .otp-box:focus { border-color:#28a745; box-shadow:0 0 6px #28a74560; }
+        /* Resend notification popup */ .resend-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 10000; animation: fadeIn 0.3s ease; } .resend-popup { background: #fff; border-radius: 14px; padding: 25px 35px; width: 90%; max-width: 360px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.2); position: relative; animation: scaleUp 0.3s ease; font-family: "Poppins", sans-serif; } .resend-popup h4 { margin-bottom: 8px; color: #28a745; font-weight: 600; } .resend-popup p { font-size: 0.9rem; color: #333; margin-bottom: 16px; } .resend-close { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 20px; color: #666; cursor: pointer; transition: color 0.2s ease; } .resend-close:hover { color: #000; } .resend-actions { display: flex; justify-content: center; gap: 12px; } .resend-ok, .resend-cancel { padding: 8px 20px; border-radius: 6px; border: none; font-weight: 500; cursor: pointer; transition: 0.3s ease; } .resend-ok { background: linear-gradient(135deg,#28a745,#34ce57); color: white; } .resend-cancel { background: #e0e0e0; color: #333; } .resend-ok:hover { background: linear-gradient(135deg,#34ce57,#28a745); } .resend-cancel:hover { background: #d6d6d6; } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .otp-actions { display:flex; justify-content:space-between; align-items:flex-end; margin-top:10px; }
+        .resend-link { color:#28a745; font-weight:500; cursor:pointer; font-size:0.9rem; }
+        .otp-done-btn { padding:9px 28px; background:linear-gradient(135deg,#28a745,#34ce57); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; }
         @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
+         @media (max-width: 992px) {
 
-        /* Floating OTP */
-        .otp-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.45); display:flex; justify-content:center; align-items:center; z-index:9999; backdrop-filter:blur(3px); }
-       .otp-container {
-        background:#fff;
-       padding:30px 40px;
-         border-radius:16px;
-  text-align:center;
-  box-shadow:0 8px 25px rgba(0,0,0,0.2);
-  max-width:420px;       /* bigger container */
-  width:90%;
-  position: relative;
-  font-family: 'Poppins', sans-serif; /* set Poppins */
-  display: flex;
-  flex-direction: column;
-}
-        .otp-close { position: absolute; top: 12px; right: 16px; font-size: 26px; font-weight: 300; cursor: pointer; }
-       .otp-inputs {
-  display:flex;
-  justify-content:center;
-  gap:12px;
-  margin:20px 0;
-}
-
-.otp-box { width:45px; height:50px; font-size:1.3rem; text-align:center; border:2px solid #dcdcdc; border-radius:10px; outline:none; }
-.otp-box:focus { border-color:#28a745; box-shadow:0 0 6px #28a74560; }
-.otp-actions { display:flex; justify-content:space-between; align-items:flex-end; margin-top:10px; }
-.otp-left { display:flex; flex-direction: column; align-items:flex-start; }
-.tooltip-error-otp { color: #dc3545; font-size: 0.85rem; margin-bottom: 4px; }
-.resend-link { color:#28a745; font-weight:500; cursor:pointer; font-size:0.9rem; }
-.resend-link:hover { text-decoration:underline; }
-.otp-done-btn {
-  padding:9px 28px;
-  background:linear-gradient(135deg,#28a745,#34ce57);
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  font-weight:600;
-  cursor:pointer;
-  justify-content: flex-end;
-}
-   @media (max-width: 768px) {
- .snackbar {
+        .snackbar {
     top: auto !important;
     bottom: 20px !important;
     left: 50% !important;
@@ -554,27 +326,24 @@ const ForgotPassword = () => {
     font-size: 0.8rem;
     padding: 12px 18px;
   }
-}
-
-/* Animations */
-@keyframes slideIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
+     .otp-inputs {
+    gap: 8px; /* reduce gap to fit smaller screens */
   }
-}
-@keyframes fadeOut {
-  to {
-    opacity: 0;
-    transform: translateY(-20px);
+  .otp-box {
+    width: 38px;  /* slightly smaller */
+    height: 45px;
+    font-size: 1.1rem; /* smaller text */
   }
-}
-
+     /* Make the resend popup centered and mobile-friendly */
+  .resend-popup {
+    width: 90% !important;
+    max-width: 350px;
+    padding: 20px !important;
+      }
+    }
       `}</style>
     </div>
   );
 };
 
 export default ForgotPassword;
-
-

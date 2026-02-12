@@ -30,6 +30,7 @@ import GuideDetail from "./Pages/GuideDetail";
 import BlogDetail from "./Pages/BlogDetail";
 import Dashboard from "./Components/Dashboard";
 import AdminLogin from "./Pages/AdminLogin";
+import AdminRegister from "./Pages/AdminRegister";
 import AdminDashboard from "./Pages/AdminDashboard";
 import AdminUsers from "./Pages/AdminUsers";
 import AdminPosts from "./Pages/AdminPosts";
@@ -46,6 +47,10 @@ import AdminProfileCovers from "./Pages/AdminProfileCovers";
 import Settings from "./Pages/Settings";
 import ChangePhoto from "./Pages/ChangePhoto";
 import MaintenancePage from "./Pages/MaintenancePage";
+import TermsAndConditions from "./Pages/TermsAndConditions";
+import PrivacyPolicy from "./Pages/PrivacyPolicy";
+import TermsOfService from "./Pages/TermsOfService";
+import About from "./Pages/About";
 import { useFcmRegistration } from "./hooks/useFcm";
 import { AuthProvider, useAuth } from "./AuthContext";
 import { ChallengesProvider } from "./Pages/Challenges";
@@ -279,6 +284,10 @@ const router = createBrowserRouter([
       { path: "dashboard", element: <Dashboard /> },
       { path: "guide-detail", element: <GuideDetail /> },
       { path: "blogdetail", element: <BlogDetail /> },
+      { path: "terms", element: <TermsAndConditions /> },
+      { path: "privacy", element: <PrivacyPolicy /> },
+      { path: "services", element: <TermsOfService /> },
+      { path: "about", element: <About /> },
 
       // ---------- Challenges Routes Wrapped in Provider ----------
       {
@@ -296,6 +305,7 @@ const router = createBrowserRouter([
 
       // ---------- Admin Routes ----------
       { path: "admin-login", element: <AdminLogin /> },
+      { path: "admin-register", element: <AdminRegister /> },
       { path: "admin-dashboard", element: <AdminDashboard /> },
       { path: "admin/users", element: <AdminUsers /> },
       { path: "admin/posts", element: <AdminPosts /> },

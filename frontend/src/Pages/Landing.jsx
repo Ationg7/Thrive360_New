@@ -1,4 +1,18 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../AuthContext";
+
 function Landing() {
+    const navigate = useNavigate();
+    const { isLoggedIn } = useAuth();
+
+    useEffect(() => {
+        // Redirect logged-in users to home
+        if (isLoggedIn) {
+            navigate("/home");
+        }
+    }, [isLoggedIn, navigate]);
+
     return (
         <section className="hero d-flex align-items-center justify-content-center text-start p-5">
             <div className="containers">
@@ -11,7 +25,7 @@ function Landing() {
                             and strength to grow
                         </h1>
                         <button className="btn btn-outline-success mt-3">
-    <a href="/SignIn" className="text-decoration-none text-white">Join now</a>
+    <a href="/signin" className="text-decoration-none text-white">Join now</a>
 </button>
                     </div>
 

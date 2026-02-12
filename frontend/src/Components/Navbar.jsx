@@ -5,6 +5,7 @@ import { Bell, User, Settings, LogOut } from "lucide-react";
 import Notifications from "./Notifications";
 import "../App.css";
 import { useAuth } from "../AuthContext";
+import { API_ENDPOINTS } from "../config/api";
 import { Modal, Button } from "react-bootstrap";
 
 function NavigationBar() {
@@ -13,7 +14,7 @@ function NavigationBar() {
   const { user, logout } = useAuth();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [setShowSuccess] = useState(false);
+  
   const [userEmail, setUserEmail] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -21,12 +22,59 @@ function NavigationBar() {
 
   const dropdownRef = useRef(null);
 
+  const profileRef = useRef(null);
+const notifRef = useRef(null);
+const menuRef = useRef(null);
+// Close profile + notifications + mobile menu on outside click
+useEffect(() => {
+  const handleClick = (e) => {
+    // Close profile dropdown
+    if (profileRef.current && !profileRef.current.contains(e.target)) {
+      setIsProfileOpen(false);
+    }
+
+    // Close notifications
+    if (notifRef.current && !notifRef.current.contains(e.target)) {
+      setShowNotifications(false);
+    }
+
+    // Close mobile collapse menu
+    const menu = document.getElementById("navbarSupportedContent");
+    const toggler = document.querySelector(".navbar-toggler");
+
+    if (
+      menu &&
+      menu.classList.contains("show") &&
+      !menu.contains(e.target) &&
+      !toggler.contains(e.target)
+    ) {
+      toggler.click();
+    }
+  };
+
+  document.addEventListener("mousedown", handleClick);
+  return () => document.removeEventListener("mousedown", handleClick);
+}, []);
+
+
+ 
+
+
+
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     setIsLoggedIn(!!token);
     const email = localStorage.getItem("userEmail");
     setUserEmail(email || "");
   }, [location]);
+ const closeMenu = () => {
+  const menu = document.getElementById("navbarSupportedContent");
+  const toggler = document.querySelector(".navbar-toggler");
+
+  if (menu && menu.classList.contains("show")) {
+    toggler.click(); // triggers Bootstrap collapse toggle
+  }
+};
 
   // Fetch unread notifications
   useEffect(() => {
@@ -34,7 +82,7 @@ function NavigationBar() {
       const token = localStorage.getItem("authToken");
       if (!token) return;
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/notifications", {
+        const res = await fetch(API_ENDPOINTS.NOTIFICATIONS, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -49,7 +97,7 @@ function NavigationBar() {
     };
     fetchUnreadCount();
   }, []);
-
+  
   // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -88,13 +136,22 @@ function NavigationBar() {
       <nav className="navbar navbar-expand-lg navbar-light bg-body-tertiary sticky-top">
         <div className="container-fluid p-0">
           <div className="d-flex align-items-center ms-2">
+             <Link
+      to="/home"
+      className="d-flex align-items-center ms-2"
+      style={{ textDecoration: "none" }}
+    >
             <img
               src="https://cdn-icons-png.flaticon.com/128/11289/11289042.png"
               width="45"
               height="45"
               alt="Thrive360 Logo"
             />
-            <span className="ms-2 fw-bold text-green">Thrive360</span>
+            <span 
+  className="ms-2 fw-bold" 
+  style={{ color: "#198754" }}  // Bootstrap “success” green
+>Thrive360</span>
+            </Link>
           </div>
 
           <button
@@ -107,22 +164,28 @@ function NavigationBar() {
           </button>
 
           {/* Collapsible menu */}
-          <div className="collapse navbar-collapse" id="navbarSupportedContent">
+          <div className="collapse navbar-collapse" id="navbarSupportedContent"ref={menuRef}>
             <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
               <li className="nav-item">
-                <Link to="/home" className={isActive("/home")}>Home</Link>
+                <Link to="/home" className={isActive("/home")} onClick={closeMenu}
+>Home</Link>
+              </li>
+              
+              <li className="nav-item">
+                <Link to="/freedomwall" className={isActive("/freedomwall")} onClick={closeMenu}
+>Freedom Wall</Link>
               </li>
               <li className="nav-item">
-                <Link to="/freedomwall" className={isActive("/freedomwall")}>Freedom Wall</Link>
+                <Link to="/wellnessblog" className={isActive("/wellnessblog")} onClick={closeMenu}
+>Wellness Blog</Link>
               </li>
               <li className="nav-item">
-                <Link to="/wellnessblog" className={isActive("/wellnessblog")}>Wellness Blog</Link>
+                <Link to="/meditation" className={isActive("/meditation")} onClick={closeMenu}
+>Meditation</Link>
               </li>
               <li className="nav-item">
-                <Link to="/meditation" className={isActive("/meditation")}>Meditation</Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/challenges" className={isActive("/challenges")}>Challenges</Link>
+                <Link to="/challenges" className={isActive("/challenges")} onClick={closeMenu}
+>Challenges</Link>
               </li>
             </ul>
 
@@ -144,37 +207,36 @@ function NavigationBar() {
           <div className="d-flex align-items-center gap-2 mobile-fixed-buttons">
 
             {/* Notification */}
-            <div className="position-relative">
+            <div className="position-relative" ref={notifRef}>
               <button
-                 className="rounded-circle bell-btn"
-  onClick={() => setShowNotifications(!showNotifications)}
->
-  <Bell size={26} color="#000000" />
+                className="btn p-2 rounded-circle bell-btn"
+                style={{ background: "transparent", border: "none" }}
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
+                <Bell size={26} color="#000000" />
 
                 {/* Unread badge above the bell */}
                 {unreadCount > 0 && (
                   <span
-  style={{
-    position: 'absolute',
-    top: '0px',
-    right: '0px',
-    transform: 'translate(30%, -30%)',
-    backgroundColor: 'red',
-    color: 'white',
-    fontSize: '0.65rem',
-    fontWeight: 'bold',
-    borderRadius: '50%',
-    width: '16px',
-    height: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  }}
->
-  {unreadCount}
-</span>
-
+                    style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      backgroundColor: 'red',
+                      color: 'white',
+                      fontSize: '0.65rem',
+                      fontWeight: 'bold',
+                      borderRadius: '50%',
+                      width: '16px',
+                      height: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 10,
+                    }}
+                  >
+                    {unreadCount}
+                  </span>
                 )}
               </button>
 
@@ -189,22 +251,21 @@ function NavigationBar() {
             </div>
 
             {/* Profile */}
-            <div className="user-navbar-profile" ref={dropdownRef}>
+            <div className="user-navbar-profile" ref={profileRef}>
               <button
                 className="user-profile-btn"
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
               >
-                <Avatar
-                  email={user?.email || ""}
-                  name={user?.name || "Anonymous"}
-                  size={40}
-                />
+                <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} className="avatar" size={40} />
+                
+               
                 <div className="user-profile-dots">⋮</div>
               </button>
               {isProfileOpen && (
                 <div className="user-profile-dropdown">
                   <div className="user-profile-info">
-                    <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} size={40} />
+                   <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} className="avatar" size={40} />
+                   
                     <div className="user-profile-details">
                       <div className="user-profile-name-large">{userEmail}</div>
                       <div className="user-profile-role">User</div>
@@ -346,7 +407,7 @@ function NavigationBar() {
     }
   }
 /* Mobile only */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .notification-dropdown {
     width: 220px;       /* smaller width on mobile */
     max-height: 250px;  /* smaller height on mobile */
@@ -368,29 +429,9 @@ function NavigationBar() {
   z-index: 10000;
   transition: all 0.3s ease;
 }
-.bell-btn {
-  position: relative;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.25s ease, transform 0.1s ease;
-}
-
-.bell-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-}
-
-.bell-btn:active {
-  transform: scale(0.92);
-  background: rgba(0, 0, 0, 0.12);
-}
 
 /* Mobile only */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
 html, body {
   overflow-x: hidden !important;
   width: 100% !important;
@@ -419,7 +460,25 @@ html, body {
     
 
   @media (max-width: 992px) {
-  
+  .custom-mobile-dropdown-item {
+    width: 100%;
+    display: block;
+    padding: 10px 15px;
+    background: transparent;
+    border-radius: 6px;
+    border-bottom: none !important;
+  }
+
+  .custom-mobile-dropdown-item:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .custom-mobile-separator {
+    height: 1px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    margin: 6px 0;
+  }
     /* Logo and brand */
     nav.navbar .container-fluid > .d-flex.align-items-center.ms-2 {
       margin-left: -20px !important;
@@ -465,7 +524,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
+   
     padding: 0 8px;
   }
   .navbar-collapse .nav-item:last-child a {
@@ -578,7 +637,11 @@ html, body {
     padding: 8px;
     margin-top: 15px !important;
   }
-     
+     .dropdown-item {
+  border-bottom: none !important;
+}
+
+
     /* Navbar toggle */
     .navbar-toggler {
       border: none !important;

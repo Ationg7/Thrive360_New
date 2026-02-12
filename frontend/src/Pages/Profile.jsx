@@ -10,7 +10,7 @@ import {
   Form,
   Modal,
 } from "react-bootstrap";
-import { Heart, ThumbsUp, Smile, Bookmark, History } from "lucide-react";
+import { Heart, ThumbsUp, Smile, Bookmark, History, Frown} from "lucide-react";
 import { BsFilter, BsGear } from "react-icons/bs";
 import { ThreeDotsVertical, Image } from "react-bootstrap-icons";
 import EmojiPicker from "emoji-picker-react";
@@ -21,8 +21,10 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import Events from "../Components/Events";
 import ChangePhoto from "./ChangePhoto"; // <-- import your component
-import { API_BASE_URL, API_ENDPOINTS } from "../config/api";
+import { API_BASE_URL, API_ENDPOINTS, getStorageUrl } from "../config/api";
 import './Profile.css'
+
+
 
 // Challenge History Component
 const ChallengeHistoryList = () => {
@@ -30,30 +32,30 @@ const ChallengeHistoryList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError(null);
       try {
         const token = localStorage.getItem('authToken');
-        if (!token) { 
-          setItems([]); 
+        if (!token) {
+          setItems([]);
           setLoading(false);
-          return; 
+          return;
         }
-        
+       
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        const res = await fetch(API_ENDPOINTS.CHALLENGES_HISTORY || `${API_BASE_URL}/challenges/history`, { 
+       
+        const res = await fetch(API_ENDPOINTS.CHALLENGES_HISTORY || `${API_BASE_URL}/challenges/history`, {
           signal: controller.signal,
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
-          } 
+          }
         });
         clearTimeout(timeoutId);
-        
+       
         if (res.ok) {
           const data = await res.json();
           setItems(Array.isArray(data) ? data.filter((x) => x.is_completed) : []);
@@ -77,6 +79,8 @@ const ChallengeHistoryList = () => {
     load();
   }, []);
 
+
+
   const renderBadge = (status) => {
     const style = status === 'In Progress'
       ? { borderColor: '#FFC107', color: '#FFC107' }
@@ -87,25 +91,6 @@ const ChallengeHistoryList = () => {
       </span>
     );
   };
-
-  if (loading) {
-    return (
-      <ListGroup.Item className="text-center text-muted py-3 small">
-        <div style={{ padding: '20px' }}>Loading challenge history...</div>
-      </ListGroup.Item>
-    );
-  }
-
-  if (error) {
-    return (
-      <ListGroup.Item className="text-center text-danger py-3 small">
-        <div style={{ padding: '20px' }}>
-          <div style={{ fontSize: '24px', marginBottom: '10px' }}>⚠️</div>
-          <div>{error}</div>
-        </div>
-      </ListGroup.Item>
-    );
-  }
 
   if (items.length === 0) {
     return (
@@ -162,21 +147,20 @@ const Profile = () => {
   const [reportingPostId, setReportingPostId] = useState(null);
   const [hiddenPosts, setHiddenPosts] = useState([]);
   const [showRestrictedModal, setShowRestrictedModal] = useState(false);
-
+const [lastPostTime, setLastPostTime] = useState(null);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [showUndo, setShowUndo] = useState(false);
   const [showChangePhoto, setShowChangePhoto] = useState(false); // <-- new state
   const [showEventsModal, setShowEventsModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showTodoModal, setShowTodoModal] = useState(false);
-  const [modalKeys, setModalKeys] = useState({
-    events: Date.now(),
-    history: Date.now(),
-    todo: Date.now()
-  });
 
   const [showNoReasonModal, setShowNoReasonModal] = useState(false);
   const [profileCoverUrl, setProfileCoverUrl] = useState(null);
+const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [postToDelete, setPostToDelete] = useState(null);
 
+  // ---------------- Helper ----------------
   // ---------------- Helper ----------------
   const toImageUrl = (img) => {
     if (!img) return null;
@@ -214,7 +198,23 @@ const Profile = () => {
     const filtered = censorText(e.target.value);
     setNewPost(filtered);
   };
-
+ // Cooldown timer effect
+   useEffect(() => {
+     if (lastPostTime && cooldownRemaining > 0) {
+       const timer = setInterval(() => {
+         const elapsed = Math.floor((Date.now() - lastPostTime) / 1000);
+         const remaining = Math.max(0, 15 - elapsed);
+         setCooldownRemaining(remaining);
+        
+         if (remaining === 0) {
+           setLastPostTime(null);
+         }
+       }, 1000);
+ 
+       return () => clearInterval(timer);
+     }
+   }, [lastPostTime, cooldownRemaining]);
+ 
   // ---------------- Post Handlers ----------------
   const handlePost = async () => {
     if (newPost.trim() === "" && !selectedImage) return;
@@ -227,8 +227,8 @@ const Profile = () => {
       const token = localStorage.getItem("authToken");
       const isAuth = !!token && isLoggedIn;
       const url = isAuth
-        ? "http://127.0.0.1:8000/api/freedom-wall/posts/auth"
-        : "http://127.0.0.1:8000/api/freedom-wall/posts";
+        ? API_ENDPOINTS.FREEDOM_WALL_POSTS_AUTH
+        : API_ENDPOINTS.FREEDOM_WALL_POSTS;
 
       const headers = isAuth ? { Authorization: `Bearer ${token}` } : {};
 
@@ -246,7 +246,7 @@ const Profile = () => {
       const p = await res.json();
       console.log("Post created successfully:", p);
 
-      const imageUrl = p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
+      const imageUrl = p.image_url || getStorageUrl(p.image_path);
       const newEntry = {
         id: p.id,
         author: p.author || user?.name || "Anonymous",
@@ -276,6 +276,8 @@ const Profile = () => {
 
   };
 
+
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) setSelectedImage(file);
@@ -293,7 +295,7 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await fetch(
-        `http://127.0.0.1:8000/api/freedom-wall/posts/${postId}/react`,
+        `${API_ENDPOINTS.FREEDOM_WALL_POSTS}/${postId}/react`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -327,7 +329,8 @@ const Profile = () => {
   const handleHeart = (id) => handleReaction(id, "heart");
   const handleSad = (id) => handleReaction(id, "sad");
 
-  const handleSave = async (id) => {
+
+ const handleSave = async (id) => {
     if (!isLoggedIn) {
       setShowGuestPopup(true);
       return;
@@ -335,7 +338,7 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await fetch(
-        `http://127.0.0.1:8000/api/freedom-wall/posts/${id}/save`,
+        `${API_ENDPOINTS.FREEDOM_WALL_POSTS}/${id}/save`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -356,19 +359,22 @@ const Profile = () => {
     }
   };
 
+
+
+
   const openReportModal = (id) => {
     setReportingPostId(id);
     setShowReportModal(true);
   };
 
-  const submitReport = async () => {
+ const submitReport = async () => {
     if (!selectedReason) {
       setShowNoReasonModal(true);
       return;
     }
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/freedom-wall/posts/${reportingPostId}/report`,
+        `${API_ENDPOINTS.FREEDOM_WALL_POSTS}/${reportingPostId}/report`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -378,6 +384,8 @@ const Profile = () => {
           }),
         }
       );
+
+
       if (response.ok) {
         setShowReportSnackbar(true);
         setTimeout(() => setShowReportSnackbar(false), 2000);
@@ -397,23 +405,28 @@ const Profile = () => {
       alert("An error occurred while submitting the report.");
     }
   };
+const handleDeletePost = async (id) => {
+  try {
+    // Optional: call backend to delete post
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${API_ENDPOINTS.FREEDOM_WALL_POSTS}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
 
-  const handleHide = (id) => {
-    const postToHide = posts.find((post) => post.id === id);
-    if (postToHide) {
-      setHiddenPosts((prev) => [postToHide, ...prev]);
-      setPosts((prev) => prev.filter((post) => post.id !== id));
-      setShowUndo(true);
-      setTimeout(() => setShowUndo(false), 5000);
-    }
-  };
-  const undoHide = () => {
-    setPosts((prev) => [...hiddenPosts, ...prev]);
-    setHiddenPosts([]);
-    setShowUndo(false);
-  };
+    if (!response.ok) throw new Error('Failed to delete post');
 
-  const loadPosts = async (filter = "my-posts") => {
+    // Remove post from state
+    setPosts((prev) => prev.filter((post) => post.id !== id));
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    alert('Failed to delete post. Please try again.');
+  }
+};
+
+const loadPosts = async (filter = "my-posts") => {
     try {
       const token = localStorage.getItem("authToken");
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
@@ -421,10 +434,10 @@ const Profile = () => {
       let url;
       switch (filter) {
         case "saved":
-          url = "http://127.0.0.1:8000/api/freedom-wall/saved-posts";
+          url = API_ENDPOINTS.FREEDOM_WALL_SAVED_POSTS;
           break;
         default:
-          url = "http://127.0.0.1:8000/api/freedom-wall/my-posts";
+          url = API_ENDPOINTS.FREEDOM_WALL_MY_POSTS;
       }
 
       const response = await fetch(url, { headers });
@@ -432,7 +445,7 @@ const Profile = () => {
 
       const data = await response.json();
       const normalizedPosts = Array.isArray(data) ? data.map((post) => {
-        const imageUrl = post.image_url || (post.image_path ? `http://127.0.0.1:8000/storage/${post.image_path}` : null);
+        const imageUrl = post.image_url || getStorageUrl(post.image_path);
         const userReaction = post.user_reaction || null;
         return {
           ...post,
@@ -456,6 +469,8 @@ const Profile = () => {
       console.error("Error loading posts:", error);
     }
   };
+
+
 
   // Apply display filters to posts
   const getFilteredAndSortedPosts = () => {
@@ -490,13 +505,13 @@ const Profile = () => {
     return filtered;
   };
 
-  const loadEvents = async () => {
+ const loadEvents = async () => {
     try {
       const token = localStorage.getItem("authToken");
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
-      const response = await fetch(API_ENDPOINTS.EVENTS || `${API_BASE_URL}/events`, { 
+      const response = await fetch(API_ENDPOINTS.EVENTS || `${API_BASE_URL}/events`, {
         headers,
         signal: controller.signal
       });
@@ -509,6 +524,9 @@ const Profile = () => {
       console.error("Error fetching events:", error);
     }
   };
+
+
+
 
   useEffect(() => { loadPosts(postFilter); }, [postFilter]);
   useEffect(() => { 
@@ -591,22 +609,13 @@ const Profile = () => {
   <Dropdown.Item  onClick={() => setShowChangePhoto(true)}>
     Change Photo
   </Dropdown.Item>
-  <Dropdown.Item className="desktop-hide" onClick={() => {
-    setModalKeys(prev => ({ ...prev, events: Date.now() }));
-    setShowEventsModal(true);
-  }}>
+  <Dropdown.Item className="desktop-hide" onClick={() => setShowEventsModal(true)}>
     Upcoming Events
   </Dropdown.Item>
-  <Dropdown.Item className="desktop-hide" onClick={() => {
-    setModalKeys(prev => ({ ...prev, history: Date.now() }));
-    setShowHistoryModal(true);
-  }}>
+  <Dropdown.Item className="desktop-hide" onClick={() => setShowHistoryModal(true)}>
   Challenge's History
 </Dropdown.Item>
-  <Dropdown.Item className="desktop-hide" onClick={() => {
-    setModalKeys(prev => ({ ...prev, todo: Date.now() }));
-    setShowTodoModal(true);
-  }}>
+  <Dropdown.Item className="desktop-hide" onClick={() => setShowTodoModal(true)}>
     To-Do List
   </Dropdown.Item>
 </Dropdown.Menu>
@@ -661,12 +670,35 @@ const Profile = () => {
     }}
     onClick={() => setShowEventsModal(false)}
   >
-    <div onClick={(e) => e.stopPropagation()} className="p-3 bg-white rounded shadow mobile-modal-content" style={{ maxWidth: "500px", width: "90%", position: "relative" }}>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 style={{ margin: 0 }}>Upcoming Events</h4>
-        <button onClick={() => setShowEventsModal(false)} className="mobile-modal-close">×</button>
-      </div>
-      <Events key={`events-modal-${modalKeys.events}`} hideCardHeader /> {/* reuse your Events component */}
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="p-3 bg-white rounded shadow"
+      style={{
+        maxWidth: "500px",
+        width: "90%",
+        position: "relative", // important for X positioning
+      }}
+    >
+      {/* Close X Button */}
+      <button
+        onClick={() => setShowEventsModal(false)}
+        style={{
+          position: "absolute",
+          top: "10px",
+          right: "10px",
+          border: "none",
+          background: "transparent",
+          fontSize: "24px",
+          cursor: "pointer",
+          lineHeight: "1",
+        }}
+      >
+        ×
+      </button>
+
+      <h4 className="mb-3">Upcoming Events</h4>
+
+      <Events hideCardHeader />
     </div>
   </div>
 )}
@@ -687,19 +719,22 @@ const Profile = () => {
     }}
     onClick={() => setShowHistoryModal(false)}
   >
+       
     <div onClick={(e) => e.stopPropagation()} 
-         className="p-3 bg-white rounded shadow mobile-modal-content" 
-         style={{ maxWidth: "500px", width: "90%", maxHeight: "80vh", overflowY: "auto", position: "relative" }}>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 style={{ margin: 0 }}>Challenge History</h4>
-        <button onClick={() => setShowHistoryModal(false)} className="mobile-modal-close">×</button>
-      </div>
+         className="p-3 bg-white rounded shadow" 
+         style={{ maxWidth: "500px", width: "90%", maxHeight: "80vh", overflowY: "auto" , position: "relative",}}>
+      <h4>Challenge History</h4>
+      
+      <button onClick={() => setShowHistoryModal(false)} 
+              style={{ position: "absolute", top: "10px", right: "10px", border: "none", background: "transparent", fontSize: "20px", cursor: "pointer" }}>
+        ×
+      </button>
 
       {/* Challenge History Content */}
       <Card className="mb-3 events-card shadow-sm border-0 mobile-visible-section" style={{ fontFamily: 'Poppins, sans-serif' }}>
         <div className="events-scroll-wrapper" style={{ maxHeight: '400px', overflowY: 'auto' }}>
           <ListGroup variant="flush">
-            <ChallengeHistoryList key={`history-modal-${modalKeys.history}`} />
+            <ChallengeHistoryList />
           </ListGroup>
         </div>
       </Card>
@@ -726,12 +761,10 @@ const Profile = () => {
     }}
     onClick={() => setShowTodoModal(false)}
   >
-    <div onClick={(e) => e.stopPropagation()} className="p-3 bg-white rounded shadow mobile-modal-content" style={{ maxWidth: "500px", width: "90%", position: "relative" }}>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 style={{ margin: 0 }}>To-Do List</h4>
-        <button onClick={() => setShowTodoModal(false)} className="mobile-modal-close">×</button>
-      </div>
-      <TodoList key={`todo-modal-${modalKeys.todo}`} /> {/* reuse your TodoList component */}
+    <div onClick={(e) => e.stopPropagation()} className="p-3 bg-white rounded shadow" style={{ maxWidth: "500px", width: "90%" ,  position: "relative",}}>
+      <h4>To-Do List</h4>
+      <button onClick={() => setShowTodoModal(false)} style={{ position: "absolute", top: "10px", right: "10px", border: "none", background: "transparent", fontSize: "20px", cursor: "pointer" }}>×</button>
+      <TodoList /> {/* reuse your TodoList component */}
     </div>
   </div>
 )}
@@ -1023,10 +1056,36 @@ const Profile = () => {
                  />
        
                  {selectedImage && (
-                   <div className="mt-2">
-                     <img src={URL.createObjectURL(selectedImage)} alt="Selected" className="img-fluid post-image-preview" />
-                   </div>
-                 )}
+  <div className="mt-2" style={{ position: "relative", display: "inline-block" }}>
+    <img
+      src={URL.createObjectURL(selectedImage)}
+      alt="Selected"
+      className="img-fluid post-image-preview"
+      style={{ borderRadius: "8px" }}
+    />
+    <span
+      onClick={() => setSelectedImage(null)}
+      style={{
+        position: "absolute",
+        top: "5px",
+        right: "5px",
+        backgroundColor: "rgba(0, 0, 0, 0.6)",
+        color: "white",
+        borderRadius: "50%",
+        width: "22px",
+        height: "22px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        cursor: "pointer",
+        fontWeight: "bold",
+        fontSize: "14px",
+      }}
+    >
+      ✕
+    </span>
+  </div>
+)}
        
           <div
   className="add-post-container mt-2 d-flex align-items-center"
@@ -1052,25 +1111,28 @@ const Profile = () => {
   
 </div>
 
-          {showEmojiPicker && <EmojiPicker onEmojiClick={handleEmojiClick} />}
-        </Modal.Body>
-        <Modal.Footer style={{ backgroundColor: "#e6f4ea" }}>
-          <Button variant="secondary" onClick={() => setShowPostModal(false)}>Cancel</Button>
-          <Button
-            variant="success"
-            onClick={() => {
-              if (isLoggedIn) {
-                handlePost();
-              } else {
-                setShowGuestPopup(true); // <-- guest notification here too
-                setShowPostModal(false);
-              }
-            }}
-          >
-            {isLoggedIn ? "Post" : "Share Anonymously"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+           {showEmojiPicker && <EmojiPicker onEmojiClick={handleEmojiClick} />}
+                  </Modal.Body>
+                 <Modal.Footer style={{ backgroundColor: "#e6f4ea" }}>
+            <Button variant="secondary" onClick={() => setShowPostModal(false)}>Cancel</Button>
+             <Button
+              variant="success"
+              disabled={cooldownRemaining > 0}
+              onClick={() => {
+                // Both logged-in and guest users can post
+                handlePost(); // handlePost already sends requests differently based on auth
+                setShowPostModal(false); // close modal after posting
+              }}
+            >
+              {cooldownRemaining > 0
+                ? `Please wait ${cooldownRemaining}s`
+                : (isLoggedIn ? "Post" : "Share Anonymously")}
+            </Button>
+          
+          
+          </Modal.Footer>
+          
+                </Modal>
 
          {/* Posts */}
               <div className="post-list mt-3">
@@ -1095,7 +1157,11 @@ const Profile = () => {
                           </Dropdown.Toggle>
                           <Dropdown.Menu align="end">
                             <Dropdown.Item onClick={() => openReportModal(post.id)}>Report</Dropdown.Item>
-                            <Dropdown.Item onClick={() => handleHide(post.id)}>Hide</Dropdown.Item>
+                           <Dropdown.Item onClick={() => {
+  setPostToDelete(post);
+  setShowDeleteConfirm(true);
+}}>Delete</Dropdown.Item>
+
                           </Dropdown.Menu>
                         </Dropdown>
                       )}
@@ -1133,76 +1199,123 @@ const Profile = () => {
 
 
         
-                        <div className="post-actions d-flex align-items-center mt-3" style={{ justifyContent: "flex-start" }}>
-                          <div className="d-flex align-items-center me-3 like-action" onClick={isLoggedIn ? () => handleLike(post.id) : undefined} style={{ cursor: isLoggedIn ? "pointer" : "default" }}>
-                            <ThumbsUp size={18} stroke={post.liked ? "blue" : "black"} fill={post.liked ? "blue" : "none"} className="me-1" />
-                            <small>{post.likes || 0}</small>
-                          </div>
-        
-                          <div className="d-flex align-items-center me-3 heart-action" onClick={isLoggedIn ? () => handleHeart(post.id) : undefined} style={{ cursor: isLoggedIn ? "pointer" : "default" }}>
-                            <Heart size={18} className="me-1" fill={post.hearted ? "red" : "none"} stroke={post.hearted ? "red" : "gray"} />
-                            <small>{post.hearts || 0}</small>
-                          </div>
-        
-                          <div className="d-flex align-items-center me-3 sad-action" onClick={isLoggedIn ? () => handleSad(post.id) : undefined} style={{ cursor: isLoggedIn ? "pointer" : "default" }}>
-                            <span className="me-1" style={{ color: post.user_reaction === 'sad' ? "#6c757d" : "gray", fontSize: "18px" }}>😢</span>
-                            <small>{post.sad || 0}</small>
-                          </div>
-        
-                          <div className="d-flex align-items-center save-action" onClick={isLoggedIn ? () => handleSave(post.id) : undefined} style={{ cursor: isLoggedIn ? "pointer" : "default" }}>
-                            <Bookmark size={18} className="me-1" fill={post.saved ? "green" : "none"} stroke={post.saved ? "green" : "gray"} />
-                            <small>{post.saves || 0}</small>
-                          </div>
-                        </div>
-                      </div>
+                          <div className="post-actions d-flex align-items-center mt-3" style={{ justifyContent: "flex-start" }}>
+  {/* LIKE */}
+  <div
+    className="d-flex align-items-center me-3 like-action"
+    onClick={isLoggedIn ? () => handleLike(post.id) : undefined}
+    style={{ cursor: isLoggedIn ? "pointer" : "default" }}
+  >
+    <ThumbsUp
+      size={18}
+      className="me-1"
+      stroke={post.liked ? "blue" : "gray"}   // ⬅ same gray color
+      fill={post.liked ? "blue" : "none"}
+    />
+    <small>{post.likes || 0}</small>
+  </div>
+
+  {/* HEART */}
+  <div
+    className="d-flex align-items-center me-3 heart-action"
+    onClick={isLoggedIn ? () => handleHeart(post.id) : undefined}
+    style={{ cursor: isLoggedIn ? "pointer" : "default" }}
+  >
+    <Heart
+      size={18}
+      className="me-1"
+      fill={post.hearted ? "red" : "none"}
+      stroke={post.hearted ? "red" : "gray"}   // ⬅ same gray
+    />
+    <small>{post.hearts || 0}</small>
+  </div>
+
+  {/* SAD */}
+  <div
+    className="d-flex align-items-center me-3 sad-action"
+    onClick={isLoggedIn ? () => handleSad(post.id) : undefined}
+    style={{ cursor: isLoggedIn ? "pointer" : "default" }}
+  >
+    <Frown
+      size={18}
+      className="me-1"
+      stroke={post.user_reaction === "sad" ? "#6c757d" : "gray"} // ⬅ same gray
+      fill={post.user_reaction === "sad" ? "yellow" : "none"}
+    />
+   
+    <small>{post.sad || 0}</small>
+  </div>
+
+  {/* SAVE */}
+  <div
+    className="d-flex align-items-center me-3 save-action"
+    onClick={isLoggedIn ? () => handleSave(post.id) : undefined}
+    style={{ cursor: isLoggedIn ? "pointer" : "default" }}
+  >
+    <Bookmark
+      size={18}
+      className="me-1"
+      fill={post.saved ? "green" : "none"}
+      stroke={post.saved ? "green" : "gray"}   // ⬅ same gray
+    />
+    <small>{post.saves || 0}</small>
+  </div>
+</div>
+
+              </div>
                     </Card.Body>
                   </Card>
                 ))}
               </div>
- {/* Undo Snackbar */}
-{showUndo && (
+ {showDeleteConfirm && postToDelete && (
   <div
-    style={{
-      position: "fixed",
-      bottom: "20px",
-      left: "0px", // flush to left edge
-      zIndex: 9999,
-      backgroundColor: "rgb(32,31,36)", // white background
-      borderLeft: "4px solid green", // green accent
-      borderRadius: "0 6px 6px 0", // rounded except left edge
-      padding: "14px 20px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
-      fontFamily: "Poppins, sans-serif",
-      fontSize: "16px",
-      minWidth: "320px",
-      maxWidth: "400px",
-      wordBreak: "break-word",
-      marginLeft: "20px",
-    }}
+    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 10050 }}
   >
-    <span style={{ color: "#fff", fontWeight: 600 }}>
-      Post hidden
-    </span>
-    
-    <div style={{ display: "flex", gap: "14px" }}>
-      <span
-        onClick={undoHide}
-        style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600, display:"underline" }}
-      >
-        Undo
-      </span>
-      <span
-        onClick={() => setShowUndo(false)}
-        style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600 }}
-      >
-        Ok
-      </span>
+    <div
+      className="rounded-4 shadow-lg p-4"
+      style={{ background: "#fff", width: "380px", maxWidth: "92%" }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h5 className="fw-bold mb-2 text-dark" style={{ margin: 0 }}>Delete Notice</h5>
+        <button
+          onClick={() => setShowDeleteConfirm(false)}
+          style={{ fontSize: "20px", border: "none", background: "transparent", cursor: "pointer", color: "#555" }}
+        >
+          ×
+        </button>
+      </div>
+
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "12px 0" }} />
+
+      <p className="text-muted mb-4">
+        Are you sure you want to delete this post? <b>{postToDelete.author || "Guest User"}</b>'s post will be permanently deleted.
+      </p>
+
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{ padding: "8px 20px", borderRadius: "24px", background: "#e8f5e9", border: "1px solid #c8e6c9", color: "#2e7d32", fontWeight: 600, cursor: "pointer" }}
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{ padding: "8px 20px", borderRadius: "24px", background: "#d32f2f", border: "none", color: "#fff", fontWeight: 600, cursor: "pointer" }}
+          onClick={async () => {
+            await handleDeletePost(postToDelete.id);
+            setShowDeleteConfirm(false);
+          }}
+        >
+          Delete
+        </button>
+      </div>
     </div>
   </div>
 )}
+
 
          
        

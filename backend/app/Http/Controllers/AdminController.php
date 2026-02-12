@@ -28,11 +28,23 @@ class AdminController extends Controller
     public function register(Request $request)
     {
         try {
+            // Validate the secret admin registration code first
+            $secretCode = config('app.admin_secret_code', 'THRIVE360ADMIN_2025');
+            $providedCode = $request->input('secret_code', '');
+
+            if ($providedCode !== $secretCode) {
+                return response()->json([
+                    'message' => 'Invalid admin secret code. Registration denied.',
+                    'errors' => ['secret_code' => ['The admin secret code is incorrect.']]
+                ], 403);
+            }
+
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:8|confirmed',
                 'password_confirmation' => 'required|string|min:8',
+                'secret_code' => 'required|string',
                 'role' => 'required|in:admin',
             ]);
 

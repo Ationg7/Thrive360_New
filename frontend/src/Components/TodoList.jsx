@@ -24,7 +24,7 @@ const TodoList = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      const apiUrl = API_ENDPOINTS.TODOS || `${API_BASE_URL}/todos`;
+      const apiUrl = API_BASE_URL; // Use base API URL, not the full TODOS endpoint
       
       // Load from IndexedDB first (offline-first approach) - filtered by user_id
       const localTodos = await todoOfflineService.loadTodos(apiUrl, token, user.id);
@@ -53,7 +53,7 @@ const TodoList = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const apiUrl = API_ENDPOINTS.TODOS || `${API_BASE_URL}/todos`;
+      const apiUrl = `${API_BASE_URL}/todos`; // Construct full todos endpoint
       
       if (editingTodo) {
         // Update existing todo
@@ -147,7 +147,7 @@ const TodoList = () => {
   const toggleTodo = async (id) => {
     try {
       const token = localStorage.getItem('authToken');
-      const apiUrl = API_ENDPOINTS.TODOS || `${API_BASE_URL}/todos`;
+      const apiUrl = `${API_BASE_URL}/todos`; // Construct full todos endpoint
       
       // Find the todo in local state
       const todo = todos.find(t => t.id === id);
@@ -201,7 +201,7 @@ const TodoList = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const apiUrl = API_ENDPOINTS.TODOS || `${API_BASE_URL}/todos`;
+      const apiUrl = `${API_BASE_URL}/todos`; // Construct full todos endpoint
       
       // Find the todo
       const todo = todos.find(t => t.id === id);
@@ -371,12 +371,13 @@ const TodoList = () => {
           <div className="p-3 text-center">Loading...</div>
         ) : (
           // SCROLLABLE WRAPPER START
-         
-            <ListGroup variant="flush">
+          <div className="todo-scrollable-wrapper">
+            <ListGroup variant="flush" style={{ padding: 0, margin: 0 }}>
               {todos.map((todo) => (
                 <ListGroup.Item 
                   key={todo.id} 
                   className="d-flex justify-content-between align-items-center recent-activity-item"
+                  style={{ padding: '8px 10px' }}
                 >
                   <div className="d-flex align-items-center flex-grow-1">
                     <Button
@@ -436,7 +437,7 @@ const TodoList = () => {
                 </ListGroup.Item>
               )}
             </ListGroup>
-        
+          </div>
           // SCROLLABLE WRAPPER END
         )}
       </Card>
@@ -450,6 +451,7 @@ const TodoList = () => {
         }} 
         centered
         className="todo-modal-mobile"
+        style={{ zIndex: 9999 }}
       >
         <Modal.Header closeButton>
           <Modal.Title>{editingTodo ? 'Edit Todo' : 'Add New Todo'}</Modal.Title>
@@ -533,6 +535,64 @@ const TodoList = () => {
 /* Show scrollbar on hover */
 .scrollable-wrapper:hover::-webkit-scrollbar-thumb {
   background-color: rgba(0,0,0,0.3);
+}
+
+/* Todo List Scrollable Wrapper */
+.todo-scrollable-wrapper {
+  max-height: 350px;
+  overflow-y: auto;
+  border-top: 1px solid #f0f0f0;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: lightgrey transparent;
+}
+
+/* Chrome, Safari, Edge */
+.todo-scrollable-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.todo-scrollable-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.todo-scrollable-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0);
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+/* Show scrollbar on hover */
+.todo-scrollable-wrapper:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.3);
+}
+
+/* Ensure TodoList Modal appears above everything */
+.todo-modal-mobile {
+  z-index: 9999 !important;
+}
+
+.todo-modal-mobile .modal-dialog {
+  z-index: 9999 !important;
+}
+
+.todo-modal-mobile .modal-content {
+  z-index: 9999 !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 992px) {
+  .todo-scrollable-wrapper {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 576px) {
+  .todo-scrollable-wrapper {
+    max-height: 250px;
+  }
 }
 
       `}</style>

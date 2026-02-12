@@ -5,15 +5,17 @@ import { useAuth } from '../AuthContext';
 import Avatar from '../Components/Avatar';
 import '../App.css';
 import './AdminSettings.css'; // ✅ uses the same CSS toggle styles as admin
+import { API_BASE_URL } from '../config/api';
 
 const Settings = () => {
   const { user, isLoggedIn } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
-  const BASE_URL = 'http://127.0.0.1:8000';
 
   const [profileData, setProfileData] = useState({
     currentPassword: '',
@@ -58,7 +60,7 @@ const Settings = () => {
     try {
       setSubmitting(true);
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${BASE_URL}/api/user/change-password`, {
+      const response = await fetch(`${API_BASE_URL}/user/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,7 +94,7 @@ const Settings = () => {
       {/* Settings Header */}
       <div className="settings-header mb-4">
         <h1>Settings</h1>
-        <p>Manage your profile, password, and notifications</p>
+        <p>Manage your password</p>
       </div>
 
   {/* Profile Section */}
@@ -135,7 +137,7 @@ const Settings = () => {
                 variant="link"
                 className="position-absolute end-0 top-50 translate-middle-y"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{ border: 'none', padding: '0.375rem' }}
+                 style={{ border: 'none', padding: '0.375rem' , color:'black' }}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </Button>
@@ -144,18 +146,31 @@ const Settings = () => {
 
           <Form.Group className="mb-3">
             <Form.Label>New Password</Form.Label>
-            <Form.Control
-              type="password"
-              className="setting-input"
-              value={profileData.newPassword}
-              onChange={e =>
-                setProfileData(prev => ({
-                  ...prev,
-                  newPassword: e.target.value
-                }))
-              }
-              placeholder="Enter new password"
-            />
+             <div className="position-relative">
+           <Form.Control
+  type={showNewPassword ? 'text' : 'password'}
+  className="setting-input"
+  value={profileData.newPassword}
+  onChange={e =>
+    setProfileData(prev => ({
+      ...prev,
+      newPassword: e.target.value
+    }))
+  }
+  placeholder="Enter new password"
+/>
+
+<Button
+  variant="link"
+  className="position-absolute end-0 top-50 translate-middle-y"
+  onClick={() => setShowNewPassword(!showNewPassword)}
+  style={{ border: 'none', padding: '0.375rem', color:'black' }}
+>
+  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+</Button>
+
+               
+            </div>
           </Form.Group>
 
           <Form.Group className="mb-3">
@@ -177,7 +192,7 @@ const Settings = () => {
                 variant="link"
                 className="position-absolute end-0 top-50 translate-middle-y"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={{ border: 'none', padding: '0.375rem' }}
+                style={{ border: 'none', padding: '0.375rem' , color:'black' }}
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </Button>

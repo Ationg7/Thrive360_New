@@ -35,7 +35,7 @@ const SignUp = () => {
     };
     checkRegistrationStatus();
   }, []);
-  
+ 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,14 +46,20 @@ const SignUp = () => {
       setError({ confirmPassword: "Passwords do not match" });
       return;
     }
+    if (password.length < 8) {
+    setError({ password: "Password must be unique" });
+    return;
+  }
 
-    try {
+   try {
       const requestData = { email, password, password_confirmation: confirmPassword };
-      const response = await fetch("http://127.0.0.1:8000/api/register", {
+      const response = await fetch(API_ENDPOINTS.REGISTER, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData)
       });
+
+
       const data = await response.json();
 
       if (response.ok) {
@@ -67,7 +73,7 @@ const SignUp = () => {
           }
           setError(errs);
         } else {
-          setError({ general: data.message || "Something went wrong" });
+          setError({ general: data.message || "Email already exist!" });
           // If registration is disabled, update state
           if (data.message && data.message.includes('disabled')) {
             setRegistrationDisabled(true);
@@ -177,8 +183,8 @@ const SignUp = () => {
                   className="tooltip-error-floating"
                   style={{
                     position: 'absolute',
-                    left: 0,
-                    bottom: '-22px',
+                   
+                    bottom: '-24px',
                     fontSize: '0.85rem',
                     color: '#dc3545',
                     whiteSpace: 'nowrap'
@@ -190,9 +196,9 @@ const SignUp = () => {
             </div>
 
             {/* Register Button */}
-            <button 
-              className="register-btn" 
-              type="submit" 
+            <button
+              className="register-btn"
+              type="submit"
               style={{ marginTop: "20px" }}
               disabled={registrationDisabled}
             >
@@ -237,22 +243,22 @@ const SignUp = () => {
 .tooltip-error-floating {
   color: #dc3545;
   font-size: 0.85rem;
-  margin-top: 4px; /* small space below input */
   position: absolute;
   left: 0;
-  bottom: -20px; /* adjust as needed */
+  bottom: -20px;
   white-space: nowrap;
-  margin-left: 60px; /* slight indent */
-  margin-top: 50px; /* small space below input */
+  margin-left: 60px;
+  margin-top: 4px;
 }
 
 
-        .label-with-tooltip {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-weight: 500;
-        }
+/* INLINE ERROR (unchanged) */
+.tooltip-error-inline {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-left: 6px;
+  position: absolute;
+}
 
         .password-container {
           position: relative;
@@ -270,7 +276,7 @@ const SignUp = () => {
           visibility: visible;
           min-width: 280px;
           background-color: white;
-          color: black; 
+          color: black;
           text-align: center;
           border-radius: 8px;
           padding: 14px 24px;
@@ -287,9 +293,24 @@ const SignUp = () => {
 
         @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
-    
-     @media (max-width: 768px) {
+   
+     @media (max-width: 992px) {
 
+      /* Keep text on the left and logo on the right */
+  .logo-containers {
+    display: flex;
+    justify-content: space-between; /* left + right */
+    align-items: center;
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .small-logo {
+    width: 40px;    /* slightly smaller for phones */
+    height: auto;
+    margin: 0;      /* remove fixed margin-left */
+  }
+     
         .snackbar {
     top: auto !important;
     bottom: 20px !important;
@@ -300,6 +321,19 @@ const SignUp = () => {
     max-width: 320px !important;
     font-size: 0.8rem;
     padding: 12px 18px;
+  }
+    .tooltip-error-floating {
+    position: relative;   /* no more absolute */
+    bottom: 0;
+    left: 50%;            /* center horizontally */
+    transform: translateX(-50%);
+    margin-left: 0;
+    margin-top: 6px;
+    white-space: normal;  /* allow wrapping */
+    width: 100%;
+    text-align: center;   /* center text */
+    font-size: 0.8rem;
+    display: block;
   }
 }
 
@@ -318,10 +352,12 @@ const SignUp = () => {
 }
 
       `}</style>
-    
+   
 
     </div>
   );
 };
 
 export default SignUp;
+
+

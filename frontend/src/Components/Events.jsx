@@ -174,26 +174,27 @@ const Events = ({ hideHeader = false }) => {
             {error}
           </ListGroup.Item>
         ) : (
-          <ListGroup variant="flush">
-            {events.length === 0 ? (
-              <ListGroup.Item className="text-center text-muted">
-                No events available
-              </ListGroup.Item>
-            ) : (
-              events.slice(0, 5).map((event) => (
-                <ListGroup.Item key={event.id}>
-                  <div className="flex-grow-1">
-                    <div className="d-flex align-items-center mb-1">
-                      <strong className="small">{event.title}</strong>
-                      <Badge bg={getCategoryVariant(event.category)} size="sm" className="ms-2">
-                        {event.category}
-                      </Badge>
-                      {!isUpcoming(event.start_date) && (
-                        <Badge bg="secondary" size="sm" className="ms-1">
-                          Past
+          <div className="events-scrollable-wrapper">
+            <ListGroup variant="flush" style={{ padding: 0, margin: 0 }}>
+              {events.length === 0 ? (
+                <ListGroup.Item className="text-center text-muted">
+                  No events available
+                </ListGroup.Item>
+              ) : (
+                events.slice(0, 5).map((event) => (
+                  <ListGroup.Item key={event.id} style={{ padding: '8px 10px' }}>
+                    <div className="flex-grow-1">
+                      <div className="d-flex align-items-center mb-1">
+                        <strong className="small">{event.title}</strong>
+                        <Badge bg={getCategoryVariant(event.category)} size="sm" className="ms-2">
+                          {event.category}
                         </Badge>
-                      )}
-                    </div>
+                        {!isUpcoming(event.start_date) && (
+                          <Badge bg="secondary" size="sm" className="ms-1">
+                            Past
+                          </Badge>
+                        )}
+                      </div>
 {toImageUrl(event.image_url || event.image_path) && (
   <div className="mb-2">
     <img
@@ -212,35 +213,82 @@ const Events = ({ hideHeader = false }) => {
   </div>
 )}
 
-                    
-                    <div className="small text-muted mb-2">
-                      {event.description.length > 100
-                        ? `${event.description.substring(0, 100)}...`
-                        : event.description}
+                      
+                      <div className="small text-muted mb-2">
+                        {event.description.length > 100
+                          ? `${event.description.substring(0, 100)}...`
+                          : event.description}
+                      </div>
+                      <div className="d-flex align-items-center small text-muted">
+                        <Clock size={14} className="me-1" />
+                        {formatDateTime(event.start_date)}
+                        {event.location && (
+                          <>
+                            <MapPin size={14} className="ms-2 me-1" />
+                            {event.location}
+                          </>
+                        )}
+                        {event.max_participants && (
+                          <>
+                            <Users size={14} className="ms-2 me-1" />
+                            {event.participants?.length || 0}/{event.max_participants}
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="d-flex align-items-center small text-muted">
-                      <Clock size={14} className="me-1" />
-                      {formatDateTime(event.start_date)}
-                      {event.location && (
-                        <>
-                          <MapPin size={14} className="ms-2 me-1" />
-                          {event.location}
-                        </>
-                      )}
-                      {event.max_participants && (
-                        <>
-                          <Users size={14} className="ms-2 me-1" />
-                          {event.participants?.length || 0}/{event.max_participants}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </ListGroup.Item>
-              ))
-            )}
-          </ListGroup>
+                  </ListGroup.Item>
+                ))
+              )}
+            </ListGroup>
+          </div>
         )}
       </Card>
+
+      {/* Events Scrollable Wrapper Styles */}
+      <style>{`
+        .events-scrollable-wrapper {
+          max-height: 350px;
+          overflow-y: auto;
+          border-top: 1px solid #f0f0f0;
+
+          /* Firefox */
+          scrollbar-width: thin;
+          scrollbar-color: lightgrey transparent;
+        }
+
+        /* Chrome, Safari, Edge */
+        .events-scrollable-wrapper::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .events-scrollable-wrapper::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .events-scrollable-wrapper::-webkit-scrollbar-thumb {
+          background-color: rgba(0, 0, 0, 0);
+          border-radius: 4px;
+          transition: background-color 0.3s;
+        }
+
+        /* Show scrollbar on hover */
+        .events-scrollable-wrapper:hover::-webkit-scrollbar-thumb {
+          background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 992px) {
+          .events-scrollable-wrapper {
+            max-height: 300px;
+          }
+        }
+
+        @media (max-width: 576px) {
+          .events-scrollable-wrapper {
+            max-height: 250px;
+          }
+        }
+      `}</style>
     </div>
   );
 };

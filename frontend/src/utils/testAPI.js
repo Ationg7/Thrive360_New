@@ -19,12 +19,12 @@ export const testAPI = async () => {
     return true;
   } catch (error) {
     console.error('❌ API test failed:', error.message);
-    console.error('💡 Make sure your Laravel backend is running on http://localhost:8000');
+    console.error('💡 Make sure your API backend is reachable');
     return false;
   }
 };
 
-// Run test when imported
-if (typeof window !== 'undefined') {
+// Run test when imported only in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   testAPI();
 }

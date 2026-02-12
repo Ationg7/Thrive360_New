@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import { API_ENDPOINTS } from '../config/api';
 
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -30,11 +31,13 @@ const SignIn = () => {
 
     try {
       const requestData = { email, password };
-      const response = await fetch("http://127.0.0.1:8000/api/login", {
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
       });
+
+
 
       const data = await response.json();
 
@@ -185,7 +188,14 @@ const SignIn = () => {
 
         @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
-        @media (max-width: 768px) {
+        @media (max-width: 992px) {
+         .eye-icon {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          cursor: pointer;
+        }
          .snackbar {
     top: auto !important;
     bottom: 20px !important;
@@ -212,6 +222,7 @@ const SignIn = () => {
     transform: translateY(-20px);
   }
 }
+ 
 
 `}</style>
 
@@ -221,3 +232,5 @@ const SignIn = () => {
 };
 
 export default SignIn;
+
+

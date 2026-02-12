@@ -3,6 +3,7 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, STORAGE_KEYS, ROUTES } from '../constants/adminConstants';
+import { getStorageUrl } from '../config/api';
 import ErrorBoundary from '../components/ErrorBoundary';
 import MessageDisplay from '../components/MessageDisplay';
 import { ThumbsUp, Smile, Trash2, Heart, Bookmark } from 'lucide-react';
@@ -30,21 +31,7 @@ const [postToDelete, setPostToDelete] = useState(null);
   }, []);
 
   // Convert backend image path to URL
-  const toImageUrl = (img) => {
-    if (!img) return null;
-    if (typeof img !== 'string') return null;
-    // If already a full URL, return as is
-    if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    // Handle different path formats
-    if (img.startsWith('/storage/')) {
-      return `http://127.0.0.1:8000${img}`;
-    }
-    if (img.startsWith('storage/')) {
-      return `http://127.0.0.1:8000/${img}`;
-    }
-    // Handle plain paths - prepend /storage/
-    return `http://127.0.0.1:8000/storage/${img}`;
-  };
+  const toImageUrl = (img) => getStorageUrl(img);
 
   // Fetch posts from Freedom Wall API
   const fetchPosts = useCallback(async () => {
@@ -58,7 +45,7 @@ const [postToDelete, setPostToDelete] = useState(null);
         return;
       }
 
-      const response = await fetch('http://127.0.0.1:8000/api/freedom-wall/posts', {
+      const response = await fetch(API_ENDPOINTS.FREEDOM_WALL_POSTS, {
         headers: {
           Authorization: `Bearer ${adminToken}`,
           'Content-Type': 'application/json',
@@ -78,8 +65,7 @@ const [postToDelete, setPostToDelete] = useState(null);
       const data = await response.json();
 
       const normalizedPosts = (Array.isArray(data) ? data : []).map((p) => {
-        const imageUrl =
-          p.image_url || (p.image_path ? `http://127.0.0.1:8000/storage/${p.image_path}` : null);
+        const imageUrl = p.image_url || getStorageUrl(p.image_path);
 
         const userName = p.user?.name || p.author || 'Guest User';
         const userEmail = p.user?.email || p.email || '';

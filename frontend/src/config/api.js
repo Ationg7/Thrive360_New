@@ -32,8 +32,9 @@ const getApiBaseUrl = () => {
     return `${protocol}//${hostname}:8000/api`;
   }
   
-  // Production or other hostnames: use same hostname with port 8000
-  return `${protocol}//${hostname}:8000/api`;
+  // Production: fixed API base
+  return 'https://thrive360.site/api';
+
 };
 
 // Make API_BASE_URL a function to recalculate dynamically if needed
@@ -95,6 +96,7 @@ export const API_ENDPOINTS = {
   
   // Admin
   ADMIN_LOGIN: `${API_BASE_URL}/admin/login`,
+  ADMIN_REGISTER: `${API_BASE_URL}/admin/register`,
   ADMIN_DASHBOARD: `${API_BASE_URL}/admin/dashboard`,
   ADMIN_USERS: `${API_BASE_URL}/admin/users`,
   ADMIN_POSTS: `${API_BASE_URL}/admin/posts`,

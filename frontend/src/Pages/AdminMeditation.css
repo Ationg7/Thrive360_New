@@ -531,7 +531,7 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .admin-meditation-page {
     padding: 10px;
   }
@@ -741,7 +741,7 @@
 }
 
 /* Responsive tutorial styles */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .tutorial-modal {
     width: 98%;
     margin: 10px;

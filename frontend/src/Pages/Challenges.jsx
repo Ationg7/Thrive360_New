@@ -713,7 +713,7 @@ const getTextColor = () => {
 
 
 /* Mobile responsive */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .join-challenges-btn {
     justify-content: center;  /* center on mobile */
   }

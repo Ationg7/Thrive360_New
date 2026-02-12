@@ -240,7 +240,7 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .admin-analytics-page {
     padding: 10px;
   }

@@ -6,6 +6,7 @@ import Notifications from "./Notifications";
 import "../App.css";
 import { useAuth } from "../AuthContext";
 import { Modal, Button } from "react-bootstrap";
+import { API_ENDPOINTS } from "../config/api";
 
 function NavigationBar() {
   const location = useLocation();
@@ -13,13 +14,52 @@ function NavigationBar() {
   const { user, logout } = useAuth();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [setShowSuccess] = useState(false);
+  
   const [userEmail, setUserEmail] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const dropdownRef = useRef(null);
+
+  const profileRef = useRef(null);
+const notifRef = useRef(null);
+const menuRef = useRef(null);
+// Close profile + notifications + mobile menu on outside click
+useEffect(() => {
+  const handleClick = (e) => {
+    // Close profile dropdown
+    if (profileRef.current && !profileRef.current.contains(e.target)) {
+      setIsProfileOpen(false);
+    }
+
+    // Close notifications
+    if (notifRef.current && !notifRef.current.contains(e.target)) {
+      setShowNotifications(false);
+    }
+
+    // Close mobile collapse menu
+    const menu = document.getElementById("navbarSupportedContent");
+    const toggler = document.querySelector(".navbar-toggler");
+
+    if (
+      menu &&
+      menu.classList.contains("show") &&
+      !menu.contains(e.target) &&
+      !toggler.contains(e.target)
+    ) {
+      toggler.click();
+    }
+  };
+
+  document.addEventListener("mousedown", handleClick);
+  return () => document.removeEventListener("mousedown", handleClick);
+}, []);
+
+
+ 
+
+
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -34,7 +74,7 @@ function NavigationBar() {
       const token = localStorage.getItem("authToken");
       if (!token) return;
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/notifications", {
+        const res = await fetch(API_ENDPOINTS.NOTIFICATIONS, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -49,7 +89,7 @@ function NavigationBar() {
     };
     fetchUnreadCount();
   }, []);
-
+  
   // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -88,13 +128,22 @@ function NavigationBar() {
       <nav className="navbar navbar-expand-lg navbar-light bg-body-tertiary sticky-top">
         <div className="container-fluid p-0">
           <div className="d-flex align-items-center ms-2">
+             <Link
+      to="/home"
+      className="d-flex align-items-center ms-2"
+      style={{ textDecoration: "none" }}
+    >
             <img
               src="https://cdn-icons-png.flaticon.com/128/11289/11289042.png"
               width="45"
               height="45"
               alt="Thrive360 Logo"
             />
-            <span className="ms-2 fw-bold text-green">Thrive360</span>
+            <span 
+  className="ms-2 fw-bold" 
+  style={{ color: "#198754" }}  // Bootstrap “success” green
+>Thrive360</span>
+            </Link>
           </div>
 
           <button
@@ -107,11 +156,12 @@ function NavigationBar() {
           </button>
 
           {/* Collapsible menu */}
-          <div className="collapse navbar-collapse" id="navbarSupportedContent">
+          <div className="collapse navbar-collapse" id="navbarSupportedContent"ref={menuRef}>
             <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
               <li className="nav-item">
                 <Link to="/home" className={isActive("/home")}>Home</Link>
               </li>
+              
               <li className="nav-item">
                 <Link to="/freedomwall" className={isActive("/freedomwall")}>Freedom Wall</Link>
               </li>
@@ -144,7 +194,7 @@ function NavigationBar() {
           <div className="d-flex align-items-center gap-2 mobile-fixed-buttons">
 
             {/* Notification */}
-            <div className="position-relative">
+            <div className="position-relative" ref={notifRef}>
               <button
                 className="btn p-2 rounded-circle bell-btn"
                 style={{ background: "transparent", border: "none" }}
@@ -188,22 +238,21 @@ function NavigationBar() {
             </div>
 
             {/* Profile */}
-            <div className="user-navbar-profile" ref={dropdownRef}>
+            <div className="user-navbar-profile" ref={profileRef}>
               <button
                 className="user-profile-btn"
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
               >
-                <Avatar
-                  email={user?.email || ""}
-                  name={user?.name || "Anonymous"}
-                  size={40}
-                />
+                <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} className="avatar" size={40} />
+                
+               
                 <div className="user-profile-dots">⋮</div>
               </button>
               {isProfileOpen && (
                 <div className="user-profile-dropdown">
                   <div className="user-profile-info">
-                    <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} size={40} />
+                   <Avatar email={user?.email || ""} name={user?.name || "Anonymous"} className="avatar" size={40} />
+                   
                     <div className="user-profile-details">
                       <div className="user-profile-name-large">{userEmail}</div>
                       <div className="user-profile-role">User</div>
@@ -345,7 +394,7 @@ function NavigationBar() {
     }
   }
 /* Mobile only */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .notification-dropdown {
     width: 220px;       /* smaller width on mobile */
     max-height: 250px;  /* smaller height on mobile */
@@ -369,7 +418,7 @@ function NavigationBar() {
 }
 
 /* Mobile only */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
 html, body {
   overflow-x: hidden !important;
   width: 100% !important;
@@ -398,7 +447,25 @@ html, body {
     
 
   @media (max-width: 992px) {
-  
+  .custom-mobile-dropdown-item {
+    width: 100%;
+    display: block;
+    padding: 10px 15px;
+    background: transparent;
+    border-radius: 6px;
+    border-bottom: none !important;
+  }
+
+  .custom-mobile-dropdown-item:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .custom-mobile-separator {
+    height: 1px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    margin: 6px 0;
+  }
     /* Logo and brand */
     nav.navbar .container-fluid > .d-flex.align-items-center.ms-2 {
       margin-left: -20px !important;
@@ -444,7 +511,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
+   
     padding: 0 8px;
   }
   .navbar-collapse .nav-item:last-child a {
@@ -557,7 +624,11 @@ html, body {
     padding: 8px;
     margin-top: 15px !important;
   }
-     
+     .dropdown-item {
+  border-bottom: none !important;
+}
+
+
     /* Navbar toggle */
     .navbar-toggler {
       border: none !important;

@@ -1,7 +1,7 @@
 // FreedomWall.js
 import React, { useState, useEffect } from "react";
 import { Container, Card, Form, Modal, Button, Dropdown } from "react-bootstrap";
-import { Heart, Bookmark, Image, Smile, ThumbsUp } from "lucide-react";
+import { Heart, Bookmark, Image, Smile, ThumbsUp ,Frown } from "lucide-react";
 import { FaEllipsisV } from "react-icons/fa";
 import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../AuthContext";
@@ -43,8 +43,7 @@ const FreedomWall = () => {
   ];
 
   const [posts, setPosts] = useState([]);
-  const [hiddenPosts, setHiddenPosts] = useState([]);
-  const [showUndo, setShowUndo] = useState(false);
+ 
 
   const [showPostModal, setShowPostModal] = useState(false);
   const [newPost, setNewPost] = useState("");
@@ -64,6 +63,10 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
   const [showGuestPopup, setShowGuestPopup] = useState(false);
 
   const [showReportSnackbar, setShowReportSnackbar] = useState(false);
+const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [postToDelete, setPostToDelete] = useState(null);
+  const [lastPostTime, setLastPostTime] = useState(null);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   const reportReasons = [
     { value: "spam", label: "Spam or misleading" },
@@ -85,34 +88,67 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
     return censored;
   };
 
+  // Cooldown timer effect
+  useEffect(() => {
+    if (lastPostTime && cooldownRemaining > 0) {
+      const timer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - lastPostTime) / 1000);
+        const remaining = Math.max(0, 15 - elapsed);
+        setCooldownRemaining(remaining);
+       
+        if (remaining === 0) {
+          setLastPostTime(null);
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [lastPostTime, cooldownRemaining]);
+
+
+
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await fetch(API_ENDPOINTS.FREEDOM_WALL_POSTS);
+        const token = localStorage.getItem('authToken');
+        // Match Profile's pattern: Always include Authorization header if token exists
+        const headers = { 
+          'Content-Type': 'application/json'
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const res = await fetch(API_ENDPOINTS.FREEDOM_WALL_POSTS, {
+          headers
+        });
+        
         if (!res.ok) throw new Error("Failed to load posts");
         const data = await res.json();
+        
+        // Match Profile's normalization pattern exactly
         const normalized = (Array.isArray(data) ? data : []).map((p) => {
           const imageUrl = p.image_url || getStorageUrl(p.image_path);
-          if (imageUrl) {
-            console.log('Post image URL:', imageUrl, 'for post:', p.id);
-          }
+          // Match Profile: Extract user_reaction the same way
+          const userReaction = p.user_reaction || null;
+          
           return {
             id: p.id,
-           // Prefer explicit author/name fields from API; fallback to Anonymous
             author: p.author || p.user?.name || "Anonymous",
-            // Capture email if API provides it (directly or nested under user)
             email: p.email || p.user?.email || null,
-
+            user_id: p.user_id || null,
             date: p.created_at ? new Date(p.created_at).toLocaleString() : new Date().toLocaleString(),
             content: p.content,
             likes: p.likes || 0,
             hearts: p.hearts || 0,
             sad: p.sad || 0,
             saves: p.saves || 0,
-            liked: p.user_reaction === 'like',
-            hearted: p.user_reaction === 'heart',
+            // Match Profile's exact pattern for setting liked/hearted
+            liked: userReaction === "like",
+            hearted: userReaction === "heart",
             saved: p.is_saved || false,
-            user_reaction: p.user_reaction,
+            user_reaction: userReaction,
             image: imageUrl,
           };
         });
@@ -123,7 +159,7 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
       }
     };
     fetchPosts();
-  }, []);
+  }, [isLoggedIn]);
 
   const handleReaction = async (postId, reactionType) => {
     if (!isLoggedIn) {
@@ -146,6 +182,7 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
 
       const data = await response.json();
       
+      // Match Profile's exact state update pattern
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId
@@ -155,8 +192,9 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
                 hearts: data.hearts,
                 sad: data.sad,
                 user_reaction: data.user_reaction,
-                liked: data.user_reaction === 'like',
-                hearted: data.user_reaction === 'heart'
+                // Match Profile: Set liked/hearted exactly the same way
+                liked: data.user_reaction === "like",
+                hearted: data.user_reaction === "heart",
               }
             : post
         )
@@ -174,17 +212,9 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
     }
   };
 
-  const handleLike = (id) => {
-    handleReaction(id, 'like');
-  };
-
-  const handleHeart = (id) => {
-    handleReaction(id, 'heart');
-  };
-
-  const handleSad = (id) => {
-    handleReaction(id, 'sad');
-  };
+   const handleLike = (id) => handleReaction(id, "like");
+  const handleHeart = (id) => handleReaction(id, "heart");
+  const handleSad = (id) => handleReaction(id, "sad");
 
   const handleSave = async (id) => {
     if (!isLoggedIn) {
@@ -232,7 +262,15 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
 
  const handlePost = async () => {
   if (newPost.trim() === "" && !selectedImage) return;
-
+ // Check cooldown
+  if (lastPostTime) {
+    const elapsed = Math.floor((Date.now() - lastPostTime) / 1000);
+    if (elapsed < 15) {
+      const remaining = 15 - elapsed;
+      alert(`Please wait ${remaining} second${remaining !== 1 ? 's' : ''} before posting again.`);
+      return;
+    }
+  }
   try {
     const formData = new FormData();
     formData.append("content", newPost);
@@ -285,6 +323,11 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
     setNewPost("");
     setSelectedImage(null);
     setShowPostModal(false);
+ 
+    // Set cooldown after successful post
+    setLastPostTime(Date.now());
+    setCooldownRemaining(15);
+
 
   } catch (e) {
   console.error("Error creating post:", e);
@@ -348,22 +391,27 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
       alert("An error occurred while submitting the report.");
     }
   };
+const handleDeletePost = async (id) => {
+  try {
+    // Optional: call backend to delete post
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${API_ENDPOINTS.FREEDOM_WALL_POSTS}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
 
-  const handleHide = (id) => {
-    const postToHide = posts.find((post) => post.id === id);
-    if (postToHide) {
-      setHiddenPosts((prev) => [postToHide, ...prev]);
-      setPosts((prev) => prev.filter((post) => post.id !== id));
-      setShowUndo(true);
-      setTimeout(() => setShowUndo(false), 5000);
-    }
-  };
+    if (!response.ok) throw new Error('Failed to delete post');
 
-  const undoHide = () => {
-    setPosts((prev) => [...hiddenPosts, ...prev]);
-    setHiddenPosts([]);
-    setShowUndo(false);
-  };
+    // Remove post from state
+    setPosts((prev) => prev.filter((post) => post.id !== id));
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    alert('Failed to delete post. Please try again.');
+  }
+};
+
  const getUserEmail = () => {
     if (user?.email) return user.email;
     try {
@@ -388,50 +436,55 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
         </p>
       </div>
 
-      {/* Undo Snackbar */}
-{showUndo && (
+    {showDeleteConfirm && postToDelete && (
   <div
-    style={{
-      position: "fixed",
-      bottom: "20px",
-      left: "0px", // flush to left edge
-      zIndex: 9999,
-      backgroundColor: "rgb(32,31,36)", // white background
-      borderLeft: "4px solid green", // green accent
-      borderRadius: "0 6px 6px 0", // rounded except left edge
-      padding: "14px 20px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
-      fontFamily: "Poppins, sans-serif",
-      fontSize: "16px",
-      minWidth: "320px",
-      maxWidth: "400px",
-      wordBreak: "break-word",
-      marginLeft: "20px",
-    }}
+    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style={{ background: "rgba(0,0,0,0.35)", zIndex: 10050 }}
   >
-    <span style={{ color: "#fff", fontWeight: 600 }}>
-      Post hidden
-    </span>
-    
-    <div style={{ display: "flex", gap: "14px" }}>
-      <span
-        onClick={undoHide}
-        style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600, display:"underline" }}
-      >
-        Undo
-      </span>
-      <span
-        onClick={() => setShowUndo(false)}
-        style={{ cursor: "pointer", color: "rgb(138, 180, 248)", fontWeight: 600 }}
-      >
-        Ok
-      </span>
+    <div
+      className="rounded-4 shadow-lg p-4"
+      style={{ background: "#fff", width: "380px", maxWidth: "92%" }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h5 className="fw-bold mb-2 text-dark" style={{ margin: 0 }}>Delete Notice</h5>
+        <button
+          onClick={() => setShowDeleteConfirm(false)}
+          style={{ fontSize: "20px", border: "none", background: "transparent", cursor: "pointer", color: "#555" }}
+        >
+          ×
+        </button>
+      </div>
+
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "12px 0" }} />
+
+      <p className="text-muted mb-4">
+        Are you sure you want to delete this post? <b>{postToDelete.author || "Guest User"}</b>'s post will be permanently deleted.
+      </p>
+
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{ padding: "8px 20px", borderRadius: "24px", background: "#e8f5e9", border: "1px solid #c8e6c9", color: "#2e7d32", fontWeight: 600, cursor: "pointer" }}
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className="btn fw-bold px-4 py-2 rounded-pill"
+          style={{ padding: "8px 20px", borderRadius: "24px", background: "#d32f2f", border: "none", color: "#fff", fontWeight: 600, cursor: "pointer" }}
+          onClick={async () => {
+            await handleDeletePost(postToDelete.id);
+            setShowDeleteConfirm(false);
+          }}
+        >
+          Delete
+        </button>
+      </div>
     </div>
   </div>
 )}
+
 
 <Modal
   show={showNoReasonModal}
@@ -612,16 +665,21 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
         </Modal.Body>
        <Modal.Footer style={{ backgroundColor: "#e6f4ea" }}>
   <Button variant="secondary" onClick={() => setShowPostModal(false)}>Cancel</Button>
-  <Button
+   <Button
     variant="success"
+    disabled={cooldownRemaining > 0}
     onClick={() => {
       // Both logged-in and guest users can post
       handlePost(); // handlePost already sends requests differently based on auth
       setShowPostModal(false); // close modal after posting
     }}
   >
-    {isLoggedIn ? "Post" : "Share Anonymously"}
+    {cooldownRemaining > 0
+      ? `Please wait ${cooldownRemaining}s`
+      : (isLoggedIn ? "Post" : "Share Anonymously")}
   </Button>
+
+
 </Modal.Footer>
 
       </Modal>
@@ -649,7 +707,18 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
                 </Dropdown.Toggle>
                 <Dropdown.Menu align="end">
                   <Dropdown.Item onClick={() => openReportModal(post.id)}>Report</Dropdown.Item>
-                  <Dropdown.Item onClick={() => handleHide(post.id)}>Hide</Dropdown.Item>
+                  {/* Show delete button only if user is the post owner */}
+                  {user && post.user_id === user.id && (
+                    <Dropdown.Item 
+                      onClick={() => {
+                        setPostToDelete(post);
+                        setShowDeleteConfirm(true);
+                      }}
+                      className="text-danger"
+                    >
+                      Delete
+                    </Dropdown.Item>
+                  )}
                 </Dropdown.Menu>
               </Dropdown>
             )}
@@ -687,26 +756,67 @@ const [showRestrictedModal, setShowRestrictedModal] = useState(false);
 
 
                 <div className="post-actions d-flex align-items-center mt-3" style={{ justifyContent: "flex-start" }}>
-                  <div className="d-flex align-items-center me-3 like-action" onClick={isLoggedIn ? () => handleLike(post.id) : undefined} style={{ cursor: isLoggedIn ? "pointer" : "default" }}>
-                    <ThumbsUp size={18} stroke={post.liked ? "blue" : "black"} fill={post.liked ? "blue" : "none"} className="me-1" />
+                  {/* LIKE */}
+                  <div
+                    className="d-flex align-items-center me-3 like-action"
+                    onClick={isLoggedIn ? () => handleLike(post.id) : undefined}
+                    style={{ cursor: isLoggedIn ? "pointer" : "default" }}
+                  >
+                    <ThumbsUp
+                      size={18}
+                      className="me-1"
+                      stroke={post.liked ? "blue" : "gray"}
+                      fill={post.liked ? "blue" : "none"}
+                    />
                     <small>{post.likes || 0}</small>
                   </div>
 
-                  <div className="d-flex align-items-center me-3 heart-action" onClick={isLoggedIn ? () => handleHeart(post.id) : undefined} style={{ cursor: isLoggedIn ? "pointer" : "default" }}>
-                    <Heart size={18} className="me-1" fill={post.hearted ? "red" : "none"} stroke={post.hearted ? "red" : "gray"} />
+                  {/* HEART */}
+                  <div
+                    className="d-flex align-items-center me-3 heart-action"
+                    onClick={isLoggedIn ? () => handleHeart(post.id) : undefined}
+                    style={{ cursor: isLoggedIn ? "pointer" : "default" }}
+                  >
+                    <Heart
+                      size={18}
+                      className="me-1"
+                      fill={post.hearted ? "red" : "none"}
+                      stroke={post.hearted ? "red" : "gray"}
+                    />
                     <small>{post.hearts || 0}</small>
                   </div>
 
-                  <div className="d-flex align-items-center me-3 sad-action" onClick={isLoggedIn ? () => handleSad(post.id) : undefined} style={{ cursor: isLoggedIn ? "pointer" : "default" }}>
-                    <span className="me-1" style={{ color: post.user_reaction === 'sad' ? "#6c757d" : "gray", fontSize: "18px" }}>😢</span>
+                  {/* SAD */}
+                  <div
+                    className="d-flex align-items-center me-3 sad-action"
+                    onClick={isLoggedIn ? () => handleSad(post.id) : undefined}
+                    style={{ cursor: isLoggedIn ? "pointer" : "default" }}
+                  >
+                    <Frown
+                      size={18}
+                      className="me-1"
+                      stroke={post.user_reaction === "sad" ? "#6c757d" : "gray"}
+                      fill={post.user_reaction === "sad" ? "yellow" : "none"}
+                    />
                     <small>{post.sad || 0}</small>
                   </div>
 
-                  <div className="d-flex align-items-center save-action" onClick={isLoggedIn ? () => handleSave(post.id) : undefined} style={{ cursor: isLoggedIn ? "pointer" : "default" }}>
-                    <Bookmark size={18} className="me-1" fill={post.saved ? "green" : "none"} stroke={post.saved ? "green" : "gray"} />
+                  {/* SAVE */}
+                  <div
+                    className="d-flex align-items-center save-action"
+                    onClick={isLoggedIn ? () => handleSave(post.id) : undefined}
+                    style={{ cursor: isLoggedIn ? "pointer" : "default" }}
+                  >
+                    <Bookmark
+                      size={18}
+                      className="me-1"
+                      fill={post.saved ? "green" : "none"}
+                      stroke={post.saved ? "green" : "gray"}
+                    />
                     <small>{post.saves || 0}</small>
                   </div>
                 </div>
+
               </div>
             </Card.Body>
           </Card>

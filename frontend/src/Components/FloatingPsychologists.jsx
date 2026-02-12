@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button, Modal, Spinner } from "react-bootstrap";
 import { FaUserMd, FaEnvelope, FaPhone, FaMapMarkerAlt, FaDollarSign } from "react-icons/fa";
 import "../App.css";
+import { API_ENDPOINTS, getStorageUrl } from "../config/api";
 
 const FloatingPsychologists = () => {
   const [show, setShow] = useState(false);
@@ -21,7 +22,7 @@ const FloatingPsychologists = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('http://127.0.0.1:8000/api/admin/psychiatrists/active');
+      const response = await fetch(API_ENDPOINTS.ADMIN_PSYCHIATRISTS_ACTIVE);
       if (!response.ok) throw new Error('Failed to fetch psychiatrists');
       
       const data = await response.json();
@@ -95,7 +96,7 @@ const FloatingPsychologists = () => {
                   {/* Profile Picture */}
                   <div className="psychologist-pic">
                     <img 
-                      src={doc.image_url ? `http://127.0.0.1:8000/storage/${doc.image_url}` : `https://i.pravatar.cc/100?img=${doc.id}`} 
+                      src={doc.image_url ? getStorageUrl(doc.image_url) : `https://i.pravatar.cc/100?img=${doc.id}`} 
                       alt={doc.name}
                       onError={(e) => { e.target.src = `https://i.pravatar.cc/100?img=${doc.id}`; }}
                     />

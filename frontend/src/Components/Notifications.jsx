@@ -1,21 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { ListGroup, Button } from 'react-bootstrap';
 import { Bell, CheckCircle, Heart, Bookmark, Calendar } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 const Notifications = ({ onUnreadUpdate }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = 'http://127.0.0.1:8000/api/notifications';
+  const API_BASE = API_ENDPOINTS.NOTIFICATIONS;
   const token = localStorage.getItem('authToken');
 
   const loadNotifications = async () => {
+    if (!token) {
+      // Don't attempt to load if no token
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
     setLoading(true);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
       const res = await fetch(API_BASE, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
+
       if (res.ok) {
         const data = await res.json();
         const list = data.data || data;
@@ -25,7 +43,14 @@ const Notifications = ({ onUnreadUpdate }) => {
         onUnreadUpdate(unread); // update navbar badge
       }
     } catch (err) {
-      console.error('Error loading notifications:', err);
+      if (err.name === 'AbortError') {
+        console.error('Notifications request timed out - backend may not be running');
+      } else {
+        console.error('Error loading notifications:', err);
+      }
+      // Don't crash the app, just set empty notifications
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }

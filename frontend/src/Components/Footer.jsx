@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 function Footer() {
     return (
       <footer className="footer">
@@ -6,16 +8,16 @@ function Footer() {
         </div>
   
         <div className="footer-center">
-        <a href="#terms">Terms and Conditions</a>
+        <Link to="/terms">Terms and Conditions</Link>
         <span>•</span>
-        <a href="#privacy">Privacy Policy</a>
+        <Link to="/privacy">Privacy Policy</Link>
         <span>•</span>
-        <a href="#services">Terms of Service</a>
+        <Link to="/services">Terms of Service</Link>
         <span>•</span>
-        <a href="#services">About</a>
+        <Link to="/about">About</Link>
         </div>
         <div className="footer-right">
-        <span>Develop by: Ationg,Ferlita & Sanchez, Chanlyn</span>
+        <span>Developed by: Ferlita Ationg & Chanlyn Sanchez</span>
         
         </div>
     </footer>

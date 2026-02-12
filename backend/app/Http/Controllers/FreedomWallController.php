@@ -10,11 +10,24 @@ use App\Models\UserPostReaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class FreedomWallController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // Manually authenticate user if Bearer token is provided
+        // This allows the route to work for both authenticated and unauthenticated users
+        if ($request->bearerToken()) {
+            $token = PersonalAccessToken::findToken($request->bearerToken());
+            if ($token) {
+                $user = $token->tokenable;
+                if ($user) {
+                    auth()->setUser($user);
+                }
+            }
+        }
+
         $posts = FreedomWallPost::with(['user','savedByUsers', 'reactions'])
             ->orderBy('created_at', 'desc')
             ->get();

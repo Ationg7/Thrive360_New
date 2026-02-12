@@ -3,6 +3,7 @@ import { Container, Card, Button, Modal, Form, Alert, Row, Col } from 'react-boo
 import { Plus, Trash2 } from 'lucide-react';
 import { API_ENDPOINTS, STORAGE_KEYS } from '../constants/adminConstants';
 import './AdminProfileCovers.css';
+import { getStorageUrl } from '../config/api';
 
 const AdminProfileCovers = () => {
   const [covers, setCovers] = useState([]);
@@ -18,12 +19,7 @@ const [coverToDelete, setCoverToDelete] = useState(null);
   const [success, setSuccess] = useState(null);
   const [activeCover, setActiveCover] = useState(null);
 
- const toImageUrl = (img) => {
-  if (!img) return null;
-  if (img.startsWith('http')) return img;            // Full URL already
-  if (img.startsWith('/storage')) return `http://127.0.0.1:8000${img}`; // Prepend domain only
-  return `http://127.0.0.1:8000/storage/${img}`;     // Raw path
-};
+ const toImageUrl = (img) => getStorageUrl(img);
 
 
   const fetchCovers = useCallback(async () => {

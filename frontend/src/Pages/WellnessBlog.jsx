@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Container, Card, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS, getStorageUrl } from "../config/api";
 import { useAuth } from "../AuthContext";
 import "../App.css";
 
@@ -103,16 +104,11 @@ By breaking your study sessions into manageable pieces, using visual aids, pract
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/admin/blogs");
+        const res = await fetch(API_ENDPOINTS.ADMIN_BLOGS);
         if (!res.ok) throw new Error("Failed to load blogs");
 
         const data = await res.json();
-        const toImageUrl = (img) => {
-          if (!img || typeof img !== "string") return null;
-          return img.startsWith("http://") || img.startsWith("https://")
-            ? img
-            : `http://127.0.0.1:8000/storage/${img}`;
-        };
+        const toImageUrl = (img) => getStorageUrl(img);
 
         const normalized = Array.isArray(data)
           ? data.map((b) => ({

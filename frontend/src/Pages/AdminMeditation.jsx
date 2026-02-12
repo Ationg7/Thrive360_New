@@ -4,6 +4,7 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, STORAGE_KEYS, ROUTES, MESSAGES } from '../constants/adminConstants';
+import { getStorageUrl } from '../config/api';
 import ErrorBoundary from '../components/ErrorBoundary';
 import MessageDisplay from '../components/MessageDisplay';
 import './AdminMeditation.css';
@@ -115,12 +116,7 @@ const [meditationToDelete, setMeditationToDelete] = useState(null);
     }
   };
 
-  const toImageUrl = (img) => {
-    if (!img) return null;
-    if (typeof img !== 'string') return null;
-    if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    return `http://127.0.0.1:8000/storage/${img}`;
-  };
+  const toImageUrl = (img) => getStorageUrl(img);
 
   // Handle tutorial step changes
   const handleTutorialStepChange = (stepIndex, field, value) => {

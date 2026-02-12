@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, ListGroup, Badge, ProgressBar } from 'react-bootstrap';
 import { CheckCircle, Clock, Calendar } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 const ChallengesHistory = () => {
   const [challenges, setChallenges] = useState([]);
@@ -11,7 +12,7 @@ const ChallengesHistory = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://127.0.0.1:8000/api/challenges/history', {
+      const response = await fetch(API_ENDPOINTS.CHALLENGES_HISTORY, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

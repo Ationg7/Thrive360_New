@@ -368,7 +368,7 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .admin-posts-page {
     padding: 10px;
   }

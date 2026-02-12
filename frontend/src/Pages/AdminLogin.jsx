@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Modal, Button } from "react-bootstrap";
+import { API_ENDPOINTS } from "../config/api";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ const AdminLogin = () => {
     console.log("🔐 Admin login attempt for:", email);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/admin/login", {
+      const response = await fetch(API_ENDPOINTS.ADMIN_LOGIN, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -164,6 +165,12 @@ const AdminLogin = () => {
         </form>
 
         <div style={{ textAlign: "center", marginTop: "20px" }}>
+          <p style={{ color: "#666", marginBottom: "10px" }}>
+            Need to create an admin account?{" "}
+            <a href="/admin-register" style={{ color: "#667eea", textDecoration: "none", fontWeight: "bold" }}>
+              Register here
+            </a>
+          </p>
           <a href="/" style={{ color: "#666", textDecoration: "none" }}>
             ← Back to Main Site
           </a>

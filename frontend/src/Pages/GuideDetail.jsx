@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import "../App.css";
+import { API_BASE_URL, getStorageUrl } from "../config/api";
 
 const GuideDetails = () => {
   const location = useLocation();
@@ -8,15 +9,10 @@ const GuideDetails = () => {
   const [guide, setGuide] = useState(guideFromState);
   const [loading, setLoading] = useState(false);
 
-  const BASE_URL = "http://127.0.0.1:8000";
+  const BASE_URL = API_BASE_URL.replace("/api", "");
 
   // Helper to normalize image URL
-  const getImageUrl = (image) => {
-    if (!image) return null;
-    if (typeof image !== "string") return null;
-    if (image.startsWith("http")) return image;
-    return `${BASE_URL}/storage/${image}`;
-  };
+  const getImageUrl = (image) => getStorageUrl(image);
 
   // Fetch fresh guide data from backend if guide has an ID
   useEffect(() => {
@@ -26,7 +22,7 @@ const GuideDetails = () => {
         setLoading(true);
         try {
           // Fetch all meditations and find the matching one
-          const res = await fetch(`${BASE_URL}/api/admin/meditation`);
+          const res = await fetch(`${API_BASE_URL}/admin/meditation`);
           if (res.ok) {
             const data = await res.json();
             const matchedGuide = Array.isArray(data) 

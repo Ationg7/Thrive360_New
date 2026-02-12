@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Button, Table, Modal, Form, Row, Col, Badge, Alert } from 'react-bootstrap';
 import { Plus, Edit3, Trash2, Calendar, MapPin, Users } from 'lucide-react';
+import { API_ENDPOINTS, getStorageUrl } from '../config/api';
 
 
 const AdminEvents = () => {
@@ -29,7 +30,7 @@ const [eventToDelete, setEventToDelete] = useState(null);
     setLoading(true);
     try {
       const adminToken = localStorage.getItem('adminToken');
-      const response = await fetch('http://127.0.0.1:8000/api/admin/events', {
+      const response = await fetch(API_ENDPOINTS.ADMIN_EVENTS, {
         headers: {
           'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json'
@@ -87,8 +88,8 @@ const saveEvent = async () => {
     if (formData.image) formDataToSend.append('image', formData.image);
 
     const url = editingEvent
-      ? `http://127.0.0.1:8000/api/admin/events/${editingEvent.id}`
-      : 'http://127.0.0.1:8000/api/admin/events';
+      ? `${API_ENDPOINTS.ADMIN_EVENTS}/${editingEvent.id}`
+      : API_ENDPOINTS.ADMIN_EVENTS;
 
     const method = editingEvent ? 'POST' : 'POST'; // If using Laravel POST for both create/update with _method=PUT
 
@@ -136,7 +137,7 @@ const saveEvent = async () => {
 
     try {
       const adminToken = localStorage.getItem('adminToken');
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/events/${id}`, {
+      const response = await fetch(`${API_ENDPOINTS.ADMIN_EVENTS}/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${adminToken}`,
@@ -270,7 +271,7 @@ const editEvent = (event) => {
                     <td>
                       {event.image_path ? (
                         <img 
-                          src={event.image_path.startsWith('http') ? event.image_path : `http://127.0.0.1:8000/storage/${event.image_path}`} 
+                          src={getStorageUrl(event.image_path) || event.image_path}
                           alt={event.title}
                           style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
                           onError={(e) => {

@@ -86,6 +86,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Admin Secret Code
+    |--------------------------------------------------------------------------
+    |
+    | A secret code required to create admin accounts via the API. Set this
+    | in your .env file as ADMIN_SECRET_CODE. Keep it secret and do not commit
+    | it to source control.
+    |
+    */
+    'admin_secret_code' => env('ADMIN_SECRET_CODE', 'THRIVE360ADMIN_2025'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |

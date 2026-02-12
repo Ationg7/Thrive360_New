@@ -3,7 +3,7 @@ return [
     'paths' => ['api/*'],
     'allowed_methods' => ['*'],
     // Allow localhost for desktop development (with any port)
-    'allowed_origins' => ['http://localhost:*', 'http://127.0.0.1:*'],
+    'allowed_origins' => ['http://localhost:*', 'http://127.0.0.1:*', 'https://thrive360.site'],
     
     // Allow IP addresses for mobile device access (e.g., http://192.168.1.100:3000)
     // This pattern matches any IP address with any port
