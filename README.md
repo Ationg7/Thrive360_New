@@ -29,7 +29,7 @@ THRIVE360: A WEB-BASED PLATFORM SUPPORTING STUDENT HEALTH, WELL-BEING, AND PERSO
 <img src="frontend/src/assets/Images/SignIn.png">  
 
 # Sign Up Page
-<img src="frontend/src/assets/Images/SignUp.png">  
+<img src="frontend/src/assets/Images/SignUP.png">  
 
 # Forgot Password Page
 <img src="frontend/src/assets/Images/ForgotPass.png">  
