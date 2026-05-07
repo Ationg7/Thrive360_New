@@ -21,6 +21,34 @@ THRIVE360: A WEB-BASED PLATFORM SUPPORTING STUDENT HEALTH, WELL-BEING, AND PERSO
 * React Bootstrap
 * HTML, CSS and JavaScript
 
+# Home Screen
+<img src="frontend/scc/assets/images/home.png">  
+
+# Sign Up Screen
+<img src="assets/images/screenshot/sign-up.jpg">  
+
+# Sign In Screen
+<img src="assets/images/screenshot/sign-in.jpg">  
+
+# Tabs Screen
+   # Profile
+   <img src="assets/images/screenshot/profile.png"> 
+
+   # Home
+   <img src="assets/images/screenshot/home.png">  
+
+   # Library
+   <img src="assets/images/screenshot/library.png">  
+   
+   # Download
+   <img src="assets/images/screenshot/download.png">
+
+   # Category
+   <img src="assets/images/screenshot/genre.png">
+
+   # Screen Demo
+   < a href="https://youtu.be/uknbDvIi1w0?si=Jo8XPrzosi0q0_l5">
+
  # Screen Demo
  < a href="https://www.youtube.com/watch?v=wPib5SC3wOk">
    
