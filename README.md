@@ -22,32 +22,24 @@ THRIVE360: A WEB-BASED PLATFORM SUPPORTING STUDENT HEALTH, WELL-BEING, AND PERSO
 * HTML, CSS and JavaScript
 
 # Home Screen
-<img src="frontend/scc/assets/images/home.png">  
+<img src="frontend/src/assets/Images/Home.png">  
 
-# Sign Up Screen
-<img src="assets/images/screenshot/sign-up.jpg">  
+# Freedom Wall Screen
+<img src="frontend/src/assets/Images/FreedomWall.png">  
 
-# Sign In Screen
-<img src="assets/images/screenshot/sign-in.jpg">  
+# Meditation Screen
+<img src="frontend/src/assets/Images/Meditation.png">  
 
-# Tabs Screen
-   # Profile
-   <img src="assets/images/screenshot/profile.png"> 
+# Wellness Blog Screen
+<img src="frontend/src/assets/Images/WellnessBlog.png">  
 
-   # Home
-   <img src="assets/images/screenshot/home.png">  
+# Challenges Screen
+<img src="frontend/src/assets/Images/Challenges.png">  
 
-   # Library
-   <img src="assets/images/screenshot/library.png">  
-   
-   # Download
-   <img src="assets/images/screenshot/download.png">
+# Profile Screen
+<img src="frontend/src/assets/Images/Profile.png">  
 
-   # Category
-   <img src="assets/images/screenshot/genre.png">
 
-   # Screen Demo
-   < a href="https://youtu.be/uknbDvIi1w0?si=Jo8XPrzosi0q0_l5">
 
  # Screen Demo
  < a href="https://www.youtube.com/watch?v=wPib5SC3wOk">
